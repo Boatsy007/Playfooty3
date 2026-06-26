@@ -6,15 +6,13 @@ import Hero from './components/sections/Hero'
 import Stats from './components/sections/Stats'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
-// Lazy load everything below the fold
-const Experience = lazy(() => import('./components/sections/Experience'))
-const HowItWorks = lazy(() => import('./components/sections/HowItWorks'))
-const Prize = lazy(() => import('./components/sections/Prize'))
-const Invitation = lazy(() => import('./components/sections/Invitation'))
+const TheWeekend         = lazy(() => import('./components/sections/TheWeekend'))
+const WhoAttends         = lazy(() => import('./components/sections/WhoAttends'))
+const OneNationalChampion = lazy(() => import('./components/sections/OneNationalChampion'))
+const Invitation         = lazy(() => import('./components/sections/Invitation'))
 
-// Minimal height fallbacks prevent layout shift during chunk load
-const SectionFallback = ({ h = 400 }: { h?: number }) => (
-  <div style={{ minHeight: `${h}px`, background: 'transparent' }} />
+const Blank = ({ h = 400 }: { h?: number }) => (
+  <div style={{ minHeight: `${h}px` }} />
 )
 
 export default function App() {
@@ -25,16 +23,16 @@ export default function App() {
         <Ticker />
         <Hero />
         <Stats />
-        <Suspense fallback={<SectionFallback h={600} />}>
-          <Experience />
+        <Suspense fallback={<Blank h={600} />}>
+          <TheWeekend />
         </Suspense>
-        <Suspense fallback={<SectionFallback h={500} />}>
-          <HowItWorks />
+        <Suspense fallback={<Blank h={500} />}>
+          <WhoAttends />
         </Suspense>
-        <Suspense fallback={<SectionFallback h={400} />}>
-          <Prize />
+        <Suspense fallback={<Blank h={500} />}>
+          <OneNationalChampion />
         </Suspense>
-        <Suspense fallback={<SectionFallback h={600} />}>
+        <Suspense fallback={<Blank h={600} />}>
           <Invitation />
         </Suspense>
       </main>

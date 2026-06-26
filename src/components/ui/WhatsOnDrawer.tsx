@@ -40,7 +40,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
             {/* Header */}
             <div className="px-6 pt-2 pb-5 shrink-0 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
               <Drawer.Title className="font-display text-white leading-none mb-1" style={{ fontSize: '2.2rem' }}>
-                WHAT'S ON
+                THE WEEKEND
               </Drawer.Title>
               <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#ff2c91' }}>
                 Gold Coast · 5–8 November 2026

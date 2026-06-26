@@ -45,15 +45,11 @@ export default function Invitation() {
             transition={{ duration: 0.7 }}
             className="lg:sticky lg:top-24 pt-2"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-[3px] w-8 bg-[#ff2c91]" />
-              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Invitation</span>
-            </div>
-            <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)' }}>
-              REQUEST<br /><span style={{ color: '#ff2c91' }}>AN</span><br />INVITATION
+            <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 4.5rem)' }}>
+              CHAMPIONSHIP<br />INVITATION<br /><span style={{ color: '#ff2c91' }}>REQUEST</span>
             </h2>
             <p className="text-white/55 text-base leading-relaxed mb-8">
-              Invitation requests are now open for eligible A Grade premiership clubs. Complete the registration form to express interest in the 2026 Country Netball Championships Australia.
+              Invitation requests are now open for eligible A Grade premiership clubs. Complete the form below to express interest in the 2026 Country Netball Championships Australia.
             </p>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
