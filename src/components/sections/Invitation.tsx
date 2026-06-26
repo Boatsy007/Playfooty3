@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { CheckCircle, MapPin, Calendar, Lock } from 'lucide-react'
-import MagneticButton from '../ui/MagneticButton'
 
 interface FormData {
   contactName: string
@@ -19,260 +18,227 @@ interface FormData {
 
 const stateOptions = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']
 
-interface FieldDef {
-  name: keyof FormData
-  label: string
-  type: string
-  placeholder?: string
-  options?: string[]
-}
-
-const fieldGroups: FieldDef[][] = [
-  [
-    { name: 'contactName' as const, label: 'Contact Name', type: 'text', placeholder: 'Your full name' },
-    { name: 'clubName' as const, label: 'Club Name', type: 'text', placeholder: 'Your netball club' },
-  ],
-  [
-    { name: 'league' as const, label: 'League / Association', type: 'text', placeholder: 'Your local competition' },
-    { name: 'state' as const, label: 'State', type: 'select', options: stateOptions },
-  ],
-  [
-    { name: 'email' as const, label: 'Email', type: 'email', placeholder: 'your@email.com.au' },
-    { name: 'phone' as const, label: 'Phone', type: 'tel', placeholder: '04xx xxx xxx' },
-  ],
-]
-
-const selectFields = [
-  {
-    name: 'premiership' as const,
-    label: 'A Grade Premiership Status',
-    options: [
-      'Yes — we won our premiership',
-      'Strong runner-up this season',
-      'In contention — season not finished',
-      'Not sure — would like more information',
-    ],
-  },
-  {
-    name: 'groupSize' as const,
-    label: 'Approximate Travelling Group Size',
-    options: ['Under 15', '15–30', '30–50', '50–80', '80+'],
-  },
-  {
-    name: 'accommodation' as const,
-    label: 'Accommodation Interest',
-    options: ["Yes — send info", "We'll arrange our own", 'Not sure yet'],
-  },
-]
-
 const containerVariants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
+  show: { transition: { staggerChildren: 0.07 } },
 }
 
 const fieldVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 }
+
+const inputCls = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-navy placeholder-gray-400 focus:outline-none focus:border-pink focus:ring-2 focus:ring-pink/15 transition-all duration-200"
+const labelCls = "block text-xs font-bold tracking-wide text-navy/70 mb-1.5"
 
 export default function Invitation() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
+  const { register, handleSubmit } = useForm<FormData>()
 
   const onSubmit = async () => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1400))
+    await new Promise(r => setTimeout(r, 1200))
     setLoading(false)
     setSubmitted(true)
   }
 
   return (
-    <section id="register" className="bg-surface overflow-hidden">
-      <div className="section-pad">
+    <section id="register" className="bg-surface py-20 lg:py-28 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-[2fr,3fr] gap-12 lg:gap-20 items-start">
 
-          {/* Left — editorial copy */}
+          {/* Left — copy */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="lg:sticky lg:top-28"
           >
-            <div className="section-divider mb-6" />
-            <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">Get Started</div>
-            <h2 className="font-display text-display-md text-navy-DEFAULT leading-none mb-6">
-              REQUEST<br />CLUB<br />INVITATION
+            <div className="inline-flex items-center gap-2 mb-5">
+              <div className="h-px w-8 bg-pink" />
+              <span className="text-xs font-bold tracking-[0.2em] uppercase text-pink">Invitation</span>
+            </div>
+            <h2 className="font-display leading-none text-navy mb-4" style={{ fontSize: 'clamp(2.8rem, 6vw, 4.5rem)' }}>
+              REQUEST<br />
+              <span className="text-pink">CLUB</span><br />
+              INVITATION
             </h2>
-            <p className="text-navy-DEFAULT/60 text-base leading-relaxed mb-8 max-w-xs">
-              Tell us about your club. We'll be in touch with invitation details and next steps.
+            <p className="text-navy/60 text-base leading-relaxed mb-8">
+              Fill in your details and our team will be in touch with everything you need to
+              know about bringing your club to the Gold Coast.
             </p>
 
-            {/* Event details card */}
-            <div className="bg-white rounded-2xl border border-navy-DEFAULT/8 p-6 shadow-glass space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-pink-DEFAULT/10 flex items-center justify-center shrink-0">
-                  <Calendar size={14} className="text-pink-DEFAULT" />
-                </div>
+            {/* Event detail card */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <Calendar size={16} className="text-pink shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-navy-DEFAULT/40">Dates</p>
-                  <p className="text-sm font-bold text-navy-DEFAULT">5–8 November 2026</p>
+                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Dates</p>
+                  <p className="text-sm font-semibold text-navy">5–8 November 2026</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-pink-DEFAULT/10 flex items-center justify-center shrink-0">
-                  <MapPin size={14} className="text-pink-DEFAULT" />
-                </div>
+              <div className="flex items-start gap-3">
+                <MapPin size={16} className="text-pink shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-navy-DEFAULT/40">Location</p>
-                  <p className="text-sm font-bold text-navy-DEFAULT">Gold Coast, Queensland</p>
+                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Location</p>
+                  <p className="text-sm font-semibold text-navy">Gold Coast, Queensland</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-pink-DEFAULT/10 flex items-center justify-center shrink-0">
-                  <Lock size={14} className="text-pink-DEFAULT" />
-                </div>
+              <div className="flex items-start gap-3">
+                <Lock size={16} className="text-pink shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-navy-DEFAULT/40">Eligibility</p>
-                  <p className="text-sm font-bold text-navy-DEFAULT">A Grade Premiership Clubs</p>
+                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Eligibility</p>
+                  <p className="text-sm font-semibold text-navy">A Grade Premiership Clubs</p>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Right — form card */}
+          {/* Right — form */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-            className="glass-white rounded-3xl p-8 md:p-10 shadow-glass card-3"
+            transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           >
-            <AnimatePresence mode="wait">
-              {submitted ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-                  className="flex flex-col items-center text-center py-12"
-                >
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-glass p-8 lg:p-10">
+              <AnimatePresence mode="wait">
+                {submitted ? (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 15 }}
-                    className="w-20 h-20 rounded-full bg-pink-DEFAULT/10 flex items-center justify-center mb-6"
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center text-center py-12"
                   >
-                    <CheckCircle size={40} className="text-pink-DEFAULT" />
+                    <div className="w-20 h-20 rounded-full bg-pink-muted flex items-center justify-center mb-6">
+                      <CheckCircle size={36} className="text-pink" />
+                    </div>
+                    <h3 className="font-display text-3xl text-navy mb-3">Request Received</h3>
+                    <p className="text-navy/60 text-base max-w-sm leading-relaxed">
+                      Thanks for your interest. Our team will be in touch shortly with invitation details.
+                    </p>
                   </motion.div>
-                  <h3 className="font-display text-3xl text-navy-DEFAULT mb-3">Request Received</h3>
-                  <p className="text-navy-DEFAULT/60 text-base leading-relaxed max-w-xs">
-                    Thank you for your interest. We'll be in touch with invitation details for your club.
-                  </p>
-                </motion.div>
-              ) : (
-                <motion.div key="form">
-                  <div className="mb-8">
-                    <h3 className="font-display text-2xl text-navy-DEFAULT mb-1">Club Interest Form</h3>
-                    <p className="text-navy-DEFAULT/40 text-sm">All fields required unless marked optional.</p>
-                  </div>
-
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <motion.div
-                      variants={containerVariants}
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true }}
-                      className="space-y-5"
-                    >
-                      {/* Paired text fields */}
-                      {fieldGroups.map((group, gi) => (
-                        <motion.div key={gi} variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
-                          {group.map(field => (
-                            <div key={field.name}>
-                              <label className="block text-xs font-bold text-navy-DEFAULT/70 mb-1.5 tracking-wide uppercase">
-                                {field.label}
-                              </label>
-                              {field.type === 'select' ? (
-                                <select
-                                  {...register(field.name, { required: true })}
-                                  className={`input-premium ${errors[field.name] ? 'error' : ''}`}
-                                >
-                                  <option value="">Select state</option>
-                                  {field.options?.map(o => (
-                                    <option key={o} value={o}>{o}</option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type={field.type}
-                                  placeholder={field.placeholder}
-                                  {...register(field.name, { required: true })}
-                                  className={`input-premium ${errors[field.name] ? 'error' : ''}`}
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </motion.div>
-                      ))}
-
-                      {/* Select fields */}
-                      {selectFields.map(field => (
-                        <motion.div key={field.name} variants={fieldVariants}>
-                          <label className="block text-xs font-bold text-navy-DEFAULT/70 mb-1.5 tracking-wide uppercase">
-                            {field.label}
-                          </label>
-                          <select
-                            {...register(field.name, { required: true })}
-                            className={`input-premium ${errors[field.name] ? 'error' : ''}`}
-                          >
-                            <option value="">Select...</option>
-                            {field.options.map(o => (
-                              <option key={o} value={o}>{o}</option>
-                            ))}
-                          </select>
-                        </motion.div>
-                      ))}
-
-                      {/* Message */}
-                      <motion.div variants={fieldVariants}>
-                        <label className="block text-xs font-bold text-navy-DEFAULT/70 mb-1.5 tracking-wide uppercase">
-                          Message <span className="font-normal normal-case text-navy-DEFAULT/30">(optional)</span>
-                        </label>
-                        <textarea
-                          {...register('message')}
-                          rows={3}
-                          placeholder="Anything else you'd like us to know..."
-                          className="input-premium resize-none"
-                        />
-                      </motion.div>
-
-                      {/* Submit */}
-                      <motion.div variants={fieldVariants} className="pt-2">
-                        <MagneticButton
-                          type="submit"
-                          disabled={loading}
-                          className="w-full bg-pink-grad text-white font-bold text-sm py-4 rounded-2xl shadow-pink hover:shadow-pink-lg transition-shadow duration-300"
-                        >
-                          {loading ? (
-                            <span className="flex items-center gap-2">
-                              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                              </svg>
-                              Sending...
-                            </span>
-                          ) : (
-                            'Request Club Invitation'
-                          )}
-                        </MagneticButton>
-                      </motion.div>
+                ) : (
+                  <motion.form
+                    key="form"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="space-y-5"
+                  >
+                    {/* Row 1 */}
+                    <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>Contact Name *</label>
+                        <input {...register('contactName', { required: true })} type="text" placeholder="Your full name" className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Club Name *</label>
+                        <input {...register('clubName', { required: true })} type="text" placeholder="Your netball club" className={inputCls} />
+                      </div>
                     </motion.div>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
+
+                    {/* Row 2 */}
+                    <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>League / Association *</label>
+                        <input {...register('league', { required: true })} type="text" placeholder="Your local competition" className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>State *</label>
+                        <select {...register('state', { required: true })} className={inputCls}>
+                          <option value="">Select state</option>
+                          {stateOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </motion.div>
+
+                    {/* Row 3 */}
+                    <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>Email *</label>
+                        <input {...register('email', { required: true })} type="email" placeholder="your@email.com.au" className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Phone</label>
+                        <input {...register('phone')} type="tel" placeholder="04xx xxx xxx" className={inputCls} />
+                      </div>
+                    </motion.div>
+
+                    {/* Premiership status */}
+                    <motion.div variants={fieldVariants}>
+                      <label className={labelCls}>Are you a current A Grade premier or in finals contention? *</label>
+                      <select {...register('premiership', { required: true })} className={inputCls}>
+                        <option value="">Select an option</option>
+                        <option value="yes">Yes — we won our premiership</option>
+                        <option value="runner-up">Strong runner-up this season</option>
+                        <option value="contention">In contention — season not finished</option>
+                        <option value="info">Not sure — would like more information</option>
+                      </select>
+                    </motion.div>
+
+                    {/* Group size */}
+                    <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>Approx travelling group size</label>
+                        <select {...register('groupSize')} className={inputCls}>
+                          <option value="">Select range</option>
+                          <option>Under 15</option>
+                          <option>15–30</option>
+                          <option>30–50</option>
+                          <option>50–80</option>
+                          <option>80+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Accommodation interest</label>
+                        <select {...register('accommodation')} className={inputCls}>
+                          <option value="">Select option</option>
+                          <option>Yes — send me info</option>
+                          <option>We'll arrange our own</option>
+                          <option>Not sure yet</option>
+                        </select>
+                      </div>
+                    </motion.div>
+
+                    {/* Message */}
+                    <motion.div variants={fieldVariants}>
+                      <label className={labelCls}>Message (optional)</label>
+                      <textarea
+                        {...register('message')}
+                        rows={3}
+                        placeholder="Any questions or additional details..."
+                        className={`${inputCls} resize-none`}
+                      />
+                    </motion.div>
+
+                    {/* Submit */}
+                    <motion.div variants={fieldVariants} className="pt-2">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-pink hover:bg-pink-dark disabled:opacity-60 text-white font-bold text-sm py-4 rounded-xl transition-all duration-200 shadow-pink hover:shadow-pink-lg flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          'Request Club Invitation'
+                        )}
+                      </button>
+                      <p className="text-center text-xs text-navy/40 mt-3">
+                        We'll respond within 2 business days
+                      </p>
+                    </motion.div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         </div>
       </div>

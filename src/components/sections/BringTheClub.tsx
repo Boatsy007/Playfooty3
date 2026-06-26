@@ -1,108 +1,91 @@
 import { motion } from 'framer-motion'
-import { Star, UserCheck, Heart, Users } from 'lucide-react'
-import SectionLabel from '../ui/SectionLabel'
+import { Swords, Users, Heart } from 'lucide-react'
 
-const audiences = [
+const cards = [
   {
-    icon: Star,
-    role: 'A Grade Players',
-    tagline: 'The competitors',
-    desc: 'Your A Grade team earns the right to compete at CNCA by winning the local premiership. They take the court representing the entire club.',
-    color: 'from-pink-500 to-pink-600',
-  },
-  {
-    icon: UserCheck,
-    role: 'Coaches & Committee',
-    tagline: 'The leaders',
-    desc: 'Coaches, managers and committee members travel as part of the official club delegation — leading the team and representing your association.',
-    color: 'from-navy-600 to-navy-700',
-  },
-  {
-    icon: Heart,
-    role: 'Families & Supporters',
-    tagline: 'The backbone',
-    desc: 'Partners, parents and supporters are what make a club. CNCA is designed for them to travel alongside the team and be part of every moment.',
-    color: 'from-pink-500 to-pink-600',
+    icon: Swords,
+    title: 'A Grade Players',
+    desc: 'Your A Grade team competes for the national title against the best country clubs in Australia.',
+    badge: 'Competes',
   },
   {
     icon: Users,
-    role: 'Club Community',
-    tagline: 'The celebration',
-    desc: 'Club members, sponsors and community supporters are welcome. Turn the end-of-season premiership into a full club trip to the Gold Coast.',
-    color: 'from-navy-600 to-navy-700',
+    title: 'Coaches & Committee',
+    desc: 'Travel with the team, prepare your players and be part of the club\'s biggest moment.',
+    badge: null,
+  },
+  {
+    icon: Heart,
+    title: 'Families & Supporters',
+    desc: 'Cheer on the team, enjoy the Gold Coast and celebrate alongside every club in the country.',
+    badge: null,
   },
 ]
 
-const container = {
+const containerVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.1 } },
 }
-const item = {
-  hidden: { opacity: 0, y: 28 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55 } },
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 }
 
 export default function BringTheClub() {
   return (
-    <section className="bg-gray-50">
-      <div className="section-container">
+    <section id="bring-the-club" className="bg-navy py-20 lg:py-28 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-6"
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="text-center mb-14"
         >
-          <SectionLabel>Who Travels</SectionLabel>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-            Bring The Whole Club
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div className="h-px w-8 bg-pink" />
+            <span className="text-xs font-bold tracking-[0.2em] uppercase text-pink">Who It's For</span>
+            <div className="h-px w-8 bg-pink" />
+          </div>
+          <h2 className="font-display leading-none text-white mb-4" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)' }}>
+            BRING THE<br />
+            <span className="text-pink">WHOLE CLUB</span>
           </h2>
-          <p className="text-lg text-navy-400 max-w-2xl mx-auto leading-relaxed">
-            The A Grade team competes for the national title — but CNCA is designed for the entire club to travel, support and celebrate together on the Gold Coast.
+          <p className="text-white/55 text-lg max-w-xl mx-auto leading-relaxed">
+            The A Grade team plays. The whole club can travel, support and celebrate.
           </p>
         </motion.div>
 
-        {/* Distinction callout */}
+        {/* Cards */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2.5 bg-pink-50 border border-pink-200 rounded-full px-5 py-2.5">
-            <div className="w-2 h-2 bg-pink-500 rounded-full flex-shrink-0" />
-            <span className="text-sm font-semibold text-pink-700">A Grade competes for the CNCA title</span>
-          </div>
-          <div className="inline-flex items-center gap-2.5 bg-navy-50 border border-navy-200 rounded-full px-5 py-2.5">
-            <div className="w-2 h-2 bg-navy-500 rounded-full flex-shrink-0" />
-            <span className="text-sm font-semibold text-navy-600">Everyone else travels to support and celebrate</span>
-          </div>
-        </motion.div>
-
-        <motion.div
-          variants={container}
+          variants={containerVariants}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
         >
-          {audiences.map(({ icon: Icon, role, tagline, desc, color }) => (
+          {cards.map(({ icon: Icon, title, desc, badge }) => (
             <motion.div
-              key={role}
-              variants={item}
-              className="bg-white rounded-2xl overflow-hidden card-hover border border-navy-50"
+              key={title}
+              variants={cardVariants}
+              className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink/40 rounded-2xl p-8 transition-all duration-400 cursor-default"
             >
-              <div className={`bg-gradient-to-br ${color} px-7 pt-7 pb-8`}>
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                  <Icon size={22} className="text-white" />
+              {/* Badge */}
+              {badge && (
+                <div className="absolute top-5 right-5 bg-pink text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">
+                  {badge}
                 </div>
-                <h3 className="text-xl font-extrabold text-white mb-1">{role}</h3>
-                <p className="text-xs font-semibold text-white/70 tracking-wider uppercase">{tagline}</p>
+              )}
+
+              <div className="w-14 h-14 rounded-2xl bg-pink/15 group-hover:bg-pink flex items-center justify-center mb-6 transition-colors duration-300">
+                <Icon size={24} className="text-pink group-hover:text-white transition-colors duration-300" />
               </div>
-              <div className="px-7 py-6">
-                <p className="text-sm text-navy-500 leading-relaxed">{desc}</p>
-              </div>
+
+              <h3 className="font-display text-[clamp(1.6rem,3vw,2.2rem)] text-white leading-none mb-3">{title}</h3>
+              <p className="text-white/50 text-sm leading-relaxed">{desc}</p>
             </motion.div>
           ))}
         </motion.div>

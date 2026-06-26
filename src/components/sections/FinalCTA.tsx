@@ -41,12 +41,12 @@ export default function FinalCTA() {
       </svg>
 
       {/* Gold star accents */}
-      <div className="absolute top-16 right-16 text-gold-DEFAULT opacity-60 pointer-events-none">
+      <div className="absolute top-16 right-16 text-gold opacity-60 pointer-events-none">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
         </svg>
       </div>
-      <div className="absolute bottom-24 left-20 text-gold-DEFAULT opacity-40 pointer-events-none">
+      <div className="absolute bottom-24 left-20 text-gold opacity-40 pointer-events-none">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
         </svg>
@@ -100,7 +100,7 @@ export default function FinalCTA() {
             >
               <MagneticButton
                 onClick={scrollToRegister}
-                className="inline-flex items-center gap-3 bg-white text-navy-DEFAULT font-bold text-sm px-10 py-4 rounded-full hover:bg-white/90 transition-colors duration-300"
+                className="inline-flex items-center gap-3 bg-white text-navy font-bold text-sm px-10 py-4 rounded-full hover:bg-white/90 transition-colors duration-300"
               >
                 Request Club Invitation
                 <ArrowRight size={16} />

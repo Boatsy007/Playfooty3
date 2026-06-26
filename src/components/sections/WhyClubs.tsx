@@ -57,14 +57,14 @@ export default function WhyClubs() {
           className="mb-16 max-w-xl"
         >
           <div className="section-divider mb-6" />
-          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">Five Reasons</div>
-          <h2 className="font-display text-display-md text-navy-DEFAULT leading-none">
+          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink mb-4">Five Reasons</div>
+          <h2 className="font-display text-display-md text-navy leading-none">
             WHY CLUBS<br />WANT TO BE<br />THERE
           </h2>
         </motion.div>
 
         {/* Benefits list */}
-        <div className="divide-y divide-navy-DEFAULT/8">
+        <div className="divide-y divide-navy/8">
           {benefits.map(({ num, title, desc, icon: Icon }, i) => (
             <motion.div
               key={num}
@@ -77,24 +77,24 @@ export default function WhyClubs() {
             >
               {/* Number */}
               <div className="w-16 md:w-20 shrink-0">
-                <span className="font-display text-[clamp(2.5rem,6vw,4rem)] text-navy-DEFAULT/10 group-hover:text-pink-DEFAULT leading-none transition-colors duration-400">
+                <span className="font-display text-[clamp(2.5rem,6vw,4rem)] text-navy/10 group-hover:text-pink leading-none transition-colors duration-400">
                   {num}
                 </span>
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-navy-DEFAULT text-[clamp(1rem,2.5vw,1.35rem)] mb-2 leading-snug group-hover:text-navy-DEFAULT transition-colors">
+                <h3 className="font-bold text-navy text-[clamp(1rem,2.5vw,1.35rem)] mb-2 leading-snug group-hover:text-navy transition-colors">
                   {title}
                 </h3>
-                <p className="text-navy-DEFAULT/50 text-sm md:text-base leading-relaxed max-w-xl">
+                <p className="text-navy/50 text-sm md:text-base leading-relaxed max-w-xl">
                   {desc}
                 </p>
               </div>
 
               {/* Icon */}
-              <div className="shrink-0 w-12 h-12 rounded-2xl bg-navy-DEFAULT/5 flex items-center justify-center group-hover:bg-pink-DEFAULT/10 group-hover:border-pink-DEFAULT/20 border border-transparent transition-all duration-400">
-                <Icon size={18} className="text-navy-DEFAULT/30 group-hover:text-pink-DEFAULT transition-colors duration-400" />
+              <div className="shrink-0 w-12 h-12 rounded-2xl bg-navy/5 flex items-center justify-center group-hover:bg-pink/10 group-hover:border-pink/20 border border-transparent transition-all duration-400">
+                <Icon size={18} className="text-navy/30 group-hover:text-pink transition-colors duration-400" />
               </div>
             </motion.div>
           ))}

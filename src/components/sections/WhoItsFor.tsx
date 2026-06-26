@@ -51,7 +51,7 @@ const rowVariants = {
 
 export default function WhoItsFor() {
   return (
-    <section id="who" className="bg-navy-DEFAULT overflow-hidden">
+    <section id="who" className="bg-navy overflow-hidden">
       <div className="section-pad">
         <div className="grid lg:grid-cols-[1fr,1.8fr] gap-16 lg:gap-24 items-start">
 
@@ -63,11 +63,11 @@ export default function WhoItsFor() {
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="lg:sticky lg:top-28"
           >
-            <div className="w-12 h-[3px] bg-pink-DEFAULT mb-8" />
-            <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-6">Who It's For</div>
+            <div className="w-12 h-[3px] bg-pink mb-8" />
+            <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink mb-6">Who It's For</div>
             <h2 className="font-display text-[clamp(3rem,7vw,5.5rem)] text-white leading-none mb-8">
               BUILT FOR THE<br />
-              <span className="text-pink-DEFAULT">WHOLE</span><br />
+              <span className="text-pink">WHOLE</span><br />
               CLUB
             </h2>
             <p className="text-white/50 text-base leading-relaxed max-w-xs mb-10">
@@ -77,7 +77,7 @@ export default function WhoItsFor() {
             {/* Legend */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-pink-DEFAULT" />
+                <div className="w-2 h-2 rounded-full bg-pink" />
                 <span className="text-xs text-white/60 font-semibold uppercase tracking-widest">A Grade competes</span>
               </div>
               <div className="flex items-center gap-3">
@@ -102,13 +102,13 @@ export default function WhoItsFor() {
                 className="group relative flex items-center gap-6 py-7 cursor-default overflow-hidden"
               >
                 {/* Pink hover accent */}
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-pink-DEFAULT scale-y-0 group-hover:scale-y-100 transition-transform duration-400 origin-bottom rounded-full" />
+                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-pink scale-y-0 group-hover:scale-y-100 transition-transform duration-400 origin-bottom rounded-full" />
 
                 {/* Hover background */}
                 <div className="absolute inset-0 bg-white/3 opacity-0 group-hover:opacity-100 transition-opacity duration-400 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
 
                 <div className="relative z-10 w-12 shrink-0">
-                  <span className="font-display text-2xl text-white/20 group-hover:text-pink-DEFAULT transition-colors duration-400 leading-none">
+                  <span className="font-display text-2xl text-white/20 group-hover:text-pink transition-colors duration-400 leading-none">
                     {num}
                   </span>
                 </div>
@@ -119,8 +119,8 @@ export default function WhoItsFor() {
                       {role}
                     </span>
                     {competes && (
-                      <span className="inline-flex items-center gap-1 bg-pink-DEFAULT/20 border border-pink-DEFAULT/30 text-pink-DEFAULT text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full shrink-0">
-                        <span className="w-1 h-1 bg-pink-DEFAULT rounded-full" />
+                      <span className="inline-flex items-center gap-1 bg-pink/20 border border-pink/30 text-pink text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full shrink-0">
+                        <span className="w-1 h-1 bg-pink rounded-full" />
                         Competes
                       </span>
                     )}
@@ -131,9 +131,9 @@ export default function WhoItsFor() {
                 </div>
 
                 <div className="relative z-10 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-8 h-8 rounded-full border border-pink-DEFAULT/40 flex items-center justify-center">
-                    <div className="w-3 h-[1px] bg-pink-DEFAULT" />
-                    <div className="w-[1px] h-3 bg-pink-DEFAULT absolute" />
+                  <div className="w-8 h-8 rounded-full border border-pink/40 flex items-center justify-center">
+                    <div className="w-3 h-[1px] bg-pink" />
+                    <div className="w-[1px] h-3 bg-pink absolute" />
                   </div>
                 </div>
               </motion.div>

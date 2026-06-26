@@ -1,126 +1,92 @@
-import { motion } from 'framer-motion'
-import { Globe, Mail, Camera, Users, Play } from 'lucide-react'
 
-const footerLinks = {
-  Championship: ['About CNCA', 'How It Works', 'Schedule', 'A Grade Format', 'Livestream'],
-  Accommodation: ['Team Accommodation', 'Club Group Bookings', 'Supporter Options', 'Family Options', 'Payment Options'],
-  Club: ['Request Invitation', 'Major Prize', 'Photography', 'Awards Presentation', 'Bring The Club'],
-  Info: ['Contact Us', 'Privacy Policy', 'Terms & Conditions', 'Media Enquiries', 'Sponsorship'],
-}
-
-const containerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-}
-
-const colVariants = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-}
+import { Globe, Mail } from 'lucide-react'
 
 export default function Footer() {
-  return (
-    <footer className="bg-navy-DEFAULT overflow-hidden">
-      {/* Pink top line */}
-      <div className="h-[3px] bg-pink-grad" />
+  const scrollTo = (id: string) =>
+    document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
-      <div className="container-main pt-16 pb-10">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-14"
-        >
-          {/* Brand column — 2 wide */}
-          <motion.div variants={colVariants} className="lg:col-span-2">
+  return (
+    <footer className="bg-navy overflow-hidden">
+      <div className="h-[3px] bg-pink" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
+          {/* Brand */}
+          <div className="lg:col-span-2">
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 shrink-0">
-                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                  <circle cx="20" cy="20" r="19" stroke="#ff2c91" strokeWidth="2" />
-                  <circle cx="20" cy="20" r="12" stroke="#ff2c91" strokeWidth="1.5" />
-                  <path d="M8 14 Q20 8 32 14" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
-                  <path d="M8 26 Q20 32 32 26" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
-                  <line x1="20" y1="1" x2="20" y2="39" stroke="#ff2c91" strokeWidth="1.5" />
-                  <path d="M6 10 Q14 16 6 26" stroke="#ff2c91" strokeWidth="1.2" fill="none" />
-                  <path d="M34 10 Q26 16 34 26" stroke="#ff2c91" strokeWidth="1.2" fill="none" />
-                </svg>
-              </div>
+            <div className="flex items-center gap-3 mb-5">
+              <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 50 C20 29 34 13 52 10 C40 15 32 31 32 50 C32 69 40 85 52 90 C34 87 20 71 20 50Z" fill="#ff2c91"/>
+                <circle cx="60" cy="50" r="26" stroke="#ff2c91" strokeWidth="3" fill="none"/>
+                <circle cx="60" cy="50" r="17" stroke="#ff2c91" strokeWidth="1.8" fill="none"/>
+                <path d="M36 43 Q60 37 84 43" stroke="#ff2c91" strokeWidth="1.6" fill="none"/>
+                <path d="M36 57 Q60 63 84 57" stroke="#ff2c91" strokeWidth="1.6" fill="none"/>
+                <line x1="60" y1="24" x2="60" y2="76" stroke="#ff2c91" strokeWidth="1.6"/>
+                <path d="M57 7 L58.4 11 L62.5 11 L59.2 13.4 L60.6 17.4 L57 15 L53.4 17.4 L54.8 13.4 L51.5 11 L55.6 11Z" fill="#f4c14d"/>
+              </svg>
               <div className="leading-none">
                 <div className="font-display text-3xl tracking-widest leading-none">
                   <span className="text-white">CN</span>
-                  <span className="text-pink-DEFAULT">CA</span>
+                  <span className="text-pink">CA</span>
                 </div>
-                <div className="text-[9px] font-bold tracking-[0.12em] uppercase text-white/40 mt-0.5">
-                  Country Netball Championships
+                <div className="text-[8px] font-bold tracking-[0.12em] uppercase text-white/35 mt-0.5">
+                  Country Netball Championships Australia
                 </div>
               </div>
             </div>
-
-            <div className="mb-1">
-              <p className="font-display text-[clamp(1.2rem,3vw,1.8rem)] text-white leading-snug">
-                Country Netball<br />Championships Australia
-              </p>
-            </div>
-            <p className="text-white/40 text-sm mb-6 font-medium">
-              Gold Coast, Queensland · 5–8 November 2026
+            <p className="text-white/40 text-sm leading-relaxed mb-5 max-w-xs">
+              Australia's invitation-only A Grade country netball championship.<br />
+              Gold Coast, Queensland · 5–8 November 2026.
             </p>
-
-            {/* Contact */}
-            <div className="space-y-3 mb-7">
+            <div className="space-y-2">
               {[
                 { icon: Globe, text: 'clubnetball.com.au' },
                 { icon: Mail, text: 'hello@clubnetball.com.au' },
               ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2.5 text-sm text-white/50 hover:text-white transition-colors cursor-default">
-                  <Icon size={13} className="text-pink-DEFAULT shrink-0" />
-                  <span>{text}</span>
+                <div key={text} className="flex items-center gap-2.5 text-sm text-white/40 hover:text-white transition-colors cursor-default">
+                  <Icon size={13} className="text-pink shrink-0" />
+                  {text}
                 </div>
               ))}
             </div>
+          </div>
 
-            {/* Social */}
-            <div className="flex gap-2">
-              {[Camera, Users, Play].map((Icon, i) => (
-                <div
-                  key={i}
-                  className="w-9 h-9 rounded-xl bg-white/6 border border-white/10 flex items-center justify-center hover:bg-pink-DEFAULT hover:border-pink-DEFAULT transition-all duration-300 cursor-pointer"
+          {/* Links */}
+          <div>
+            <p className="text-xs font-bold tracking-[0.15em] uppercase text-white/30 mb-4">Championship</p>
+            <div className="space-y-2.5">
+              {['Experience', 'How It Works', 'A Grade Format', 'Major Prize', 'Request Invitation'].map(item => (
+                <button
+                  key={item}
+                  onClick={() => scrollTo(item === 'Experience' ? '#experience' : item === 'How It Works' ? '#how-it-works' : item === 'Major Prize' ? '#prize' : '#register')}
+                  className="block text-sm text-white/50 hover:text-white transition-colors"
                 >
-                  <Icon size={15} className="text-white" />
-                </div>
+                  {item}
+                </button>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([heading, items]) => (
-            <motion.div key={heading} variants={colVariants}>
-              <h4 className="text-[10px] font-bold tracking-[0.16em] uppercase text-white/30 mb-5">{heading}</h4>
-              <ul className="space-y-3">
-                {items.map(item => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-white/50 hover:text-white transition-colors duration-200 font-medium"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
-        </motion.div>
+          <div>
+            <p className="text-xs font-bold tracking-[0.15em] uppercase text-white/30 mb-4">Information</p>
+            <div className="space-y-2.5">
+              {['About CNCA', 'Accommodation Options', 'Bring The Whole Club', 'Contact Us', 'Media Enquiries'].map(item => (
+                <span key={item} className="block text-sm text-white/50 cursor-default">{item}</span>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-white/30 font-medium">
-            © 2026 Country Netball Championships Australia · All rights reserved
+          <p className="text-xs text-white/30">
+            © 2026 Country Netball Championships Australia. All rights reserved.
           </p>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-pink-DEFAULT" />
-            <span className="text-xs text-white/30 font-medium">Gold Coast QLD · 5–8 November 2026</span>
+          <div className="flex gap-6">
+            {['Privacy Policy', 'Terms & Conditions'].map(item => (
+              <span key={item} className="text-xs text-white/30 hover:text-white/60 cursor-default transition-colors">{item}</span>
+            ))}
           </div>
         </div>
       </div>

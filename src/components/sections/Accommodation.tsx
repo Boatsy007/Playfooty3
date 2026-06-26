@@ -67,7 +67,7 @@ export default function Accommodation() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="accommodation" className="bg-navy-DEFAULT overflow-hidden">
+    <section ref={sectionRef} id="accommodation" className="bg-navy overflow-hidden">
       <div className="section-pad">
 
         {/* Header */}
@@ -78,8 +78,8 @@ export default function Accommodation() {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           className="mb-16 max-w-2xl"
         >
-          <div className="w-12 h-[3px] bg-pink-DEFAULT mb-6" />
-          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">Accommodation</div>
+          <div className="w-12 h-[3px] bg-pink mb-6" />
+          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink mb-4">Accommodation</div>
           <h2 className="font-display text-display-md text-white leading-none mb-6">
             MAKE THE<br />TRIP EASY
           </h2>
@@ -104,15 +104,15 @@ export default function Accommodation() {
               <div className="w-16 shrink-0">
                 <span
                   ref={el => { numRefs.current[i] = el }}
-                  className="font-display text-[clamp(2rem,5vw,3.5rem)] text-white/15 group-hover:text-pink-DEFAULT leading-none transition-colors duration-400"
+                  className="font-display text-[clamp(2rem,5vw,3.5rem)] text-white/15 group-hover:text-pink leading-none transition-colors duration-400"
                 >
                   {num}
                 </span>
               </div>
 
               {/* Icon */}
-              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-pink-DEFAULT/40 group-hover:bg-pink-DEFAULT/10 transition-all duration-400">
-                <Icon size={18} className="text-white/40 group-hover:text-pink-DEFAULT transition-colors duration-400" />
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-pink/40 group-hover:bg-pink/10 transition-all duration-400">
+                <Icon size={18} className="text-white/40 group-hover:text-pink transition-colors duration-400" />
               </div>
 
               {/* Content */}
@@ -127,8 +127,8 @@ export default function Accommodation() {
 
               {/* Check */}
               <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="w-9 h-9 rounded-full bg-pink-DEFAULT/15 border border-pink-DEFAULT/30 flex items-center justify-center">
-                  <Check size={14} className="text-pink-DEFAULT" />
+                <div className="w-9 h-9 rounded-full bg-pink/15 border border-pink/30 flex items-center justify-center">
+                  <Check size={14} className="text-pink" />
                 </div>
               </div>
             </motion.div>
@@ -144,8 +144,8 @@ export default function Accommodation() {
           className="glass rounded-2xl p-8 md:p-10"
         >
           <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
-            <div className="w-10 h-10 rounded-xl bg-gold-DEFAULT/20 flex items-center justify-center shrink-0">
-              <Building2 size={18} className="text-gold-DEFAULT" />
+            <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center shrink-0">
+              <Building2 size={18} className="text-gold" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-white mb-2 text-base">Flexible Payment Options</h4>

@@ -98,8 +98,8 @@ export default function Schedule() {
           className="mb-14"
         >
           <div className="section-divider mb-6" />
-          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">Event Schedule</div>
-          <h2 className="font-display text-display-md text-navy-DEFAULT leading-none">
+          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink mb-4">Event Schedule</div>
+          <h2 className="font-display text-display-md text-navy leading-none">
             FOUR DAYS.<br />EVERY MOMENT.
           </h2>
         </motion.div>
@@ -120,8 +120,8 @@ export default function Schedule() {
               whileTap={{ scale: 0.97 }}
               className={`relative px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
                 active === d.id
-                  ? 'bg-pink-DEFAULT text-white shadow-pink'
-                  : 'bg-surface text-navy-DEFAULT/60 hover:text-navy-DEFAULT hover:bg-navy-muted'
+                  ? 'bg-pink text-white shadow-pink'
+                  : 'bg-surface text-navy/60 hover:text-navy hover:bg-navy-muted'
               }`}
             >
               <span className="font-display tracking-wide text-base mr-2">{d.day}</span>
@@ -151,7 +151,7 @@ export default function Schedule() {
             </div>
 
             {/* Events list */}
-            <div className="bg-white rounded-2xl border border-navy-DEFAULT/8 overflow-hidden shadow-glass">
+            <div className="bg-white rounded-2xl border border-navy/8 overflow-hidden shadow-glass">
               <motion.div
                 variants={eventRowVariants}
                 initial="hidden"
@@ -161,14 +161,14 @@ export default function Schedule() {
                   <motion.div
                     key={`${active}-${i}`}
                     variants={eventVariants}
-                    className="group relative flex gap-6 items-start px-6 md:px-8 py-6 border-b border-navy-DEFAULT/6 last:border-0 hover:bg-surface transition-colors duration-300 cursor-default"
+                    className="group relative flex gap-6 items-start px-6 md:px-8 py-6 border-b border-navy/6 last:border-0 hover:bg-surface transition-colors duration-300 cursor-default"
                   >
                     {/* Pink hover accent */}
-                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-pink-DEFAULT scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-pink scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center" />
 
                     {/* Time */}
                     <div className="w-24 shrink-0 pt-0.5">
-                      <div className="flex items-center gap-2 text-pink-DEFAULT">
+                      <div className="flex items-center gap-2 text-pink">
                         <Icon size={13} />
                         <span className="text-xs font-bold uppercase tracking-widest">{time}</span>
                       </div>
@@ -176,8 +176,8 @@ export default function Schedule() {
 
                     {/* Content */}
                     <div className="flex-1">
-                      <h4 className="font-bold text-navy-DEFAULT text-base mb-1">{title}</h4>
-                      {desc && <p className="text-navy-DEFAULT/55 text-sm leading-snug">{desc}</p>}
+                      <h4 className="font-bold text-navy text-base mb-1">{title}</h4>
+                      {desc && <p className="text-navy/55 text-sm leading-snug">{desc}</p>}
                     </div>
                   </motion.div>
                 ))}
@@ -192,7 +192,7 @@ export default function Schedule() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-8 flex items-center gap-3 text-navy-DEFAULT/40"
+          className="mt-8 flex items-center gap-3 text-navy/40"
         >
           <Info size={14} />
           <p className="text-sm font-medium">Full schedule shared with confirmed clubs in advance.</p>
