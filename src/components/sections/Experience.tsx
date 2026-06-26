@@ -31,7 +31,7 @@ export default function Experience() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="h-[3px] w-8 bg-white" />
-              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-white/70">The Championship</span>
+              <span className="font-condensed font-bold text-sm tracking-[0.2em] uppercase text-white/75">The Championship</span>
             </div>
             <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6rem)' }}>
               THE CHAMPIONSHIP<br />EXPERIENCE
@@ -62,8 +62,8 @@ export default function Experience() {
               }}
             >
               <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-                <span className="font-bold text-[10px] tracking-[0.18em] uppercase w-5 text-right shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <span className="font-condensed font-bold text-xs tracking-[0.18em] uppercase w-5 text-right shrink-0"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span
@@ -77,7 +77,7 @@ export default function Experience() {
                 </span>
               </div>
               <span
-                className="shrink-0 ml-4 text-[9px] font-bold tracking-[0.22em] uppercase px-3 py-1.5 rounded-full transition-all duration-300"
+                className="shrink-0 ml-4 font-condensed font-bold text-xs tracking-[0.18em] uppercase px-3 py-1.5 rounded-full transition-all duration-300"
                 style={{
                   color: hovered === i ? '#ff2c91' : 'rgba(255,255,255,0.8)',
                   background: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.15)',

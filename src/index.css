@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,12 +7,16 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Barlow', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
+/* Bebas Neue: hero headlines, section titles */
 .font-display { font-family: 'Bebas Neue', Impact, sans-serif; }
+
+/* Barlow Condensed: sub-headings, labels, categories, stats */
+.font-condensed { font-family: 'Barlow Condensed', sans-serif; }
 
 .nav-scrolled {
   background: rgba(255,255,255,0.97);
@@ -35,6 +39,17 @@ body {
   transform: translateY(-1px);
 }
 
+/* Diagonal section break — add to section wrapper */
+.clip-diagonal-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% 92%, 0 100%);
+  padding-bottom: 6rem;
+}
+.clip-diagonal-top {
+  clip-path: polygon(0 4%, 100% 0, 100% 100%, 0 100%);
+  padding-top: 6rem;
+  margin-top: -3rem;
+}
+
 .icon-circle {
   width: 56px;
   height: 56px;
@@ -53,6 +68,6 @@ body {
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee 30s linear infinite;
+  animation: marquee 28s linear infinite;
 }
 .marquee-track:hover { animation-play-state: paused; }

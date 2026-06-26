@@ -1,39 +1,33 @@
 import { motion } from 'framer-motion'
 
 const stats = [
-  { num: 'A GRADE', label: 'Premiers Only' },
-  { num: '4 DAYS', label: 'Gold Coast' },
-  { num: '1', label: 'National Title' },
-  { num: '2026', label: 'Inaugural Event' },
+  { num: 'A GRADE', label: 'Premiers Only', bg: '#ff2c91', text: '#ffffff', labelColor: 'rgba(255,255,255,0.7)' },
+  { num: '4 DAYS',  label: 'Gold Coast',    bg: '#111111', text: '#ffffff', labelColor: 'rgba(255,255,255,0.45)' },
+  { num: '1',       label: 'National Title', bg: '#f4c14d', text: '#111111', labelColor: 'rgba(17,17,17,0.6)' },
+  { num: '2026',    label: 'Inaugural Year', bg: '#111111', text: '#ffffff', labelColor: 'rgba(255,255,255,0.45)' },
 ]
 
 export default function Stats() {
   return (
-    <section style={{ background: '#111111' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0"
-          style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          {stats.map(({ num, label }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-              className="px-6 py-10 lg:py-12 flex flex-col gap-2"
-              style={{ borderColor: 'rgba(255,255,255,0.08)' }}
-            >
-              <span className="font-display text-white leading-none"
-                style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}>
-                {num}
-              </span>
-              <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#ff2c91' }}>
-                {label}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
+    <div className="grid grid-cols-2 lg:grid-cols-4">
+      {stats.map(({ num, label, bg, text, labelColor }, i) => (
+        <motion.div
+          key={label}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="flex flex-col justify-end px-7 py-10 lg:py-14 min-h-[160px] lg:min-h-[200px]"
+          style={{ background: bg }}
+        >
+          <span className="font-display leading-none mb-2" style={{ fontSize: 'clamp(2.4rem, 5vw, 4rem)', color: text }}>
+            {num}
+          </span>
+          <span className="font-condensed font-700 text-sm tracking-[0.18em] uppercase" style={{ color: labelColor, fontWeight: 700 }}>
+            {label}
+          </span>
+        </motion.div>
+      ))}
+    </div>
   )
 }

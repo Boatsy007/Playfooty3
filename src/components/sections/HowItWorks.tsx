@@ -26,7 +26,7 @@ export default function HowItWorks() {
         >
           <div className="flex items-center gap-3 mb-5">
             <div className="h-[3px] w-8 bg-[#ff2c91]" />
-            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Who Attends</span>
+            <span className="font-condensed font-bold text-sm tracking-[0.2em] uppercase text-[#ff2c91]">Who Attends</span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <h2 className="font-display leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)', color: '#111111' }}>
@@ -61,10 +61,10 @@ export default function HowItWorks() {
 
               {/* Text */}
               <div className="flex-1 min-w-0">
-                <p className="font-display leading-none mb-1.5" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', color: '#111111' }}>
+                <p className="font-condensed font-bold leading-none mb-1.5" style={{ fontSize: 'clamp(1.5rem, 3.2vw, 2.4rem)', color: '#111111', letterSpacing: '0.02em' }}>
                   {title}
                 </p>
-                <p className="text-sm" style={{ color: 'rgba(17,17,17,0.5)' }}>{desc}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(17,17,17,0.5)', fontFamily: 'Barlow, sans-serif' }}>{desc}</p>
               </div>
 
               {/* Accent dot */}

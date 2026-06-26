@@ -30,7 +30,7 @@ export default function Prize() {
                 style={{ background: 'rgba(244,193,77,0.15)', border: '1px solid rgba(244,193,77,0.3)' }}>
                 <Trophy size={22} style={{ color: '#f4c14d' }} />
               </div>
-              <span className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: '#f4c14d' }}>
+              <span className="font-condensed font-bold text-sm tracking-[0.2em] uppercase" style={{ color: '#f4c14d' }}>
                 Championship Prize
               </span>
             </div>
