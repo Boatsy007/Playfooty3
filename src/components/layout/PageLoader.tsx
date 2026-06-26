@@ -14,7 +14,7 @@ export default function PageLoader() {
       {visible && (
         <motion.div
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] } }}
           className="fixed inset-0 z-[9000] flex flex-col items-center justify-center bg-navy overflow-hidden"
           style={{ background: '#081a3d' }}
         >
@@ -23,7 +23,7 @@ export default function PageLoader() {
             className="absolute top-0 left-0 right-0 h-1 bg-pink-grad"
             initial={{ scaleX: 0, transformOrigin: 'left' }}
             animate={{ scaleX: 1 }}
-            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] as [number,number,number,number], delay: 0.1 }}
           />
 
           {/* Logo reveal */}
@@ -32,7 +32,7 @@ export default function PageLoader() {
             <motion.div
               initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number,number,number,number] }}
               className="relative"
             >
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -61,7 +61,7 @@ export default function PageLoader() {
               <motion.div
                 initial={{ y: 60, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number,number,number,number], delay: 0.3 }}
                 className="flex items-baseline gap-0"
               >
                 <span className="font-display text-6xl text-white tracking-wider">CN</span>
@@ -84,7 +84,7 @@ export default function PageLoader() {
                 className="h-full bg-pink-grad rounded-full"
                 initial={{ scaleX: 0, transformOrigin: 'left' }}
                 animate={{ scaleX: 1 }}
-                transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] as [number,number,number,number], delay: 0.2 }}
               />
             </motion.div>
           </div>
