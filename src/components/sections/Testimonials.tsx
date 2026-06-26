@@ -1,79 +1,59 @@
 import { motion } from 'framer-motion'
-import { Quote, MapPin } from 'lucide-react'
+import { Trophy, Users, MapPin, Camera, Star } from 'lucide-react'
 import SectionLabel from '../ui/SectionLabel'
 
-const testimonials = [
+const benefits = [
   {
-    quote: "We brought 45 players and supporters to ACNC last year and every single person said it was the best netball experience of their lives. We're already locked in for 2026.",
-    name: 'Robyn Hatcher',
-    title: 'Club President',
-    club: 'Mudgee Netball Club',
-    state: 'NSW',
-    grade: 'A & B Grade',
+    icon: Trophy,
+    title: 'A national title to play for.',
+    desc: 'For A Grade players who have won their local premiership, CNCA is the next step — a national championship that measures your club against the best country clubs in Australia.',
+    color: 'bg-pink-500',
   },
   {
-    quote: "As a coach, it's incredible to see your players compete at a national level. But it's the off-court experience — the parties, the Gold Coast, the community — that makes it truly special.",
-    name: 'Sarah Thornton',
-    title: 'Head Coach',
-    club: 'Warrnambool Netball Club',
-    state: 'VIC',
-    grade: 'A Grade',
+    icon: Users,
+    title: 'A reason to bring the whole club together.',
+    desc: 'Winning a premiership is the perfect excuse for an end-of-season trip. CNCA gives your whole club — players, families, committee and supporters — a shared goal to travel toward.',
+    color: 'bg-navy-700',
   },
   {
-    quote: "Our committee was hesitant about the cost, but the travel packages made it so manageable. Twelve months later our players are still talking about it. Best investment we've made.",
-    name: 'Michelle Davies',
-    title: 'Club Secretary',
-    club: 'Toowoomba Storm NC',
-    state: 'QLD',
-    grade: 'B & C Grade',
+    icon: MapPin,
+    title: 'A Gold Coast end-of-season trip.',
+    desc: 'Four days on the Gold Coast is a reward in itself. Beaches, dining and attractions for every member of the travelling group — long after the final whistle.',
+    color: 'bg-pink-500',
   },
   {
-    quote: "The professionalism of this event is on another level. Professional photography, livestreamed finals, an awards gala — it felt like a national sporting event, because it is one.",
-    name: 'Karen Whitfield',
-    title: 'Club Manager',
-    club: 'Bunbury Netball Association',
-    state: 'WA',
-    grade: 'A Grade',
+    icon: Camera,
+    title: 'A professional event experience.',
+    desc: 'Professional photography, a welcome function, a formal presentation ceremony and live coverage of key matches. This is a national event — run and presented at that standard.',
+    color: 'bg-navy-700',
   },
   {
-    quote: "We won the $10K grant in 2024 and used it to resurface two courts. The application process was simple and it genuinely changed our club. Can't recommend ACNC highly enough.",
-    name: 'Tracey Osman',
-    title: 'President',
-    club: 'Mt Gambier Netball Club',
-    state: 'SA',
-    grade: 'All Grades',
-  },
-  {
-    quote: "Our D Grade team had never played outside our region. ACNC gave them something to aspire to, train for, and ultimately achieve. We'll be back every single year.",
-    name: 'Julie Patterson',
-    title: 'Coach',
-    club: 'Longreach Netball Club',
-    state: 'QLD',
-    grade: 'C & D Grade',
+    icon: Star,
+    title: 'A story your local league will remember.',
+    desc: 'Representing your district at a national championship creates a story that lives in your club for years. It\'s a moment that defines a season — and a club.',
+    color: 'bg-pink-500',
   },
 ]
 
-const clubNames = [
-  'Mudgee NC', 'Warrnambool NC', 'Toowoomba Storm', 'Bunbury Association',
-  'Mt Gambier NC', 'Longreach NC', 'Ballarat NC', 'Launceston NC',
-  'Albury-Wodonga', 'Tamworth NC', 'Bendigo NC', 'Wagga Wagga NC',
-  'Cairns NC', 'Townsville NC', 'Dubbo NC', 'Orange NC',
+const stateList = [
+  'NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'NT', 'ACT',
+  'NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'NT', 'ACT',
 ]
 
 export default function Testimonials() {
   return (
-    <section id="why-acnc" className="bg-white overflow-hidden">
-      {/* Ticker */}
+    <section id="why-cnca" className="bg-white overflow-hidden">
+      {/* State ticker */}
       <div className="bg-navy-700 py-3 overflow-hidden">
         <motion.div
           animate={{ x: ['0%', '-50%'] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
           className="flex gap-8 whitespace-nowrap"
         >
-          {[...clubNames, ...clubNames].map((name, i) => (
+          {[...stateList, ...stateList].map((s, i) => (
             <span key={i} className="text-xs font-bold text-white/60 tracking-widest uppercase flex items-center gap-3">
               <span className="text-pink-500">◆</span>
-              {name}
+              {s} Country Clubs
             </span>
           ))}
         </motion.div>
@@ -87,41 +67,30 @@ export default function Testimonials() {
           transition={{ duration: 0.6 }}
           className="text-center mb-14"
         >
-          <SectionLabel>Club Stories</SectionLabel>
+          <SectionLabel>Why It Matters</SectionLabel>
           <h2 className="text-4xl md:text-5xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-            Why Clubs Love ACNC
+            Why Clubs Will Want To Be There
           </h2>
           <p className="text-lg text-navy-400 max-w-xl mx-auto">
-            Hear from club presidents, coaches and committee members who've experienced it firsthand.
+            For A Grade premiership clubs who want to take the next step — and for every club member who deserves to celebrate the season in style.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
+          {benefits.map(({ icon: Icon, title, desc, color }, i) => (
             <motion.div
-              key={t.name}
+              key={title}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.55, delay: i * 0.08 }}
-              className="bg-gray-50 rounded-2xl p-7 border border-navy-50 card-hover relative"
+              className={`bg-gray-50 rounded-2xl p-7 border border-navy-50 card-hover ${i === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}
             >
-              <Quote size={32} className="text-pink-200 mb-4" fill="currentColor" />
-              <p className="text-sm text-navy-500 leading-relaxed mb-6 italic">"{t.quote}"</p>
-              <div className="border-t border-navy-100 pt-5 flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-navy-700">{t.name}</p>
-                  <p className="text-xs text-navy-400">{t.title}</p>
-                  <p className="text-xs font-semibold text-navy-600 mt-0.5">{t.club}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-pink-500 bg-pink-50 px-2.5 py-1 rounded-full">
-                    <MapPin size={9} />
-                    {t.state}
-                  </span>
-                  <p className="text-xs text-navy-400 mt-1">{t.grade}</p>
-                </div>
+              <div className={`w-11 h-11 ${color} rounded-xl flex items-center justify-center mb-5`}>
+                <Icon size={20} className="text-white" />
               </div>
+              <h3 className="text-base font-extrabold text-navy-700 mb-3 leading-snug">{title}</h3>
+              <p className="text-sm text-navy-400 leading-relaxed">{desc}</p>
             </motion.div>
           ))}
         </div>

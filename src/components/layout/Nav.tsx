@@ -5,10 +5,10 @@ import Button from '../ui/Button'
 
 const links = [
   { label: 'Experience', href: '#experience' },
-  { label: 'Why ACNC', href: '#why-acnc' },
-  { label: 'Schedule', href: '#schedule' },
-  { label: 'Travel', href: '#travel' },
-  { label: 'Grant', href: '#grant' },
+  { label: 'Format', href: '#format' },
+  { label: 'Accommodation', href: '#accommodation' },
+  { label: 'Prize', href: '#prize' },
+  { label: 'Invitation', href: '#register' },
 ]
 
 export default function Nav() {
@@ -63,11 +63,11 @@ export default function Nav() {
               </div>
               <div className="leading-none">
                 <div className={`font-extrabold text-lg tracking-tight transition-colors duration-300 ${scrolled ? 'text-navy-700' : 'text-white'}`}>
-                  <span className={scrolled ? 'text-navy-700' : 'text-white'}>AC</span>
-                  <span className="text-pink-500">NC</span>
+                  <span className={scrolled ? 'text-navy-700' : 'text-white'}>CN</span>
+                  <span className="text-pink-500">CA</span>
                 </div>
                 <div className={`text-[9px] font-bold tracking-[0.12em] uppercase transition-colors duration-300 ${scrolled ? 'text-navy-400' : 'text-white/70'}`}>
-                  Aust. Club Netball
+                  Country Netball Champs
                 </div>
               </div>
             </motion.a>

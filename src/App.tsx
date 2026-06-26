@@ -3,6 +3,7 @@ import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
 import MoreThanTournament from './components/sections/MoreThanTournament'
 import BringTheClub from './components/sections/BringTheClub'
+import HowItWorks from './components/sections/HowItWorks'
 import Schedule from './components/sections/Schedule'
 import TravelExperience from './components/sections/TravelExperience'
 import Testimonials from './components/sections/Testimonials'
@@ -18,6 +19,7 @@ export default function App() {
         <Hero />
         <MoreThanTournament />
         <BringTheClub />
+        <HowItWorks />
         <Schedule />
         <TravelExperience />
         <Testimonials />

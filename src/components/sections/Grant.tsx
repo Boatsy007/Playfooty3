@@ -1,19 +1,12 @@
 import { motion } from 'framer-motion'
-import { Building2, Package, Baby, TrendingUp, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Trophy, Users, Star, Shield, ArrowRight } from 'lucide-react'
 import Button from '../ui/Button'
 
-const categories = [
-  { icon: Building2, label: 'Facilities', desc: 'Court resurfacing, lighting, clubroom upgrades' },
-  { icon: Package, label: 'Equipment', desc: 'Bibs, balls, timing systems, scoreboards' },
-  { icon: Baby, label: 'Junior Programs', desc: 'Development camps, coaching education, uniforms' },
-  { icon: TrendingUp, label: 'Club Development', desc: 'Marketing, administration, digital tools' },
-]
-
-const eligibility = [
-  'Club must participate in the championship',
-  'Application submitted with registration',
-  'Funds disbursed to winning club post-event',
-  'All country clubs eligible to apply',
+const prizeElements = [
+  { icon: Trophy, label: 'Club Reward', desc: 'A prize package designed to deliver lasting value for the winning club and its community.' },
+  { icon: Users, label: 'Player Recognition', desc: 'Recognition for the players who competed and won at the national championship level.' },
+  { icon: Star, label: 'Champion Status', desc: 'The CNCA title — the highest honour in A Grade country netball — plus the memories that go with it.' },
+  { icon: Shield, label: 'Community Value', desc: 'A prize built to benefit the club at home — creating a legacy from the championship win.' },
 ]
 
 export default function Grant() {
@@ -22,8 +15,7 @@ export default function Grant() {
   }
 
   return (
-    <section id="grant" className="bg-navy-700 overflow-hidden relative">
-      {/* Decorative elements */}
+    <section id="prize" className="bg-navy-700 overflow-hidden relative">
       <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/8 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500/6 rounded-full translate-y-1/2 -translate-x-1/3" />
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-pink-gradient" />
@@ -39,32 +31,24 @@ export default function Grant() {
           >
             <div className="inline-flex items-center gap-2 mb-6">
               <div className="h-px w-8 bg-pink-500" />
-              <span className="text-xs font-bold tracking-[0.15em] uppercase text-pink-400">Club Development</span>
+              <span className="text-xs font-bold tracking-[0.15em] uppercase text-pink-400">Championship Prize</span>
               <div className="h-px w-8 bg-pink-500" />
             </div>
 
-            <div className="mb-6">
-              <span className="text-7xl md:text-8xl font-extrabold text-white leading-none">$10K</span>
-              <div className="mt-2">
-                <span className="text-2xl md:text-3xl font-bold text-pink-400">Club Development Grant</span>
-              </div>
-            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">
+              Major Prize For The Winning Club
+            </h2>
 
-            <p className="text-white/75 text-lg leading-relaxed mb-8">
-              One participating club walks away with $10,000 in funding to invest back into their club. From court upgrades to junior programs — you decide what your club needs most.
+            <p className="text-white/75 text-lg leading-relaxed mb-5">
+              The CNCA champion club will receive a major prize package designed to reward the club, celebrate the players and create lasting value for their netball community.
             </p>
 
-            <div className="space-y-3 mb-10">
-              {eligibility.map((item) => (
-                <div key={item} className="flex items-start gap-3">
-                  <CheckCircle2 size={16} className="text-pink-400 flex-shrink-0 mt-0.5" />
-                  <span className="text-white/70 text-sm">{item}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-white/50 text-base leading-relaxed mb-10">
+              Prize details will be announced closer to the event.
+            </p>
 
             <Button onClick={scrollToRegister} size="lg">
-              Apply With Registration
+              Register Interest
               <ArrowRight size={16} className="ml-2" />
             </Button>
           </motion.div>
@@ -77,7 +61,7 @@ export default function Grant() {
             transition={{ duration: 0.65 }}
             className="grid grid-cols-2 gap-4"
           >
-            {categories.map(({ icon: Icon, label, desc }, i) => (
+            {prizeElements.map(({ icon: Icon, label, desc }, i) => (
               <motion.div
                 key={label}
                 initial={{ opacity: 0, y: 20 }}
@@ -90,19 +74,19 @@ export default function Grant() {
                   <Icon size={20} className="text-pink-400" />
                 </div>
                 <h4 className="text-base font-bold text-white mb-2">{label}</h4>
-                <p className="text-xs text-white/55 leading-relaxed">{desc}</p>
+                <p className="text-xs text-white/50 leading-relaxed">{desc}</p>
               </motion.div>
             ))}
 
-            {/* Grant card */}
+            {/* Prize announcement card */}
             <div className="col-span-2 bg-pink-gradient rounded-2xl p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-1">2026 Grant</p>
-                  <p className="text-2xl font-extrabold text-white">$10,000 AUD</p>
-                  <p className="text-white/70 text-sm mt-1">Awarded to one club at the 2026 Championships</p>
+                  <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">CNCA 2026</p>
+                  <p className="text-xl font-extrabold text-white mb-1">Major Prize Package</p>
+                  <p className="text-white/65 text-sm">Details to be announced. Register interest to stay informed.</p>
                 </div>
-                <div className="text-5xl font-black text-white/20">G</div>
+                <Trophy size={40} className="text-white/20 flex-shrink-0" />
               </div>
             </div>
           </motion.div>

@@ -2,9 +2,9 @@ import { motion } from 'framer-motion'
 import { Globe, Mail, Phone, Camera, Users, Play } from 'lucide-react'
 
 const footerLinks = {
-  'Event': ['About ACNC', 'Schedule', 'Grades', 'Venue', 'Livestream'],
-  'Travel': ['Club Packages', 'Team Packages', 'Supporter Packages', 'Accommodation', 'Payment Plans'],
-  'Club': ['Request Invitation', '$10K Grant', 'Club Resources', 'Photography', 'Awards Night'],
+  'Championship': ['About CNCA', 'How It Works', 'Schedule', 'A Grade Format', 'Livestream'],
+  'Accommodation': ['Team Accommodation', 'Club Group Bookings', 'Supporter Options', 'Family Options', 'Payment Options'],
+  'Club': ['Request Invitation', 'Major Prize', 'Photography', 'Awards Presentation', 'Bring The Club'],
   'Info': ['Contact Us', 'Privacy Policy', 'Terms & Conditions', 'Media Enquiries', 'Sponsorship'],
 }
 
@@ -34,17 +34,17 @@ export default function Footer() {
               </div>
               <div className="leading-none">
                 <div className="font-extrabold text-xl tracking-tight">
-                  <span className="text-white">AC</span>
-                  <span className="text-pink-500">NC</span>
+                  <span className="text-white">CN</span>
+                  <span className="text-pink-500">CA</span>
                 </div>
                 <div className="text-[9px] font-bold tracking-[0.12em] uppercase text-white/40">
-                  Australian Club Netball
+                  Country Netball Champs
                 </div>
               </div>
             </div>
 
             <p className="text-white/55 text-sm leading-relaxed mb-6 max-w-xs">
-              Australia's ultimate country netball experience. Bringing clubs together for competition, celebration and community.
+              Invitation-only A Grade country netball championship. Gold Coast, Queensland. 5–8 November 2026.
             </p>
 
             <div className="space-y-2.5 mb-6">
@@ -96,7 +96,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
-            <span>© 2026 Australian Club Netball Championships</span>
+            <span>© 2026 Country Netball Championships Australia</span>
             <span className="hidden sm:inline">·</span>
             <span>All rights reserved</span>
           </div>

@@ -1,27 +1,35 @@
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
-import { CheckCircle2, Shield, Clock, Users } from 'lucide-react'
+import { CheckCircle2, Lock, Mail, Users } from 'lucide-react'
 import SectionLabel from '../ui/SectionLabel'
 import Button from '../ui/Button'
 import { useState } from 'react'
 
 interface FormData {
-  name: string
-  club: string
+  contactName: string
+  clubName: string
+  league: string
+  state: string
   email: string
   phone: string
-  grade: string
-  clubSize: string
+  premiership: string
+  groupSize: string
+  accommodation: string
   message: string
 }
 
-const grades = ['A Grade', 'B Grade', 'C Grade', 'D Grade', 'Multiple Grades', 'Not sure yet']
-const clubSizes = ['Under 30', '30–60', '60–100', '100–150', '150+']
-
-const trust = [
-  { icon: Shield, text: 'Your details are never shared or sold' },
-  { icon: Clock, text: 'Response within 48 business hours' },
-  { icon: Users, text: 'No commitment required to express interest' },
+const states = ['NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'NT', 'ACT']
+const premiershipOptions = [
+  "Yes — we won our A Grade premiership",
+  "We are a strong runner-up this season",
+  "We are in contention — season not yet finished",
+  "Not sure — we'd like to find out more",
+]
+const groupSizes = ['Under 15', '15–30', '30–50', '50–80', '80+']
+const accommodationOptions = [
+  "Yes — we'd like accommodation information",
+  "We'll arrange our own accommodation",
+  "Not sure yet",
 ]
 
 export default function RequestInvitation() {
@@ -37,7 +45,7 @@ export default function RequestInvitation() {
     <section id="register" className="bg-gray-50">
       <div className="section-container">
         <div className="grid lg:grid-cols-5 gap-12 items-start">
-          {/* Left copy — 2 cols */}
+          {/* Left copy */}
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -47,14 +55,18 @@ export default function RequestInvitation() {
           >
             <SectionLabel>Apply Now</SectionLabel>
             <h2 className="text-3xl md:text-4xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-              Request Your Invitation
+              Request Club Invitation
             </h2>
             <p className="text-base text-navy-400 leading-relaxed mb-8">
-              Spaces are limited to ensure the highest quality experience for every club. Submit your expression of interest and our team will be in touch with everything you need to know.
+              Tell us about your club and we'll be in touch with invitation details, competition format and accommodation options. Places are limited and invitation-only.
             </p>
 
             <div className="space-y-4 mb-8">
-              {trust.map(({ icon: Icon, text }) => (
+              {[
+                { icon: Lock, text: 'Invitation-only — A Grade premiership clubs first' },
+                { icon: Mail, text: "We'll be in touch with full event information" },
+                { icon: Users, text: 'Accommodation enquiries handled separately' },
+              ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-3">
                   <div className="w-9 h-9 bg-pink-50 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Icon size={15} className="text-pink-500" />
@@ -68,21 +80,22 @@ export default function RequestInvitation() {
               <p className="text-xs font-bold text-navy-400 uppercase tracking-widest mb-3">Event Details</p>
               <div className="space-y-2">
                 {[
+                  ['Name', 'Country Netball Championships Australia'],
+                  ['Short Name', 'CNCA'],
                   ['Date', '5–8 November 2026'],
                   ['Location', 'Gold Coast, Queensland'],
-                  ['Grades', 'A, B, C & D Grade'],
-                  ['Format', 'National Championship'],
+                  ['Competition', 'A Grade — Invitation Only'],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between text-sm">
-                    <span className="text-navy-400">{label}</span>
-                    <span className="font-semibold text-navy-700">{value}</span>
+                  <div key={label} className="flex justify-between gap-3 text-sm">
+                    <span className="text-navy-400 flex-shrink-0">{label}</span>
+                    <span className="font-semibold text-navy-700 text-right">{value}</span>
                   </div>
                 ))}
               </div>
             </div>
           </motion.div>
 
-          {/* Right form — 3 cols */}
+          {/* Right form */}
           <motion.div
             initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -99,9 +112,9 @@ export default function RequestInvitation() {
                 <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-5">
                   <CheckCircle2 size={32} className="text-pink-500" />
                 </div>
-                <h3 className="text-2xl font-extrabold text-navy-700 mb-3">Request Received!</h3>
+                <h3 className="text-2xl font-extrabold text-navy-700 mb-3">Request Received</h3>
                 <p className="text-navy-400 leading-relaxed max-w-sm mx-auto">
-                  Thank you for your interest in ACNC 2026. Our team will be in touch within 48 hours with everything your club needs to know.
+                  Thank you for your interest in CNCA 2026. We'll be in touch with invitation details, competition format and accommodation information.
                 </p>
               </motion.div>
             ) : (
@@ -111,24 +124,41 @@ export default function RequestInvitation() {
               >
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Full Name *</label>
+                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Contact Name *</label>
                     <input
-                      {...register('name', { required: true })}
-                      placeholder="e.g. Sarah Johnson"
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${
-                        errors.name ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      {...register('contactName', { required: true })}
+                      placeholder="Your full name"
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.contactName ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Club Name *</label>
                     <input
-                      {...register('club', { required: true })}
+                      {...register('clubName', { required: true })}
                       placeholder="e.g. Mudgee Netball Club"
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${
-                        errors.club ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.clubName ? 'border-red-400' : 'border-navy-200'}`}
                     />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">League / Association *</label>
+                    <input
+                      {...register('league', { required: true })}
+                      placeholder="e.g. Central Western Netball"
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.league ? 'border-red-400' : 'border-navy-200'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">State *</label>
+                    <select
+                      {...register('state', { required: true })}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white ${errors.state ? 'border-red-400' : 'border-navy-200'}`}
+                    >
+                      <option value="">Select state...</option>
+                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </div>
                 </div>
 
@@ -139,9 +169,7 @@ export default function RequestInvitation() {
                       {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
                       type="email"
                       placeholder="you@club.com.au"
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${
-                        errors.email ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.email ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
                   <div>
@@ -150,56 +178,61 @@ export default function RequestInvitation() {
                       {...register('phone', { required: true })}
                       type="tel"
                       placeholder="0400 000 000"
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${
-                        errors.phone ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.phone ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">A Grade Premiership Status *</label>
+                  <select
+                    {...register('premiership', { required: true })}
+                    className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white ${errors.premiership ? 'border-red-400' : 'border-navy-200'}`}
+                  >
+                    <option value="">Did your club win or are you a contender?</option>
+                    {premiershipOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+
                 <div className="grid sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Grade *</label>
+                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Approx. Travelling Group Size</label>
                     <select
-                      {...register('grade', { required: true })}
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white ${
-                        errors.grade ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      {...register('groupSize')}
+                      className="w-full border border-navy-200 rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white"
                     >
-                      <option value="">Select grade...</option>
-                      {grades.map(g => <option key={g} value={g}>{g}</option>)}
+                      <option value="">Estimate if known...</option>
+                      {groupSizes.map(s => <option key={s} value={s}>{s} people</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Approx. Club Size *</label>
+                    <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Accommodation Interest</label>
                     <select
-                      {...register('clubSize', { required: true })}
-                      className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white ${
-                        errors.clubSize ? 'border-red-400' : 'border-navy-200'
-                      }`}
+                      {...register('accommodation')}
+                      className="w-full border border-navy-200 rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white"
                     >
-                      <option value="">Select size...</option>
-                      {clubSizes.map(s => <option key={s} value={s}>{s} members</option>)}
+                      <option value="">Select an option...</option>
+                      {accommodationOptions.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Anything else? (Optional)</label>
+                  <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Anything else you'd like to tell us?</label>
                   <textarea
                     {...register('message')}
                     rows={3}
-                    placeholder="Tell us about your club, questions about travel packages, or anything else..."
+                    placeholder="Tell us about your club, your season, or any questions you have..."
                     className="w-full border border-navy-200 rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 resize-none"
                   />
                 </div>
 
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                  {isSubmitting ? 'Submitting...' : 'Request Club Invitation'}
                 </Button>
 
                 <p className="text-center text-xs text-navy-400">
-                  By submitting you agree to our privacy policy. No spam, ever.
+                  Your details are used solely to assess invitation eligibility and respond to your enquiry.
                 </p>
               </form>
             )}

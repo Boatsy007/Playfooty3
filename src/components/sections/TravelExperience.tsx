@@ -1,66 +1,54 @@
 import { motion } from 'framer-motion'
-import { Check, Plane, Hotel, Users, Star, CreditCard } from 'lucide-react'
+import { Check, Hotel, Users, Heart, Home } from 'lucide-react'
 import SectionLabel from '../ui/SectionLabel'
 import Button from '../ui/Button'
 
 const packages = [
   {
-    icon: Star,
-    name: 'Supporter',
-    tagline: 'For fans & families',
-    color: 'border-navy-200',
+    icon: Users,
+    name: 'Team Accommodation',
+    tagline: 'For the playing group',
     features: [
-      '3 nights Gold Coast accommodation',
-      'Championship event access',
-      'Welcome party tickets',
-      'Awards night access',
-      'Airport transfers included',
+      'Options for full playing squad',
+      'Close to championship venue',
+      'Group booking support',
+      'Flexible booking windows',
     ],
     highlight: false,
   },
   {
-    icon: Users,
-    name: 'Team',
-    tagline: 'Per playing team',
-    color: 'border-pink-500',
+    icon: Hotel,
+    name: 'Club Group Bookings',
+    tagline: 'For the whole travelling club',
     features: [
-      '4 nights team accommodation',
-      'Full competition entry',
-      'Team photo session',
-      'Welcome & awards events',
-      'Dedicated team liaison',
-      'Flexible booking options',
+      'Accommodation for larger groups',
+      'Club-together options where available',
+      'Dedicated booking coordination',
+      'Payment plan options',
     ],
     highlight: true,
   },
   {
-    icon: Hotel,
-    name: 'Club',
-    tagline: 'Whole club package',
-    color: 'border-navy-200',
+    icon: Heart,
+    name: 'Supporter Accommodation',
+    tagline: 'For families & supporters',
     features: [
-      'Accommodation for full club',
-      'All grades competition entry',
-      'Club banner display',
-      'Priority court scheduling',
-      'Club-branded event experience',
-      'Payment plan available',
+      'Options near the venue',
+      'Suitable for couples and families',
+      'Flexible check-in and check-out',
+      'Enquire for availability',
     ],
     highlight: false,
   },
   {
-    icon: Plane,
-    name: 'Premium Club',
-    tagline: 'Ultimate experience',
-    color: 'border-gold-400',
+    icon: Home,
+    name: 'Family-Friendly Options',
+    tagline: 'For travelling families',
     features: [
-      'Premium resort accommodation',
-      'All-inclusive catering',
-      'VIP championship access',
-      'Private group experiences',
-      'Dedicated club host',
-      'Flexible payment plans',
-      'Priority grant eligibility',
+      'Family room configurations',
+      'Gold Coast holiday options',
+      'Proximity to beaches and attractions',
+      'Enquire for tailored options',
     ],
     highlight: false,
   },
@@ -72,7 +60,7 @@ export default function TravelExperience() {
   }
 
   return (
-    <section id="travel" className="bg-pink-50">
+    <section id="accommodation" className="bg-pink-50">
       <div className="section-container">
         <div className="grid lg:grid-cols-2 gap-14 items-start">
           {/* Left copy */}
@@ -83,24 +71,23 @@ export default function TravelExperience() {
             transition={{ duration: 0.65 }}
             className="lg:sticky lg:top-28"
           >
-            <SectionLabel>Travel & Packages</SectionLabel>
+            <SectionLabel>Accommodation</SectionLabel>
             <h2 className="text-4xl md:text-5xl font-extrabold text-navy-700 tracking-tight leading-tight mb-6">
-              Turn Your Championship Trip Into A Gold Coast Holiday
+              Make The Trip Easy For Your Club
             </h2>
             <p className="text-lg text-navy-500 leading-relaxed mb-6">
-              We've taken care of everything. From accommodation and transfers to event entry and experiences — our club travel packages make bringing your whole team simple, affordable and unforgettable.
+              CNCA will work with accommodation partners to provide group options for travelling clubs, teams, families and supporters. Our goal is to make the end-of-season trip to the Gold Coast as simple as possible.
             </p>
             <p className="text-base text-navy-400 leading-relaxed mb-8">
-              Whether you're sending one team or your entire club, we have a package that fits. Flexible payment plans mean you can lock in early and pay over time.
+              Whether you're coordinating accommodation for ten people or a hundred, register your interest and we'll connect you with the right options.
             </p>
 
-            {/* Trust badges */}
             <div className="space-y-3 mb-8">
               {[
-                { icon: CreditCard, text: 'Flexible payment plans available for all clubs' },
-                { icon: Hotel, text: 'Premium Gold Coast accommodation options' },
-                { icon: Users, text: 'Group bookings from 10 to 200+ people' },
-                { icon: Plane, text: 'Interstate travel support and coordination' },
+                { icon: Hotel, text: 'Group accommodation options near the venue' },
+                { icon: Users, text: 'Suitable for teams, families and supporters' },
+                { icon: Home, text: 'Gold Coast location — beaches and attractions nearby' },
+                { icon: Heart, text: 'Flexible payment options where available' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -112,7 +99,7 @@ export default function TravelExperience() {
             </div>
 
             <Button size="lg" onClick={scrollToRegister}>
-              Request Travel Information
+              Enquire About Accommodation
             </Button>
           </motion.div>
 
@@ -124,19 +111,19 @@ export default function TravelExperience() {
             transition={{ duration: 0.65 }}
             className="grid sm:grid-cols-2 gap-4"
           >
-            {packages.map(({ icon: Icon, name, tagline, color, features, highlight }, i) => (
+            {packages.map(({ icon: Icon, name, tagline, features, highlight }, i) => (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative bg-white rounded-2xl border-2 ${color} p-6 card-hover ${highlight ? 'shadow-lg shadow-pink-500/15' : ''}`}
+                className={`relative bg-white rounded-2xl border-2 p-6 card-hover ${highlight ? 'border-pink-500 shadow-lg shadow-pink-500/15' : 'border-navy-100'}`}
               >
                 {highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="bg-pink-gradient text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-                      Most Popular
+                      Most Requested
                     </span>
                   </div>
                 )}
@@ -145,7 +132,7 @@ export default function TravelExperience() {
                   <Icon size={18} className={highlight ? 'text-white' : 'text-navy-500'} />
                 </div>
 
-                <h3 className="text-lg font-extrabold text-navy-700 mb-0.5">{name}</h3>
+                <h3 className="text-base font-extrabold text-navy-700 mb-0.5">{name}</h3>
                 <p className="text-xs text-pink-500 font-semibold uppercase tracking-wide mb-4">{tagline}</p>
 
                 <ul className="space-y-2.5 mb-5">

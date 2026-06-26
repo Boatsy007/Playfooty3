@@ -14,7 +14,7 @@ export default function FinalCTA() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/4" />
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-white/5 translate-y-1/2 -translate-x-1/4" />
 
-      {/* Netball seam line decorative */}
+      {/* Netball decorative lines */}
       <div className="absolute inset-0 opacity-5">
         <svg className="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice">
           <circle cx="600" cy="200" r="350" stroke="white" strokeWidth="2" fill="none" />
@@ -34,11 +34,11 @@ export default function FinalCTA() {
           className="mb-4"
         >
           <span className="text-white/70 text-xs font-bold tracking-[0.2em] uppercase">
-            Australian Club Netball Championships · 2026
+            Country Netball Championships Australia · 2026
           </span>
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-10">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-8">
           {words.map((word, i) => (
             <motion.span
               key={word}
@@ -60,7 +60,7 @@ export default function FinalCTA() {
           transition={{ duration: 0.6, delay: 0.7 }}
           className="text-white/80 text-lg md:text-xl max-w-lg mx-auto mb-10 leading-relaxed"
         >
-          This is your club's moment. 5–8 November 2026, Gold Coast, Queensland.
+          A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — 5–8 November 2026.
         </motion.p>
 
         <motion.div
@@ -68,12 +68,13 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.85 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <button
             onClick={scrollToRegister}
-            className="inline-flex items-center gap-3 bg-white text-pink-600 font-extrabold text-base px-10 py-4 rounded-full hover:bg-pink-50 transition-all duration-200 shadow-2xl hover:shadow-white/20 hover:scale-[1.03] active:scale-[0.98]"
+            className="inline-flex items-center gap-3 bg-white text-pink-600 font-extrabold text-base px-10 py-4 rounded-full hover:bg-pink-50 transition-all duration-200 shadow-2xl hover:scale-[1.03] active:scale-[0.98]"
           >
-            Request Invitation
+            Request Club Invitation
             <ArrowRight size={18} />
           </button>
         </motion.div>
@@ -85,7 +86,7 @@ export default function FinalCTA() {
           transition={{ duration: 0.5, delay: 1 }}
           className="text-white/50 text-sm mt-6 font-medium"
         >
-          Limited club spots available for 2026
+          Invitation only · A Grade premiership clubs · Limited places
         </motion.p>
       </div>
     </section>

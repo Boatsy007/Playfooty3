@@ -1,52 +1,52 @@
 import { motion } from 'framer-motion'
-import { Trophy, PartyPopper, Truck, Music, Camera, Video, Award, Bus, Palmtree } from 'lucide-react'
+import { Trophy, PartyPopper, Music, Camera, Video, Award, Hotel, Users, Palmtree } from 'lucide-react'
 import SectionLabel from '../ui/SectionLabel'
 
 const features = [
   {
     icon: Trophy,
-    title: 'National Championship',
-    desc: 'Compete for the ultimate title against the best country clubs from every state across Australia.',
+    title: 'A Grade Championship',
+    desc: 'A Grade premiership clubs compete for the CNCA title — the national standard for country netball excellence.',
   },
   {
     icon: PartyPopper,
-    title: 'Welcome Party',
-    desc: 'Kick off the weekend with a spectacular welcome event celebrating the spirit of country netball.',
-  },
-  {
-    icon: Truck,
-    title: 'Food Trucks',
-    desc: 'A curated festival of incredible food vendors serving the courts all championship weekend.',
+    title: 'Welcome Function',
+    desc: 'All clubs, coaches, families and supporters welcomed together at the official CNCA welcome event.',
   },
   {
     icon: Music,
-    title: 'Live Entertainment',
-    desc: 'Live music, DJs and entertainment that turns the championship into an unforgettable festival.',
+    title: 'Food & Entertainment',
+    desc: 'Great food, live entertainment and a festival atmosphere throughout the championship weekend.',
+  },
+  {
+    icon: Award,
+    title: 'Awards Presentation',
+    desc: 'A formal presentation ceremony honouring the CNCA champion club and standout players of the championship.',
   },
   {
     icon: Camera,
     title: 'Professional Photography',
-    desc: 'Every team photographed professionally. Take home images that capture the memory forever.',
+    desc: 'Every competing team photographed professionally. Memories worth keeping from your championship weekend.',
   },
   {
     icon: Video,
-    title: 'Livestream Coverage',
-    desc: 'Finals broadcast live so families, supporters and sponsors back home never miss a moment.',
+    title: 'Livestream Highlights',
+    desc: 'Key matches and finals covered with highlight footage so the people back home never miss a moment.',
   },
   {
-    icon: Award,
-    title: 'Awards Night',
-    desc: 'A glamorous end-of-event gala celebrating champions, clubs and the best of country netball.',
+    icon: Hotel,
+    title: 'Accommodation Packages',
+    desc: 'Group accommodation options available for teams, supporters and families travelling to the Gold Coast.',
   },
   {
-    icon: Bus,
-    title: 'Club Travel Packages',
-    desc: 'All-inclusive packages that make bringing your entire club simple, affordable and stress-free.',
+    icon: Users,
+    title: 'Supporter Experience',
+    desc: 'Designed for the whole club to attend. Families, partners and supporters are a central part of the CNCA weekend.',
   },
   {
     icon: Palmtree,
-    title: 'Gold Coast Experiences',
-    desc: 'Theme parks, beaches, dining and nightlife. Turn your championship trip into a full holiday.',
+    title: 'Gold Coast Weekend',
+    desc: 'Extend your trip and explore the beaches, attractions and dining of Australia\'s favourite holiday destination.',
   },
 ]
 
@@ -75,7 +75,7 @@ export default function MoreThanTournament() {
             More Than A Tournament
           </h2>
           <p className="text-lg text-navy-400 max-w-xl mx-auto leading-relaxed">
-            ACNC is Australia's biggest country netball end-of-season experience — competition, celebration and community, all in one place.
+            CNCA is built around the A Grade championship, but the weekend is designed for every person who makes your club what it is.
           </p>
         </motion.div>
 
