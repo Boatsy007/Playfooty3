@@ -1,136 +1,94 @@
 import { motion } from 'framer-motion'
-import { Trophy, Users, Briefcase, Heart, Star, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 const attendees = [
-  {
-    icon: Trophy,
-    num: '01',
-    title: 'PLAYERS',
-    desc: 'A Grade premiers competing for the national title.',
-    color: '#ff2c91',
-  },
-  {
-    icon: Users,
-    num: '02',
-    title: 'COACHES',
-    desc: 'Connect with leading clubs from across Australia.',
-    color: '#e8a020',
-  },
-  {
-    icon: Briefcase,
-    num: '03',
-    title: 'CLUB OFFICIALS',
-    desc: 'Committee members, administrators and volunteers.',
-    color: '#0ea5c9',
-  },
-  {
-    icon: Heart,
-    num: '04',
-    title: 'FAMILIES',
-    desc: 'Support the journey and enjoy the Gold Coast.',
-    color: '#ff2c91',
-  },
-  {
-    icon: Star,
-    num: '05',
-    title: 'SUPPORTERS',
-    desc: 'Celebrate the season together.',
-    color: '#e8a020',
-  },
+  { num: '01', title: 'PLAYERS', desc: 'A Grade premiers competing for the national title.', color: '#ff2c91' },
+  { num: '02', title: 'COACHES', desc: 'Leading clubs and coaching staff from across Australia.', color: '#f4c14d' },
+  { num: '03', title: 'CLUB OFFICIALS', desc: 'Committee members, administrators and volunteers.', color: '#4dd9f4' },
+  { num: '04', title: 'FAMILIES', desc: 'Support the journey and enjoy the Gold Coast.', color: '#ff2c91' },
+  { num: '05', title: 'SUPPORTERS', desc: 'Celebrate the season together.', color: '#f4c14d' },
 ]
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 28 },
-  show: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 0.6, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] },
-  }),
-}
 
 export default function HowItWorks() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section id="format" className="py-20 lg:py-28" style={{ background: '#1a1a1a' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8">
+    <section id="format" style={{ background: '#f5f4f0' }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-28">
 
-        {/* Section header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-          className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14"
+          className="mb-16"
         >
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-[3px] w-8 bg-[#ff2c91]" />
-              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Who Attends</span>
-            </div>
-            <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.4rem, 6vw, 5.5rem)' }}>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-[3px] w-8 bg-[#ff2c91]" />
+            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Who Attends</span>
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <h2 className="font-display leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)', color: '#111111' }}>
               MORE THAN THE<br />PLAYING GROUP
             </h2>
+            <p className="text-sm leading-relaxed max-w-xs lg:pb-2" style={{ color: 'rgba(17,17,17,0.5)' }}>
+              CNCA brings together everyone who contributes to country netball.
+            </p>
           </div>
-          <p className="text-white/40 text-sm leading-relaxed max-w-xs lg:pb-2">
-            CNCA brings together everyone who contributes to country netball.
-          </p>
         </motion.div>
 
-        {/* 5-card grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          {attendees.map(({ icon: Icon, num, title, desc, color }, i) => (
+        {/* Attendee rows */}
+        <div className="border-t" style={{ borderColor: 'rgba(17,17,17,0.12)' }}>
+          {attendees.map(({ num, title, desc, color }, i) => (
             <motion.div
               key={title}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              whileInView="show"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group rounded-2xl p-5 lg:p-6 flex flex-col cursor-default"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              transition={{ duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+              className="flex items-center gap-6 sm:gap-10 py-6 border-b"
+              style={{ borderColor: 'rgba(17,17,17,0.1)' }}
             >
-              {/* Number */}
-              <span className="text-[10px] font-bold tracking-[0.2em] mb-4 transition-colors duration-300"
-                style={{ color: 'rgba(255,255,255,0.22)' }}>
+              {/* Big colored number */}
+              <span className="font-display leading-none shrink-0 w-20 text-right"
+                style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', color }}>
                 {num}
               </span>
 
-              {/* Icon */}
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5 transition-all duration-300"
-                style={{ background: `${color}20`, border: `1px solid ${color}35` }}>
-                <Icon size={17} style={{ color }} />
-              </div>
+              {/* Divider */}
+              <div className="w-px h-12 shrink-0" style={{ background: 'rgba(17,17,17,0.12)' }} />
 
               {/* Text */}
-              <p className="font-display text-white leading-none mb-2"
-                style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)' }}>
-                {title}
-              </p>
-              <p className="text-white/45 text-xs leading-relaxed mt-auto pt-2">
-                {desc}
-              </p>
+              <div className="flex-1 min-w-0">
+                <p className="font-display leading-none mb-1.5" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', color: '#111111' }}>
+                  {title}
+                </p>
+                <p className="text-sm" style={{ color: 'rgba(17,17,17,0.5)' }}>{desc}</p>
+              </div>
+
+              {/* Accent dot */}
+              <div className="w-2.5 h-2.5 rounded-full shrink-0 hidden sm:block" style={{ background: color }} />
             </motion.div>
           ))}
         </div>
 
-        {/* Championship Weekend strip */}
+        {/* Bottom strip */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-          className="rounded-2xl px-8 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="mt-8 rounded-3xl px-8 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
+          style={{ background: '#111111' }}
         >
           <div>
             <p className="font-display text-white leading-none mb-2"
-              style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)' }}>
+              style={{ fontSize: 'clamp(1.5rem, 3vw, 2.4rem)' }}>
               THE CHAMPIONSHIP WEEKEND
             </p>
-            <p className="text-white/55 text-sm mb-0.5">Competition by day. Celebration by night.</p>
-            <p className="text-white/35 text-sm">
-              Accommodation, travel and group packages available for the Gold Coast.
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Competition by day. Celebration by night. Gold Coast, 5–8 November 2026.
             </p>
           </div>
           <button
