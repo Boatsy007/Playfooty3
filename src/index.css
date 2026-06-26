@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #ffffff;
+    color: #0A1A35;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 24px;
+  }
+
+  .section-container-sm {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .text-gradient-pink {
+    background: linear-gradient(135deg, #E8157A, #F03FA0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-pink-gradient {
+    background: linear-gradient(135deg, #E8157A 0%, #C90F66 100%);
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      105deg,
+      rgba(10, 26, 53, 0.88) 0%,
+      rgba(10, 26, 53, 0.75) 40%,
+      rgba(10, 26, 53, 0.3) 70%,
+      rgba(10, 26, 53, 0.0) 100%
+    );
+  }
+
+  .card-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(10, 26, 53, 0.12);
+  }
+
+  .nav-blur {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
+
+@media (max-width: 768px) {
+  .section-container {
+    padding: 60px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-container {
+    padding: 48px 16px;
+  }
+}
