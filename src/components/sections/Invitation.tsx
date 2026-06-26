@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
-import { CheckCircle, MapPin, Calendar, Lock } from 'lucide-react'
+import { CheckCircle, MapPin, Calendar, Lock, ChevronRight } from 'lucide-react'
 
 interface FormData {
   contactName: string
@@ -20,16 +20,52 @@ const stateOptions = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']
 
 const containerVariants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
+  show: { transition: { staggerChildren: 0.06 } },
 }
 
 const fieldVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 14 },
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 }
 
-const inputCls = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-navy placeholder-gray-400 focus:outline-none focus:border-pink focus:ring-2 focus:ring-pink/15 transition-all duration-200"
-const labelCls = "block text-xs font-bold tracking-wide text-navy/70 mb-1.5"
+const inputCls = "w-full rounded-xl px-4 py-3.5 text-sm transition-all duration-200 outline-none"
+const inputStyle = {
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  color: '#ffffff',
+}
+const inputFocusStyle = {
+  borderColor: '#ff2c91',
+  boxShadow: '0 0 0 3px rgba(255,44,145,0.12)',
+}
+
+function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      {...props}
+      className={inputCls}
+      style={{ ...inputStyle, ...(focused ? inputFocusStyle : {}) }}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+    />
+  )
+}
+
+function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <select
+      {...props}
+      className={`${inputCls} cursor-pointer`}
+      style={{ ...inputStyle, ...(focused ? inputFocusStyle : {}), appearance: 'none' }}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+    />
+  )
+}
+
+const labelCls = "block text-[11px] font-bold tracking-[0.14em] uppercase mb-2 text-white/45"
 
 export default function Invitation() {
   const [submitted, setSubmitted] = useState(false)
@@ -44,11 +80,19 @@ export default function Invitation() {
   }
 
   return (
-    <section id="register" className="bg-surface py-20 lg:py-28 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-[2fr,3fr] gap-12 lg:gap-20 items-start">
+    <section id="register" className="relative overflow-hidden"
+      style={{ background: 'linear-gradient(160deg, #040e22 0%, #081a3d 60%, #040e22 100%)' }}>
 
-          {/* Left — copy */}
+      {/* Pink atmospheric glow */}
+      <div className="absolute top-0 left-0 w-[700px] h-[700px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(255,44,145,0.1) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(255,44,145,0.06) 0%, transparent 70%)' }} />
+
+      <div className="relative z-10 max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-12 py-24 lg:py-32">
+        <div className="grid lg:grid-cols-[5fr,7fr] gap-12 lg:gap-20 items-start">
+
+          {/* Left — editorial copy */}
           <motion.div
             initial={{ opacity: 0, x: -32 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -56,67 +100,74 @@ export default function Invitation() {
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="lg:sticky lg:top-28"
           >
-            <div className="inline-flex items-center gap-2 mb-5">
-              <div className="h-px w-8 bg-pink" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase text-pink">Invitation</span>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-[3px] w-10 bg-[#ff2c91]" />
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Invitation</span>
             </div>
-            <h2 className="font-display leading-none text-navy mb-4" style={{ fontSize: 'clamp(2.8rem, 6vw, 4.5rem)' }}>
+
+            <h2 className="font-display leading-none text-white mb-6"
+              style={{ fontSize: 'clamp(3.2rem, 7vw, 7rem)' }}>
               REQUEST<br />
-              <span className="text-pink">CLUB</span><br />
-              INVITATION
+              <span style={{ color: '#ff2c91' }}>CLUB</span><br />
+              INVITE
             </h2>
-            <p className="text-navy/60 text-base leading-relaxed mb-8">
+
+            <p className="text-white/50 text-base leading-relaxed mb-10 max-w-sm">
               Fill in your details and our team will be in touch with everything you need to
               know about bringing your club to the Gold Coast.
             </p>
 
-            {/* Event detail card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <Calendar size={16} className="text-pink shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Dates</p>
-                  <p className="text-sm font-semibold text-navy">5–8 November 2026</p>
+            {/* Event detail strip */}
+            <div className="space-y-3">
+              {[
+                { icon: Calendar, label: 'Dates', value: '5–8 November 2026' },
+                { icon: MapPin, label: 'Location', value: 'Gold Coast, Queensland' },
+                { icon: Lock, label: 'Eligibility', value: 'A Grade Premiership Clubs' },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center gap-4 rounded-xl px-5 py-3.5"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(255,44,145,0.15)' }}>
+                    <Icon size={14} style={{ color: '#ff2c91' }} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.16em] uppercase text-white/30 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-white">{value}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin size={16} className="text-pink shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Location</p>
-                  <p className="text-sm font-semibold text-navy">Gold Coast, Queensland</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Lock size={16} className="text-pink shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-navy/50 tracking-wide uppercase mb-0.5">Eligibility</p>
-                  <p className="text-sm font-semibold text-navy">A Grade Premiership Clubs</p>
-                </div>
-              </div>
+              ))}
             </div>
           </motion.div>
 
-          {/* Right — form */}
+          {/* Right — form panel */}
           <motion.div
             initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           >
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-glass p-8 lg:p-10">
+            <div className="rounded-3xl p-8 lg:p-10"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', backdropFilter: 'blur(20px)' }}>
+
+              {/* Top accent */}
+              <div className="h-[2px] w-12 bg-[#ff2c91] mb-8 rounded-full" />
+
               <AnimatePresence mode="wait">
                 {submitted ? (
                   <motion.div
                     key="success"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center text-center py-12"
+                    className="flex flex-col items-center text-center py-16"
                   >
-                    <div className="w-20 h-20 rounded-full bg-pink-muted flex items-center justify-center mb-6">
-                      <CheckCircle size={36} className="text-pink" />
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                      style={{ background: 'rgba(255,44,145,0.15)', border: '1px solid rgba(255,44,145,0.3)' }}>
+                      <CheckCircle size={36} style={{ color: '#ff2c91' }} />
                     </div>
-                    <h3 className="font-display text-3xl text-navy mb-3">Request Received</h3>
-                    <p className="text-navy/60 text-base max-w-sm leading-relaxed">
+                    <h3 className="font-display text-white leading-none mb-3" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+                      REQUEST RECEIVED
+                    </h3>
+                    <p className="text-white/50 text-base max-w-sm leading-relaxed">
                       Thanks for your interest. Our team will be in touch shortly with invitation details.
                     </p>
                   </motion.div>
@@ -129,82 +180,74 @@ export default function Invitation() {
                     onSubmit={handleSubmit(onSubmit)}
                     className="space-y-5"
                   >
-                    {/* Row 1 */}
                     <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className={labelCls}>Contact Name *</label>
-                        <input {...register('contactName', { required: true })} type="text" placeholder="Your full name" className={inputCls} />
+                        <Input {...register('contactName', { required: true })} type="text" placeholder="Your full name" />
                       </div>
                       <div>
                         <label className={labelCls}>Club Name *</label>
-                        <input {...register('clubName', { required: true })} type="text" placeholder="Your netball club" className={inputCls} />
+                        <Input {...register('clubName', { required: true })} type="text" placeholder="Your netball club" />
                       </div>
                     </motion.div>
 
-                    {/* Row 2 */}
                     <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className={labelCls}>League / Association *</label>
-                        <input {...register('league', { required: true })} type="text" placeholder="Your local competition" className={inputCls} />
+                        <Input {...register('league', { required: true })} type="text" placeholder="Your local competition" />
                       </div>
                       <div>
                         <label className={labelCls}>State *</label>
-                        <select {...register('state', { required: true })} className={inputCls}>
-                          <option value="">Select state</option>
-                          {stateOptions.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                        <Select {...register('state', { required: true })}>
+                          <option value="" style={{ background: '#081a3d' }}>Select state</option>
+                          {stateOptions.map(s => <option key={s} value={s} style={{ background: '#081a3d' }}>{s}</option>)}
+                        </Select>
                       </div>
                     </motion.div>
 
-                    {/* Row 3 */}
                     <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className={labelCls}>Email *</label>
-                        <input {...register('email', { required: true })} type="email" placeholder="your@email.com.au" className={inputCls} />
+                        <Input {...register('email', { required: true })} type="email" placeholder="your@email.com.au" />
                       </div>
                       <div>
                         <label className={labelCls}>Phone</label>
-                        <input {...register('phone')} type="tel" placeholder="04xx xxx xxx" className={inputCls} />
+                        <Input {...register('phone')} type="tel" placeholder="04xx xxx xxx" />
                       </div>
                     </motion.div>
 
-                    {/* Premiership status */}
                     <motion.div variants={fieldVariants}>
                       <label className={labelCls}>Are you a current A Grade premier or in finals contention? *</label>
-                      <select {...register('premiership', { required: true })} className={inputCls}>
-                        <option value="">Select an option</option>
-                        <option value="yes">Yes — we won our premiership</option>
-                        <option value="runner-up">Strong runner-up this season</option>
-                        <option value="contention">In contention — season not finished</option>
-                        <option value="info">Not sure — would like more information</option>
-                      </select>
+                      <Select {...register('premiership', { required: true })}>
+                        <option value="" style={{ background: '#081a3d' }}>Select an option</option>
+                        <option value="yes" style={{ background: '#081a3d' }}>Yes — we won our premiership</option>
+                        <option value="runner-up" style={{ background: '#081a3d' }}>Strong runner-up this season</option>
+                        <option value="contention" style={{ background: '#081a3d' }}>In contention — season not finished</option>
+                        <option value="info" style={{ background: '#081a3d' }}>Not sure — would like more information</option>
+                      </Select>
                     </motion.div>
 
-                    {/* Group size */}
                     <motion.div variants={fieldVariants} className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className={labelCls}>Approx travelling group size</label>
-                        <select {...register('groupSize')} className={inputCls}>
-                          <option value="">Select range</option>
-                          <option>Under 15</option>
-                          <option>15–30</option>
-                          <option>30–50</option>
-                          <option>50–80</option>
-                          <option>80+</option>
-                        </select>
+                        <label className={labelCls}>Approx group size</label>
+                        <Select {...register('groupSize')}>
+                          <option value="" style={{ background: '#081a3d' }}>Select range</option>
+                          {['Under 15', '15–30', '30–50', '50–80', '80+'].map(o => (
+                            <option key={o} style={{ background: '#081a3d' }}>{o}</option>
+                          ))}
+                        </Select>
                       </div>
                       <div>
                         <label className={labelCls}>Accommodation interest</label>
-                        <select {...register('accommodation')} className={inputCls}>
-                          <option value="">Select option</option>
-                          <option>Yes — send me info</option>
-                          <option>We'll arrange our own</option>
-                          <option>Not sure yet</option>
-                        </select>
+                        <Select {...register('accommodation')}>
+                          <option value="" style={{ background: '#081a3d' }}>Select option</option>
+                          {["Yes — send me info", "We'll arrange our own", "Not sure yet"].map(o => (
+                            <option key={o} style={{ background: '#081a3d' }}>{o}</option>
+                          ))}
+                        </Select>
                       </div>
                     </motion.div>
 
-                    {/* Message */}
                     <motion.div variants={fieldVariants}>
                       <label className={labelCls}>Message (optional)</label>
                       <textarea
@@ -212,15 +255,18 @@ export default function Invitation() {
                         rows={3}
                         placeholder="Any questions or additional details..."
                         className={`${inputCls} resize-none`}
+                        style={inputStyle}
                       />
                     </motion.div>
 
-                    {/* Submit */}
                     <motion.div variants={fieldVariants} className="pt-2">
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-pink hover:bg-pink-dark disabled:opacity-60 text-white font-bold text-sm py-4 rounded-xl transition-all duration-200 shadow-pink hover:shadow-pink-lg flex items-center justify-center gap-2"
+                        className="w-full font-bold text-sm py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 group"
+                        style={{ background: '#ff2c91', color: '#ffffff', boxShadow: '0 8px 40px rgba(255,44,145,0.35)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
                       >
                         {loading ? (
                           <>
@@ -228,10 +274,13 @@ export default function Invitation() {
                             Sending...
                           </>
                         ) : (
-                          'Request Club Invitation'
+                          <>
+                            Request Club Invitation
+                            <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
+                          </>
                         )}
                       </button>
-                      <p className="text-center text-xs text-navy/40 mt-3">
+                      <p className="text-center text-xs text-white/25 mt-3">
                         We'll respond within 2 business days
                       </p>
                     </motion.div>
