@@ -25,14 +25,11 @@ export default function Prize() {
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
           >
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            <div className="mb-8">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
                 style={{ background: 'rgba(244,193,77,0.15)', border: '1px solid rgba(244,193,77,0.3)' }}>
-                <Trophy size={22} style={{ color: '#f4c14d' }} />
+                <Trophy size={26} style={{ color: '#f4c14d' }} />
               </div>
-              <span className="font-condensed font-bold text-sm tracking-[0.2em] uppercase" style={{ color: '#f4c14d' }}>
-                Championship Prize
-              </span>
             </div>
 
             <h2 className="font-display text-white leading-none mb-0"

@@ -139,10 +139,10 @@ export default function Invitation() {
                     <label className={labelCls}>Are you an A Grade premier or in finals contention? *</label>
                     <select {...register('premiership', { required: true })} className={inputCls}>
                       <option value="">Select an option</option>
-                      <option value="yes">Yes — we won our premiership</option>
+                      <option value="yes">Yes, we won our premiership</option>
                       <option value="runner-up">Strong runner-up this season</option>
-                      <option value="contention">In contention — season not finished</option>
-                      <option value="info">Not sure — would like more information</option>
+                      <option value="contention">In contention, season not yet finished</option>
+                      <option value="info">Not sure, we would like more information</option>
                     </select>
                   </div>
 
@@ -158,7 +158,7 @@ export default function Invitation() {
                       <label className={labelCls}>Accommodation interest</label>
                       <select {...register('accommodation')} className={inputCls}>
                         <option value="">Select option</option>
-                        <option>Yes — send me info</option>
+                        <option>Yes, send me info</option>
                         <option>We'll arrange our own</option>
                         <option>Not sure yet</option>
                       </select>

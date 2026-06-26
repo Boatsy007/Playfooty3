@@ -24,7 +24,7 @@ export default function Hero() {
       {/* Full-bleed photo */}
       <img
         src="/hero-photo.webp"
-        alt="CNCA — Country Netball Championships Australia"
+        alt="CNCA Country Netball Championships Australia"
         className="absolute inset-0 w-full h-full object-cover"
         style={{ objectPosition: '65% center' }}
       />

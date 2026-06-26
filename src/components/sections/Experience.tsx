@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 const lineup = [
   { cat: 'COMPETE',   label: 'National Championship' },
@@ -15,6 +15,7 @@ const lineup = [
 
 export default function Experience() {
   const [hovered, setHovered] = useState<number | null>(null)
+  const prefersReduced = useReducedMotion()
 
   return (
     <section id="experience" className="overflow-hidden" style={{ background: '#ff2c91' }}>
@@ -47,10 +48,10 @@ export default function Experience() {
           {lineup.map(({ cat, label }, i) => (
             <motion.div
               key={label}
-              initial={{ opacity: 0, x: -32 }}
+              initial={{ opacity: 0, x: prefersReduced ? 0 : -32 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+              transition={{ duration: prefersReduced ? 0.01 : 0.55, delay: prefersReduced ? 0 : i * 0.06, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
               onHoverStart={() => setHovered(i)}
               onHoverEnd={() => setHovered(null)}
               className="group flex items-center justify-between py-5 sm:py-6 border-b cursor-default transition-all duration-300"

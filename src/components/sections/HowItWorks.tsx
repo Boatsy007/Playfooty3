@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 
 const attendees = [
@@ -11,6 +11,7 @@ const attendees = [
 
 export default function HowItWorks() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+  const prefersReduced = useReducedMotion()
 
   return (
     <section id="format" style={{ background: '#f5f4f0' }}>
@@ -24,10 +25,6 @@ export default function HowItWorks() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
           className="mb-16"
         >
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-[3px] w-8 bg-[#ff2c91]" />
-            <span className="font-condensed font-bold text-sm tracking-[0.2em] uppercase text-[#ff2c91]">Who Attends</span>
-          </div>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <h2 className="font-display leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)', color: '#111111' }}>
               MORE THAN THE<br />PLAYING GROUP
@@ -43,10 +40,10 @@ export default function HowItWorks() {
           {attendees.map(({ num, title, desc, color }, i) => (
             <motion.div
               key={title}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: prefersReduced ? 0 : 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.5, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+              transition={{ duration: prefersReduced ? 0.01 : 0.5, delay: prefersReduced ? 0 : i * 0.07, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
               className="flex items-center gap-6 sm:gap-10 py-6 border-b"
               style={{ borderColor: 'rgba(17,17,17,0.1)' }}
             >
