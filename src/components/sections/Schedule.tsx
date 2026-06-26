@@ -1,153 +1,202 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plane, Users, Trophy, Star } from 'lucide-react'
-import SectionLabel from '../ui/SectionLabel'
+import { Sun, Sunset, Moon, Utensils, Info } from 'lucide-react'
 
-const days = [
+interface ScheduleEvent {
+  time: string
+  title: string
+  desc?: string
+  icon: typeof Sun
+}
+
+interface Day {
+  id: string
+  day: string
+  date: string
+  theme: string
+  events: ScheduleEvent[]
+}
+
+const days: Day[] = [
   {
+    id: 'thu',
     day: 'Thursday',
     date: '5 Nov',
-    icon: Plane,
-    theme: 'Arrival + Welcome',
+    theme: 'Arrival + Welcome Function',
     events: [
-      { time: 'Morning', title: 'Venue Opens', desc: 'Courts, registration and the CNCA welcome hub open for arriving clubs.' },
-      { time: 'Afternoon', title: 'Club Check-In', desc: 'Official club registration. Meet your liaison and collect your championship materials.' },
-      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed together at the official CNCA opening function.' },
+      { time: 'Morning', title: 'Venue Opens', desc: 'Championship venue opens for arrivals', icon: Sun },
+      { time: 'Afternoon', title: 'Club Check-In', desc: 'Official registration for all participating clubs', icon: Sunset },
+      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed at the official CNCA opening function', icon: Moon },
     ],
   },
   {
+    id: 'fri',
     day: 'Friday',
     date: '6 Nov',
-    icon: Users,
     theme: 'Pool Matches',
     events: [
-      { time: 'Morning', title: 'Pool Play Begins', desc: 'A Grade pool matches get underway. Every result matters as clubs fight for finals positions.' },
-      { time: 'Midday', title: 'Lunch Break', desc: 'Food and entertainment on-site for players, supporters and families.' },
-      { time: 'Afternoon', title: 'Pool Play Continues', desc: 'Afternoon rounds complete the pool stage. Standings confirmed heading into finals day.' },
-      { time: 'Evening', title: 'Club Social', desc: 'Informal club social for players, coaches and travelling supporters.' },
+      { time: 'Morning', title: 'Pool Play Begins', desc: 'A Grade pool matches get underway', icon: Sun },
+      { time: 'Midday', title: 'Lunch Break', desc: 'Food and entertainment on-site for all attendees', icon: Utensils },
+      { time: 'Afternoon', title: 'Pool Play Continues', desc: 'Remaining pool rounds played out', icon: Sunset },
+      { time: 'Evening', title: 'Club Social', desc: 'Clubs come together for an evening social event', icon: Moon },
     ],
   },
   {
+    id: 'sat',
     day: 'Saturday',
     date: '7 Nov',
-    icon: Trophy,
     theme: 'Finals + Celebration',
     events: [
-      { time: 'Morning', title: 'Semi-Finals', desc: 'The top clubs from pool play meet in the semi-finals. Intensity rises.' },
-      { time: 'Afternoon', title: 'Club Experience', desc: 'Official team photography sessions, sponsor activations and club celebration events.' },
-      { time: 'All Day', title: 'Gold Coast', desc: 'Free time to explore the Gold Coast — beaches, attractions and dining for the whole travelling group.' },
+      { time: 'Morning', title: 'Semi-Finals', desc: 'Top clubs from pool play compete for a Grand Final spot', icon: Sun },
+      { time: 'Afternoon', title: 'Club Photography & Experiences', desc: 'Professional team and club photography sessions', icon: Sunset },
+      { time: 'Evening', title: 'Gold Coast Evening', desc: 'Experience everything the Gold Coast has to offer', icon: Moon },
     ],
   },
   {
+    id: 'sun',
     day: 'Sunday',
     date: '8 Nov',
-    icon: Star,
     theme: 'Grand Final + Presentation',
     events: [
-      { time: 'Morning', title: 'Grand Final Day', desc: 'The CNCA Grand Final. The two best A Grade country clubs in Australia take the court for the national title.' },
-      { time: 'Midday', title: 'CNCA Grand Final', desc: 'One match. One title. The CNCA champion is crowned in front of clubs, families and supporters from across Australia.' },
-      { time: 'Evening', title: 'Presentation & Celebration', desc: 'Official CNCA awards presentation honouring the champion club and the players who defined the weekend.' },
+      { time: 'Morning', title: 'Grand Final Day Opens', desc: 'The final day of championship begins', icon: Sun },
+      { time: 'Midday', title: 'CNCA Grand Final', desc: 'One match. One title.', icon: Sunset },
+      { time: 'Evening', title: 'Awards Presentation', desc: 'Official CNCA awards honouring the champion club', icon: Moon },
     ],
   },
 ]
 
+const tabContentVariants = {
+  enter: { opacity: 0, y: 24 },
+  center: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  exit: { opacity: 0, y: -16, transition: { duration: 0.25 } },
+}
+
+const eventRowVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+}
+
+const eventVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+}
+
 export default function Schedule() {
-  const [activeDay, setActiveDay] = useState(0)
+  const [active, setActive] = useState('thu')
+  const activeDay = days.find(d => d.id === active)!
 
   return (
-    <section id="schedule" className="bg-white">
-      <div className="section-container">
+    <section id="schedule" className="bg-white overflow-hidden">
+      <div className="section-pad">
+
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="mb-14"
         >
-          <SectionLabel>4 Days</SectionLabel>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-            Event Schedule
+          <div className="section-divider mb-6" />
+          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">Event Schedule</div>
+          <h2 className="font-display text-display-md text-navy-DEFAULT leading-none">
+            FOUR DAYS.<br />EVERY MOMENT.
           </h2>
-          <p className="text-lg text-navy-400 max-w-xl mx-auto">
-            Four days on the Gold Coast — competition, celebration and community for the whole club.
-          </p>
         </motion.div>
 
         {/* Day tabs */}
-        <div className="flex flex-wrap gap-3 justify-center mb-10">
-          {days.map((day, i) => {
-            const Icon = day.icon
-            const isActive = activeDay === i
-            return (
-              <motion.button
-                key={day.day}
-                onClick={() => setActiveDay(i)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-200 border ${
-                  isActive
-                    ? 'bg-pink-500 text-white border-pink-500 shadow-lg shadow-pink-500/20'
-                    : 'bg-white text-navy-500 border-navy-100 hover:border-pink-300 hover:text-pink-500'
-                }`}
-              >
-                <Icon size={15} />
-                <span className="hidden sm:inline">{day.day}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-navy-50 text-navy-400'}`}>
-                  {day.date}
-                </span>
-              </motion.button>
-            )
-          })}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="flex flex-wrap gap-3 mb-10"
+        >
+          {days.map(d => (
+            <motion.button
+              key={d.id}
+              onClick={() => setActive(d.id)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className={`relative px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 ${
+                active === d.id
+                  ? 'bg-pink-DEFAULT text-white shadow-pink'
+                  : 'bg-surface text-navy-DEFAULT/60 hover:text-navy-DEFAULT hover:bg-navy-muted'
+              }`}
+            >
+              <span className="font-display tracking-wide text-base mr-2">{d.day}</span>
+              <span className="font-sans text-xs opacity-70">{d.date}</span>
+            </motion.button>
+          ))}
+        </motion.div>
 
+        {/* Day content */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeDay}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.35 }}
+            key={active}
+            variants={tabContentVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
           >
-            <div className="bg-gray-50 rounded-2xl overflow-hidden border border-navy-100">
-              <div className="bg-pink-gradient px-8 py-6 flex items-center justify-between">
-                <div>
-                  <div className="text-pink-200 text-xs font-bold tracking-widest uppercase mb-1">{days[activeDay].date} · 2026</div>
-                  <h3 className="text-2xl font-extrabold text-white">{days[activeDay].day}</h3>
-                  <p className="text-pink-200 text-sm font-medium mt-0.5">{days[activeDay].theme}</p>
-                </div>
-                <div className="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center">
-                  {(() => { const Icon = days[activeDay].icon; return <Icon size={26} className="text-white" /> })()}
-                </div>
+            {/* Day header bar */}
+            <div className="bg-pink-grad rounded-2xl px-8 py-6 mb-6 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="font-display text-white/60 text-sm tracking-widest uppercase mb-1">{activeDay.date}</div>
+                <div className="font-display text-white text-[clamp(1.6rem,4vw,2.5rem)] leading-none">{activeDay.theme}</div>
               </div>
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <Sun size={22} className="text-white" />
+              </div>
+            </div>
 
-              <div className="divide-y divide-navy-100">
-                {days[activeDay].events.map((event, i) => (
+            {/* Events list */}
+            <div className="bg-white rounded-2xl border border-navy-DEFAULT/8 overflow-hidden shadow-glass">
+              <motion.div
+                variants={eventRowVariants}
+                initial="hidden"
+                animate="show"
+              >
+                {activeDay.events.map(({ time, title, desc, icon: Icon }, i) => (
                   <motion.div
-                    key={event.title}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: i * 0.08 }}
-                    className="flex gap-5 px-8 py-5 group hover:bg-white transition-colors"
+                    key={`${active}-${i}`}
+                    variants={eventVariants}
+                    className="group relative flex gap-6 items-start px-6 md:px-8 py-6 border-b border-navy-DEFAULT/6 last:border-0 hover:bg-surface transition-colors duration-300 cursor-default"
                   >
-                    <div className="flex-shrink-0 w-24 pt-0.5">
-                      <span className="text-xs font-bold text-pink-500 tracking-wide">{event.time}</span>
+                    {/* Pink hover accent */}
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-pink-DEFAULT scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center" />
+
+                    {/* Time */}
+                    <div className="w-24 shrink-0 pt-0.5">
+                      <div className="flex items-center gap-2 text-pink-DEFAULT">
+                        <Icon size={13} />
+                        <span className="text-xs font-bold uppercase tracking-widest">{time}</span>
+                      </div>
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1">
-                      <h4 className="text-base font-bold text-navy-700 mb-1">{event.title}</h4>
-                      <p className="text-sm text-navy-400 leading-relaxed">{event.desc}</p>
+                      <h4 className="font-bold text-navy-DEFAULT text-base mb-1">{title}</h4>
+                      {desc && <p className="text-navy-DEFAULT/55 text-sm leading-snug">{desc}</p>}
                     </div>
                   </motion.div>
                 ))}
-              </div>
-            </div>
-
-            <div className="flex justify-center mt-6">
-              <p className="text-sm text-navy-400 font-medium text-center">
-                Full schedule shared with confirmed clubs in advance of the event.
-              </p>
+              </motion.div>
             </div>
           </motion.div>
         </AnimatePresence>
+
+        {/* Note */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-8 flex items-center gap-3 text-navy-DEFAULT/40"
+        >
+          <Info size={14} />
+          <p className="text-sm font-medium">Full schedule shared with confirmed clubs in advance.</p>
+        </motion.div>
       </div>
     </section>
   )

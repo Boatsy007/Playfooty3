@@ -1,126 +1,165 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Award, Mail, CheckCircle2, Trophy, Lock, AlertCircle } from 'lucide-react'
-import SectionLabel from '../ui/SectionLabel'
-import Button from '../ui/Button'
+import { Trophy, Mail, CheckCircle, Swords } from 'lucide-react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const steps = [
   {
-    number: '01',
-    icon: Award,
+    num: '01',
+    icon: Trophy,
     title: 'Win Your Local Premiership',
-    desc: 'Eligibility begins on home turf. A Grade country premiership clubs are the foundation of CNCA. Win your local competition and you become eligible for an invitation.',
+    body: 'A Grade country premiership clubs are eligible for invitation. Win your local competition and you earn the right to be here.',
     note: null,
   },
   {
-    number: '02',
+    num: '02',
     icon: Mail,
     title: 'Receive An Invitation',
-    desc: 'Premier clubs are contacted with an official invitation to express interest in attending CNCA 2026. Invitations are limited and issued to confirm places are filled by committed clubs.',
-    note: 'Runner-up clubs may be offered a wildcard invitation if the premier is unable to attend.',
+    body: 'Premier clubs receive an official CNCA invitation to express interest. Invitations are limited and allocated to committed clubs.',
+    note: 'Runner-up clubs may be offered a wildcard invitation if the premier cannot attend.',
   },
   {
-    number: '03',
-    icon: CheckCircle2,
+    num: '03',
+    icon: CheckCircle,
     title: 'Secure Your Place',
-    desc: 'Confirm your club\'s participation and register interest in accommodation options. A dedicated point of contact will guide your club through the next steps.',
+    body: "Confirm your club's participation and register accommodation interest. Your dedicated contact will guide you through everything.",
     note: null,
   },
   {
-    number: '04',
-    icon: Trophy,
-    title: 'Compete On The Gold Coast',
-    desc: 'Your A Grade team takes the court against the best country premiership clubs in Australia. Play for the CNCA title — the highest honour in country club netball.',
+    num: '04',
+    icon: Swords,
+    title: 'Compete For The Title',
+    body: 'Your A Grade team takes the court against the best country premiership clubs in Australia. Play for the CNCA title.',
     note: null,
   },
 ]
 
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+}
+
+const stepVariants = {
+  hidden: { opacity: 0, y: 48 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+}
+
 export default function HowItWorks() {
-  const scrollToRegister = () => {
-    document.querySelector('#register')?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const lineRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        lineRef.current,
+        { scaleY: 0 },
+        {
+          scaleY: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 60%',
+            end: 'bottom 60%',
+            scrub: 1,
+          },
+        }
+      )
+    }, sectionRef)
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <section id="format" className="bg-white">
-      <div className="section-container">
+    <section ref={sectionRef} id="how-it-works" className="bg-surface overflow-hidden">
+      <div className="section-pad">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-6"
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="mb-20 max-w-xl"
         >
-          <SectionLabel>How It Works</SectionLabel>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-            The CNCA Format
+          <div className="section-divider mb-6" />
+          <div className="text-xs font-bold tracking-[0.18em] uppercase text-pink-DEFAULT mb-4">The Process</div>
+          <h2 className="font-display text-display-md text-navy-DEFAULT leading-none">
+            HOW IT<br />WORKS
           </h2>
-          <p className="text-lg text-navy-400 max-w-xl mx-auto leading-relaxed">
-            An invitation-only championship for A Grade country premiership clubs. Limited places. Premier clubs first.
-          </p>
         </motion.div>
 
-        {/* Invitation-only banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="flex justify-center mb-14"
-        >
-          <div className="inline-flex items-center gap-2.5 bg-navy-700 text-white rounded-full px-6 py-3 text-sm font-semibold">
-            <Lock size={13} className="text-pink-400" />
-            Invitation only · A Grade premiership clubs · Limited places available
+        {/* Steps with connecting line */}
+        <div className="relative">
+          {/* Vertical animated line */}
+          <div className="absolute left-[27px] md:left-[39px] top-4 bottom-4 w-[2px] bg-navy-DEFAULT/10 hidden md:block overflow-hidden">
+            <div
+              ref={lineRef}
+              className="absolute top-0 left-0 w-full bg-pink-DEFAULT origin-top"
+              style={{ height: '100%' }}
+            />
           </div>
-        </motion.div>
 
-        {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
-          {steps.map(({ number, icon: Icon, title, desc, note }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: i * 0.1 }}
-              className="relative bg-gray-50 border border-navy-100 rounded-2xl p-8 card-hover"
-            >
-              {/* Step number */}
-              <div className="flex items-start gap-5 mb-5">
-                <div className="text-5xl font-black text-navy-100 leading-none flex-shrink-0 select-none">
-                  {number}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-60px' }}
+            className="space-y-0"
+          >
+            {steps.map(({ num, icon: Icon, title, body, note }) => (
+              <motion.div
+                key={num}
+                variants={stepVariants}
+                className="relative flex gap-8 md:gap-16 items-start pb-16 last:pb-0 group"
+              >
+                {/* Circle marker */}
+                <div className="flex flex-col items-center shrink-0 pt-1">
+                  <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-white border border-navy-DEFAULT/10 flex items-center justify-center shadow-glass transition-all duration-500 group-hover:border-pink-DEFAULT group-hover:shadow-pink">
+                    <Icon size={22} className="text-pink-DEFAULT" />
+                  </div>
                 </div>
-                <div className="w-11 h-11 bg-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                  <Icon size={20} className="text-white" />
-                </div>
-              </div>
 
-              <h3 className="text-lg font-extrabold text-navy-700 mb-3">{title}</h3>
-              <p className="text-sm text-navy-500 leading-relaxed">{desc}</p>
-
-              {note && (
-                <div className="mt-4 flex items-start gap-2 bg-pink-50 border border-pink-100 rounded-xl p-3.5">
-                  <AlertCircle size={13} className="text-pink-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-pink-700 font-medium leading-snug">{note}</p>
+                {/* Content */}
+                <div className="flex-1 pt-2 md:pt-3 relative">
+                  {/* Big ghost number */}
+                  <div className="font-display text-[clamp(5rem,12vw,9rem)] leading-none text-navy-DEFAULT/6 select-none absolute -top-8 right-0 pointer-events-none">
+                    {num}
+                  </div>
+                  <div className="font-display text-sm tracking-[0.2em] text-pink-DEFAULT mb-2 uppercase">
+                    Step {num}
+                  </div>
+                  <h3 className="font-display text-[clamp(1.8rem,4vw,3rem)] text-navy-DEFAULT leading-none mb-4">
+                    {title}
+                  </h3>
+                  <p className="text-navy-DEFAULT/60 text-base md:text-lg leading-relaxed max-w-lg mb-5">
+                    {body}
+                  </p>
+                  {note && (
+                    <div className="inline-flex items-start gap-3 bg-white border border-gold-DEFAULT/40 rounded-xl px-4 py-3 max-w-lg">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gold-DEFAULT mt-1.5 shrink-0" />
+                      <p className="text-sm text-navy-DEFAULT/70 leading-snug font-medium">{note}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
 
-        {/* Bottom CTA strip */}
+        {/* Bottom pill */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="bg-pink-50 border border-pink-100 rounded-2xl px-8 py-7 flex flex-col sm:flex-row items-center justify-between gap-5"
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="mt-16 flex justify-center"
         >
-          <div>
-            <p className="text-base font-bold text-navy-700 mb-1">Did your club win or are you a contender for the premiership?</p>
-            <p className="text-sm text-navy-400">Register your interest now and we'll be in touch with invitation details.</p>
+          <div className="inline-flex items-center gap-3 bg-navy-DEFAULT text-white text-xs font-bold tracking-[0.15em] uppercase px-8 py-4 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-DEFAULT inline-block" />
+            Invitation only · A Grade premiership clubs · Limited places
+            <span className="w-1.5 h-1.5 rounded-full bg-pink-DEFAULT inline-block" />
           </div>
-          <Button onClick={scrollToRegister} size="md" className="flex-shrink-0">
-            Request Invitation
-          </Button>
         </motion.div>
       </div>
     </section>

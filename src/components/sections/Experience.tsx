@@ -21,7 +21,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 32, scale: 0.96 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 }
 
 export default function Experience() {
@@ -38,7 +38,7 @@ export default function Experience() {
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="lg:sticky lg:top-28"
           >
             <div className="section-divider mb-6" />

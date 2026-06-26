@@ -19,7 +19,7 @@ const word_variants = {
   visible: (i: number) => ({
     y: 0,
     opacity: 1,
-    transition: { duration: 0.9, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.9, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
   }),
 }
 
@@ -79,7 +79,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 2.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 2.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="flex flex-wrap gap-3 mb-10"
           >
             <span className="badge-pink">
@@ -132,7 +132,7 @@ export default function Hero() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 2.7, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, delay: 2.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="text-white/70 text-lg md:text-xl font-medium max-w-lg mb-10 leading-relaxed"
           >
             Australia's invitation-only country netball championship for A Grade premiership clubs.
@@ -142,7 +142,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 2.9, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.8, delay: 2.9, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="flex flex-wrap gap-4"
           >
             <MagneticButton
@@ -167,7 +167,7 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 3.1, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.9, delay: 3.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
           className="glass rounded-2xl md:rounded-3xl px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-white/10"
         >
           {stats.map(({ value, label }) => (

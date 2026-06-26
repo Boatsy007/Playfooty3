@@ -1,93 +1,117 @@
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import MagneticButton from '../ui/MagneticButton'
 
-const words = ['Play.', 'Travel.', 'Celebrate.', 'Belong.']
+const words = ['PLAY.', 'TRAVEL.', 'CELEBRATE.', 'BELONG.']
+
+const wordVariants = {
+  hidden: { clipPath: 'inset(0 0 100% 0)', y: 60, opacity: 0 },
+  show: (i: number) => ({
+    clipPath: 'inset(0 0 0% 0)',
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.9, delay: i * 0.14, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  }),
+}
 
 export default function FinalCTA() {
-  const scrollToRegister = () => {
+  const scrollToRegister = () =>
     document.querySelector('#register')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   return (
-    <section className="relative bg-pink-gradient overflow-hidden">
-      {/* Decorative circles */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/4" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full bg-white/5 translate-y-1/2 -translate-x-1/4" />
+    <section className="bg-animated-pink relative overflow-hidden noise min-h-[92vh] flex items-center">
 
-      {/* Netball decorative lines */}
-      <div className="absolute inset-0 opacity-5">
-        <svg className="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice">
-          <circle cx="600" cy="200" r="350" stroke="white" strokeWidth="2" fill="none" />
-          <circle cx="600" cy="200" r="200" stroke="white" strokeWidth="1.5" fill="none" />
-          <line x1="250" y1="200" x2="950" y2="200" stroke="white" strokeWidth="1.5" />
-          <path d="M450 10 Q550 200 450 390" stroke="white" strokeWidth="1.5" fill="none" />
-          <path d="M750 10 Q650 200 750 390" stroke="white" strokeWidth="1.5" fill="none" />
+      {/* Large decorative circles */}
+      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full border border-white/5 pointer-events-none" />
+      <div className="absolute bottom-[-30%] left-[-10%] w-[50vw] h-[50vw] rounded-full border border-white/5 pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-[25vw] h-[25vw] rounded-full border border-white/5 pointer-events-none" />
+
+      {/* Netball SVG decoration */}
+      <svg
+        className="absolute inset-0 w-full h-full opacity-[0.04] pointer-events-none"
+        viewBox="0 0 800 800"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="400" cy="400" r="380" stroke="white" strokeWidth="2" />
+        <circle cx="400" cy="400" r="240" stroke="white" strokeWidth="2" />
+        <line x1="400" y1="20" x2="400" y2="780" stroke="white" strokeWidth="2" />
+        <path d="M 60 400 Q 400 100 740 400" stroke="white" strokeWidth="2" fill="none" />
+        <path d="M 60 400 Q 400 700 740 400" stroke="white" strokeWidth="2" fill="none" />
+      </svg>
+
+      {/* Gold star accents */}
+      <div className="absolute top-16 right-16 text-gold-DEFAULT opacity-60 pointer-events-none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+        </svg>
+      </div>
+      <div className="absolute bottom-24 left-20 text-gold-DEFAULT opacity-40 pointer-events-none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
         </svg>
       </div>
 
-      <div className="section-container relative z-10 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-4"
-        >
-          <span className="text-white/70 text-xs font-bold tracking-[0.2em] uppercase">
-            Country Netball Championships Australia · 2026
-          </span>
-        </motion.div>
+      {/* Content */}
+      <div className="relative z-10 w-full">
+        <div className="section-pad text-center">
 
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-8">
-          {words.map((word, i) => (
-            <motion.span
-              key={word}
-              initial={{ opacity: 0, y: 32 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 + i * 0.15 }}
-              className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-tight tracking-tight"
-            >
-              {word}
-            </motion.span>
-          ))}
-        </div>
+          {/* Stacked words */}
+          <div className="mb-12">
+            {words.map((word, i) => (
+              <div key={word} className="overflow-hidden">
+                <motion.div
+                  custom={i}
+                  variants={wordVariants}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, margin: '-60px' }}
+                  className="font-display text-[clamp(4rem,13vw,11rem)] text-white leading-[0.9] tracking-wide"
+                >
+                  {word}
+                </motion.div>
+              </div>
+            ))}
+          </div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="text-white/80 text-lg md:text-xl max-w-lg mx-auto mb-10 leading-relaxed"
-        >
-          A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — 5–8 November 2026.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.85 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <button
-            onClick={scrollToRegister}
-            className="inline-flex items-center gap-3 bg-white text-pink-600 font-extrabold text-base px-10 py-4 rounded-full hover:bg-pink-50 transition-all duration-200 shadow-2xl hover:scale-[1.03] active:scale-[0.98]"
+          {/* Body */}
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+            className="text-white/80 text-base md:text-xl font-medium max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Request Club Invitation
-            <ArrowRight size={18} />
-          </button>
-        </motion.div>
+            A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — 5–8 November 2026.
+          </motion.p>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 1 }}
-          className="text-white/50 text-sm mt-6 font-medium"
-        >
-          Invitation only · A Grade premiership clubs · Limited places
-        </motion.p>
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.55, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+            className="flex flex-col items-center gap-5"
+          >
+            <motion.div
+              animate={{ boxShadow: ['0 0 0 0 rgba(255,255,255,0.3)', '0 0 0 20px rgba(255,255,255,0)', '0 0 0 0 rgba(255,255,255,0)'] }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
+              className="rounded-full"
+            >
+              <MagneticButton
+                onClick={scrollToRegister}
+                className="inline-flex items-center gap-3 bg-white text-navy-DEFAULT font-bold text-sm px-10 py-4 rounded-full hover:bg-white/90 transition-colors duration-300"
+              >
+                Request Club Invitation
+                <ArrowRight size={16} />
+              </MagneticButton>
+            </motion.div>
+
+            <p className="text-white/50 text-xs font-semibold tracking-widest uppercase">
+              Invitation only · A Grade premiership clubs · Limited places
+            </p>
+          </motion.div>
+        </div>
       </div>
     </section>
   )
