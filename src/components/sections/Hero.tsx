@@ -151,7 +151,7 @@ export default function Hero() {
             <div className="absolute inset-y-14 left-0 right-0 rounded-[28px] overflow-hidden"
               style={{ boxShadow: '0 0 0 1px rgba(255,44,145,0.2), 0 0 80px rgba(255,44,145,0.2), 0 0 160px rgba(255,44,145,0.08)' }}>
               <img
-                src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=900&q=90&auto=format&fit=crop&crop=center"
+                src="/hero-photo.webp"
                 alt="Netball action"
                 className="w-full h-full object-cover object-center"
               />
@@ -210,7 +210,7 @@ export default function Hero() {
         style={{ boxShadow: '0 0 40px rgba(255,44,145,0.2)' }}
       >
         <img
-          src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80&auto=format&fit=crop&crop=top"
+          src="/hero-photo.webp"
           alt="Netball action"
           className="w-full h-full object-cover object-top"
         />
