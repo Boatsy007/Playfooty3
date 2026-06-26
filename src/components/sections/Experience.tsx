@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 
 const lineup = [
-  { cat: 'COMPETE', label: 'NATIONAL CHAMPIONSHIP', color: '#ff2c91' },
-  { cat: 'PARTY', label: 'WELCOME PARTY', color: '#f4c14d' },
-  { cat: 'SOUNDS', label: 'LIVE ENTERTAINMENT', color: '#4dd9f4' },
-  { cat: 'NIGHT', label: 'AWARDS NIGHT', color: '#ff2c91' },
-  { cat: 'EAT', label: 'FOOD TRUCKS & MORE', color: '#f4c14d' },
-  { cat: 'EXPLORE', label: 'GOLD COAST EXPERIENCES', color: '#4dd9f4' },
-  { cat: 'CAPTURED', label: 'PROFESSIONAL PHOTOGRAPHY', color: '#ff2c91' },
+  { cat: 'COMPETE',   label: 'National Championship',      color: '#ff2c91' },
+  { cat: 'SOCIAL',    label: 'Opening Function',           color: '#f4c14d' },
+  { cat: 'SOUNDS',    label: 'Live Entertainment',         color: '#4dd9f4' },
+  { cat: 'CELEBRATE', label: 'Awards Presentation',        color: '#ff2c91' },
+  { cat: 'EAT',       label: 'Food Trucks & Festival Zone',color: '#f4c14d' },
+  { cat: 'EXPLORE',   label: 'Gold Coast Experiences',     color: '#4dd9f4' },
+  { cat: 'CAPTURED',  label: 'Professional Photography',   color: '#ff2c91' },
+  { cat: 'LIVE',      label: 'Livestream Coverage',        color: '#f4c14d' },
+  { cat: 'TRAVEL',    label: 'Club Travel Packages',       color: '#4dd9f4' },
 ]
 
 export default function Experience() {
@@ -29,14 +31,14 @@ export default function Experience() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="h-[3px] w-8 bg-[#ff2c91]" />
-              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">More Than a Tournament</span>
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">The Championship</span>
             </div>
-            <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3.2rem, 8vw, 7rem)' }}>
-              WHAT'S ON
+            <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6rem)' }}>
+              THE CHAMPIONSHIP<br />EXPERIENCE
             </h2>
           </div>
           <p className="text-white/35 text-sm leading-relaxed max-w-xs pb-1">
-            Four days of netball, parties, and Gold Coast memories. The full weekend — for everyone.
+            Four days of competition, celebration and connection on the Gold Coast.
           </p>
         </motion.div>
 
@@ -48,7 +50,7 @@ export default function Experience() {
               initial={{ opacity: 0, x: -32 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+              transition={{ duration: 0.55, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
               onHoverStart={() => setHovered(i)}
               onHoverEnd={() => setHovered(null)}
               className="group flex items-center justify-between py-5 sm:py-6 border-b border-white/10 cursor-default transition-colors duration-300"
@@ -64,11 +66,11 @@ export default function Experience() {
                 <motion.span
                   className="font-display leading-none truncate transition-colors duration-300"
                   style={{
-                    fontSize: 'clamp(1.6rem, 4vw, 3.4rem)',
+                    fontSize: 'clamp(1.5rem, 3.5vw, 3rem)',
                     color: hovered === i ? color : '#ffffff',
                   }}
                 >
-                  {label}
+                  {label.toUpperCase()}
                 </motion.span>
               </div>
               <motion.span

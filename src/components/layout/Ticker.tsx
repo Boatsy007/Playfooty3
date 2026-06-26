@@ -1,7 +1,8 @@
 const segments = [
-  'GOLD COAST', '✦', 'NOVEMBER 2026', '✦', 'A GRADE PREMIERS', '✦',
-  'INVITE ONLY', '✦', 'NATIONAL TITLE', '✦', 'GOLD COAST', '✦',
-  'NOVEMBER 2026', '✦', 'A GRADE PREMIERS', '✦', 'INVITE ONLY', '✦', 'NATIONAL TITLE', '✦',
+  'NATIONAL CHAMPIONSHIP', '✦', 'A GRADE PREMIERS', '✦',
+  'INVITATION ONLY', '✦', 'GOLD COAST 2026', '✦', 'ONE NATIONAL TITLE', '✦',
+  'NATIONAL CHAMPIONSHIP', '✦', 'A GRADE PREMIERS', '✦',
+  'INVITATION ONLY', '✦', 'GOLD COAST 2026', '✦', 'ONE NATIONAL TITLE', '✦',
 ]
 
 export default function Ticker() {

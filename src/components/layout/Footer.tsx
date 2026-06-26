@@ -8,7 +8,7 @@ export default function Footer() {
           <img src="/logo.webp" alt="CNCA" className="h-9 w-auto brightness-0 invert opacity-60" />
           <div className="flex items-center gap-2 text-white/50 text-sm font-bold">
             <Globe size={14} className="text-[#ff2c91]" />
-            clubnetball.com.au
+            cnca.com.au
           </div>
         </div>
         <p className="text-white/30 text-xs text-center">

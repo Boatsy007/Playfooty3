@@ -1,178 +1,149 @@
 import { motion } from 'framer-motion'
-import { Users, Luggage, Star, Check } from 'lucide-react'
+import { Trophy, Users, Briefcase, Heart, Star, ChevronRight } from 'lucide-react'
 
-const bringTheClub = [
-  'A Grade Players', 'B Grade Players', 'C Grade Players', 'D Grade Players',
-  'Coaches', 'Committee Members', 'Partners', 'Families', 'Supporters',
-]
-
-const travelItems = [
-  'Accommodation Packages', 'Team Packages', 'Club Packages',
-  'Group Bookings', 'Supporter Packages', 'Flexible Payment Options',
-]
-
-const weekend = [
-  'Compete against the best country clubs in Australia.',
-  'Celebrate your season with unforgettable experiences.',
-  'Create memories that last a lifetime.',
+const attendees = [
+  {
+    icon: Trophy,
+    num: '01',
+    title: 'PLAYERS',
+    desc: 'A Grade premiers competing for the national title.',
+    color: '#ff2c91',
+  },
+  {
+    icon: Users,
+    num: '02',
+    title: 'COACHES',
+    desc: 'Connect with leading clubs from across Australia.',
+    color: '#f4c14d',
+  },
+  {
+    icon: Briefcase,
+    num: '03',
+    title: 'CLUB OFFICIALS',
+    desc: 'Committee members, administrators and volunteers.',
+    color: '#4dd9f4',
+  },
+  {
+    icon: Heart,
+    num: '04',
+    title: 'FAMILIES',
+    desc: 'Support the journey and enjoy the Gold Coast.',
+    color: '#ff2c91',
+  },
+  {
+    icon: Star,
+    num: '05',
+    title: 'SUPPORTERS',
+    desc: 'Celebrate the season together.',
+    color: '#f4c14d',
+  },
 ]
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 28 },
   show: (i: number) => ({
     opacity: 1, y: 0,
-    transition: { duration: 0.65, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] },
+    transition: { duration: 0.6, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] },
   }),
 }
 
-const checkVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
-}
-
-const checkItem = {
-  hidden: { opacity: 0, x: -8 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.35 } },
-}
-
 export default function HowItWorks() {
+  const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+
   return (
-    <section id="format" className="bg-white py-16 lg:py-20 border-t border-gray-100">
+    <section id="format" className="py-20 lg:py-28" style={{ background: '#0d0d0d' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8">
 
+        {/* Section header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14"
         >
-          <div className="flex items-center justify-center gap-4 mb-3">
-            <div className="h-px w-16 bg-[#ff2c91]" />
-            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">The Experience</span>
-            <div className="h-px w-16 bg-[#ff2c91]" />
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-[3px] w-8 bg-[#ff2c91]" />
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Who Attends</span>
+            </div>
+            <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.4rem, 6vw, 5.5rem)' }}>
+              MORE THAN THE<br />PLAYING GROUP
+            </h2>
           </div>
-          <h2 className="font-display text-[#1a1a1a]" style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)' }}>
-            BUILT FOR THE WHOLE CLUB
-          </h2>
+          <p className="text-white/40 text-sm leading-relaxed max-w-xs lg:pb-2">
+            CNCA brings together everyone who contributes to country netball.
+          </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-          {/* Card 1 — Hot Pink */}
-          <motion.div
-            custom={0}
-            variants={cardVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            whileHover={{ y: -6, boxShadow: '0 20px 60px rgba(255,44,145,0.35)', transition: { duration: 0.25 } }}
-            className="rounded-2xl p-8 cursor-default"
-            style={{ background: '#ff2c91' }}
-          >
-            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-5">
-              <Users size={22} color="white" />
-            </div>
-            <h3 className="font-display text-white leading-none mb-1" style={{ fontSize: '1.75rem' }}>
-              BRING THE
-            </h3>
-            <h3 className="font-display text-white/60 leading-none mb-0" style={{ fontSize: '1.75rem' }}>
-              WHOLE CLUB
-            </h3>
-            <div className="h-[2px] w-10 bg-white/40 mt-3 mb-5 rounded-full" />
+        {/* 5-card grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+          {attendees.map(({ icon: Icon, num, title, desc, color }, i) => (
             <motion.div
-              variants={checkVariants}
+              key={title}
+              custom={i}
+              variants={cardVariants}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true }}
-              className="grid grid-cols-2 gap-y-2 gap-x-4"
+              viewport={{ once: true, margin: '-40px' }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="group rounded-2xl p-5 lg:p-6 flex flex-col cursor-default"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              {bringTheClub.map(it => (
-                <motion.div key={it} variants={checkItem} className="flex items-center gap-1.5">
-                  <Check size={12} style={{ color: 'rgba(255,255,255,0.7)', flexShrink: 0 }} />
-                  <span className="text-xs font-semibold text-white/75">{it}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
+              {/* Number */}
+              <span className="text-[10px] font-bold tracking-[0.2em] mb-4 transition-colors duration-300"
+                style={{ color: 'rgba(255,255,255,0.18)' }}>
+                {num}
+              </span>
 
-          {/* Card 2 — Dark */}
-          <motion.div
-            custom={1}
-            variants={cardVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            whileHover={{ y: -6, transition: { duration: 0.25 } }}
-            className="rounded-2xl p-8 cursor-default"
-            style={{ background: '#1a1a1a' }}
-          >
-            <div className="w-14 h-14 rounded-full bg-[#ff2c91] flex items-center justify-center mb-5">
-              <Luggage size={22} color="white" />
-            </div>
-            <h3 className="font-display text-white leading-none mb-1" style={{ fontSize: '1.75rem' }}>
-              TRAVEL
-            </h3>
-            <h3 className="font-display leading-none mb-1" style={{ fontSize: '1.75rem', color: '#ff2c91' }}>
-              PACKAGES
-            </h3>
-            <h3 className="font-display text-white leading-none" style={{ fontSize: '1.75rem' }}>
-              AVAILABLE
-            </h3>
-            <div className="h-[2px] w-10 bg-[#ff2c91] mt-3 mb-5 rounded-full" />
-            <motion.div
-              variants={checkVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="space-y-2.5"
-            >
-              {travelItems.map(it => (
-                <motion.div key={it} variants={checkItem} className="flex items-center gap-2">
-                  <Check size={12} style={{ color: '#ff2c91', flexShrink: 0 }} />
-                  <span className="text-xs font-semibold text-white/70">{it}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5 transition-all duration-300"
+                style={{ background: `${color}14`, border: `1px solid ${color}25` }}>
+                <Icon size={17} style={{ color }} />
+              </div>
 
-          {/* Card 3 — Gold */}
-          <motion.div
-            custom={2}
-            variants={cardVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-60px' }}
-            whileHover={{ y: -6, boxShadow: '0 20px 60px rgba(244,193,77,0.3)', transition: { duration: 0.25 } }}
-            className="rounded-2xl p-8 cursor-default"
-            style={{ background: '#f4c14d' }}
-          >
-            <div className="w-14 h-14 rounded-full bg-[#1a1a1a]/20 flex items-center justify-center mb-5">
-              <Star size={22} color="#1a1a1a" />
-            </div>
-            <h3 className="font-display text-[#1a1a1a] leading-[0.95] mb-2" style={{ fontSize: '1.75rem' }}>
-              ONE WEEKEND.<br />EVERYTHING<br />YOUR CLUB<br />DESERVES.
-            </h3>
-            <div className="h-[2px] w-10 bg-[#1a1a1a]/30 mt-3 mb-5 rounded-full" />
-            <div className="space-y-4">
-              {weekend.map((text, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
-                  className="flex items-start gap-3"
-                >
-                  <div className="w-5 h-5 rounded-full bg-[#1a1a1a]/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a]" />
-                  </div>
-                  <p className="text-[#1a1a1a]/80 text-sm font-medium leading-snug">{text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+              {/* Text */}
+              <p className="font-display text-white leading-none mb-2"
+                style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)' }}>
+                {title}
+              </p>
+              <p className="text-white/40 text-xs leading-relaxed mt-auto pt-2">
+                {desc}
+              </p>
+            </motion.div>
+          ))}
         </div>
+
+        {/* Championship Weekend strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="rounded-2xl px-8 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div>
+            <p className="font-display text-white leading-none mb-2"
+              style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)' }}>
+              THE CHAMPIONSHIP WEEKEND
+            </p>
+            <p className="text-white/50 text-sm mb-0.5">Competition by day. Celebration by night.</p>
+            <p className="text-white/30 text-sm">
+              Accommodation, travel and group packages available for the Gold Coast.
+            </p>
+          </div>
+          <button
+            onClick={() => go('#invitation')}
+            className="group shrink-0 flex items-center gap-2.5 font-bold text-sm px-7 py-3.5 rounded-full transition-all duration-200"
+            style={{ background: '#ff2c91', color: '#ffffff' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
+          >
+            Register Interest
+            <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+          </button>
+        </motion.div>
       </div>
     </section>
   )
