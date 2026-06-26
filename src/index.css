@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -17,6 +17,9 @@ body {
 
 /* Barlow Condensed: sub-headings, labels, categories, stats */
 .font-condensed { font-family: 'Barlow Condensed', sans-serif; }
+
+/* Playfair Display: pull quotes, editorial accent text */
+.font-serif { font-family: 'Playfair Display', Georgia, serif; }
 
 .nav-scrolled {
   background: rgba(255,255,255,0.97);

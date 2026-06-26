@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
 const links = [
-  { label: 'Experience', href: '#experience' },
-  { label: 'Format', href: '#format' },
+  { label: 'The Weekend', href: '#the-weekend' },
+  { label: 'Who Attends', href: '#who-attends' },
   { label: 'Invitation', href: '#invitation' },
 ]
 
