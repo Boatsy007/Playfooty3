@@ -48,11 +48,11 @@ export default function Prize() {
         </motion.p>
 
         <motion.button
-          initial={{ opacity: 0, scale: 0.85 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.96, y: 8 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.25, ease: [0.34, 1.56, 0.64, 1] as [number,number,number,number] }}
-          whileHover={{ scale: 1.06, y: -3 }}
+          transition={{ duration: 0.5, delay: 0.25, ease: [0.23, 1, 0.32, 1] as [number,number,number,number] }}
+          whileHover={{ scale: 1.04, y: -2 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => go('#invitation')}
           className="inline-flex items-center gap-3 bg-white font-bold text-base px-10 py-5 rounded-full shadow-2xl"

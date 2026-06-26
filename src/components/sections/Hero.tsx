@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, MapPin, Lock, Trophy } from 'lucide-react'
+import WhatsOnDrawer from '../ui/WhatsOnDrawer'
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -11,6 +13,7 @@ const badges = [
 ]
 
 export default function Hero() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
@@ -102,7 +105,10 @@ export default function Hero() {
           <motion.button
             whileHover={{ borderColor: '#ff2c91', color: '#ff2c91', y: -2 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => go('#experience')}
+            onClick={() => {
+              if (window.innerWidth < 1024) setDrawerOpen(true)
+              else go('#experience')
+            }}
             className="font-semibold rounded-full border-2 transition-all duration-200"
             style={{
               fontSize: 'clamp(0.875rem, 1.5vw, 1rem)',
@@ -140,6 +146,7 @@ export default function Hero() {
           ))}
         </motion.div>
       </div>
+      <WhatsOnDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </section>
   )
 }
