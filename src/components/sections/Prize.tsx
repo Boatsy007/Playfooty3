@@ -1,8 +1,11 @@
+import { useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Trophy, ChevronRight } from 'lucide-react'
 
 export default function Prize() {
-  const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+  const go = useCallback((id: string) => {
+    document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
 
   return (
     <section className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>

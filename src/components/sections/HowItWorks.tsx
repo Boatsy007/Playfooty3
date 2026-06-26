@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 
@@ -10,7 +11,9 @@ const attendees = [
 ]
 
 export default function HowItWorks() {
-  const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+  const go = useCallback((id: string) => {
+    document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
   const prefersReduced = useReducedMotion()
 
   return (

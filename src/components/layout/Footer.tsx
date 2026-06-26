@@ -1,6 +1,7 @@
+import { memo } from 'react'
 import { Globe } from 'lucide-react'
 
-export default function Footer() {
+export default memo(function Footer() {
   return (
     <footer className="bg-[#1a1a1a] py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -12,7 +13,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="text-white/30 text-xs text-center">
-          © 2026 Australian Club Netball Championships. All rights reserved.
+          &copy; 2026 Australian Club Netball Championships. All rights reserved.
         </p>
         <div className="flex gap-5">
           {['Privacy', 'Terms'].map(t => (
@@ -22,4 +23,4 @@ export default function Footer() {
       </div>
     </footer>
   )
-}
+})
