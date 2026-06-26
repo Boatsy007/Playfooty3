@@ -14,14 +14,14 @@ const attendees = [
     num: '02',
     title: 'COACHES',
     desc: 'Connect with leading clubs from across Australia.',
-    color: '#f4c14d',
+    color: '#e8a020',
   },
   {
     icon: Briefcase,
     num: '03',
     title: 'CLUB OFFICIALS',
     desc: 'Committee members, administrators and volunteers.',
-    color: '#4dd9f4',
+    color: '#0ea5c9',
   },
   {
     icon: Heart,
@@ -35,7 +35,7 @@ const attendees = [
     num: '05',
     title: 'SUPPORTERS',
     desc: 'Celebrate the season together.',
-    color: '#f4c14d',
+    color: '#e8a020',
   },
 ]
 
@@ -51,7 +51,7 @@ export default function HowItWorks() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section id="format" className="py-20 lg:py-28" style={{ background: '#0d0d0d' }}>
+    <section id="format" className="py-20 lg:py-28" style={{ background: '#1a1a1a' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8">
 
         {/* Section header */}
@@ -88,17 +88,17 @@ export default function HowItWorks() {
               viewport={{ once: true, margin: '-40px' }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="group rounded-2xl p-5 lg:p-6 flex flex-col cursor-default"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
               {/* Number */}
               <span className="text-[10px] font-bold tracking-[0.2em] mb-4 transition-colors duration-300"
-                style={{ color: 'rgba(255,255,255,0.18)' }}>
+                style={{ color: 'rgba(255,255,255,0.22)' }}>
                 {num}
               </span>
 
               {/* Icon */}
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5 transition-all duration-300"
-                style={{ background: `${color}14`, border: `1px solid ${color}25` }}>
+                style={{ background: `${color}20`, border: `1px solid ${color}35` }}>
                 <Icon size={17} style={{ color }} />
               </div>
 
@@ -107,7 +107,7 @@ export default function HowItWorks() {
                 style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)' }}>
                 {title}
               </p>
-              <p className="text-white/40 text-xs leading-relaxed mt-auto pt-2">
+              <p className="text-white/45 text-xs leading-relaxed mt-auto pt-2">
                 {desc}
               </p>
             </motion.div>
@@ -121,15 +121,15 @@ export default function HowItWorks() {
           viewport={{ once: true, margin: '-40px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
           className="rounded-2xl px-8 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
         >
           <div>
             <p className="font-display text-white leading-none mb-2"
               style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)' }}>
               THE CHAMPIONSHIP WEEKEND
             </p>
-            <p className="text-white/50 text-sm mb-0.5">Competition by day. Celebration by night.</p>
-            <p className="text-white/30 text-sm">
+            <p className="text-white/55 text-sm mb-0.5">Competition by day. Celebration by night.</p>
+            <p className="text-white/35 text-sm">
               Accommodation, travel and group packages available for the Gold Coast.
             </p>
           </div>

@@ -33,7 +33,7 @@ export default function Invitation() {
   }
 
   return (
-    <section id="invitation" className="bg-[#1a1a1a] py-14 lg:py-20">
+    <section id="invitation" className="py-14 lg:py-20" style={{ background: '#111111' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8">
         <div className="grid lg:grid-cols-[5fr,7fr] gap-10 lg:gap-16 items-start">
 
