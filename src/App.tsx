@@ -1,4 +1,5 @@
 import Nav from './components/layout/Nav'
+import Ticker from './components/layout/Ticker'
 import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
 import Experience from './components/sections/Experience'
@@ -11,6 +12,7 @@ export default function App() {
     <>
       <Nav />
       <main>
+        <Ticker />
         <Hero />
         <Experience />
         <HowItWorks />

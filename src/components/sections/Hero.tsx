@@ -12,10 +12,13 @@ export default function Hero() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section className="relative bg-white pt-[68px] overflow-hidden">
-      {/* Subtle pink glow top-left */}
-      <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,44,145,0.07) 0%, transparent 70%)' }} />
+    <section className="relative bg-white overflow-hidden">
+      {/* Diagonal stripe texture */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 38px, rgba(255,44,145,0.025) 38px, rgba(255,44,145,0.025) 39px)', opacity: 1 }} />
+      {/* Pink glow top-left */}
+      <div className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(255,44,145,0.09) 0%, transparent 70%)' }} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8">
         <div className="grid lg:grid-cols-[55%_45%] min-h-[88vh] items-center gap-0">

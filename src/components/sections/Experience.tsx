@@ -1,97 +1,89 @@
-import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
-import { Trophy, PartyPopper, Utensils, Music, Camera, Video, Award, Bus, Palmtree } from 'lucide-react'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 
-const items = [
-  { icon: Trophy, label: 'National Championship' },
-  { icon: PartyPopper, label: 'Welcome Party' },
-  { icon: Utensils, label: 'Food Trucks' },
-  { icon: Music, label: 'Live Entertainment' },
-  { icon: Camera, label: 'Professional Photography' },
-  { icon: Video, label: 'Livestream Coverage' },
-  { icon: Award, label: 'Awards Night' },
-  { icon: Bus, label: 'Club Travel Packages' },
-  { icon: Palmtree, label: 'Gold Coast Experiences' },
+const lineup = [
+  { cat: 'COMPETE', label: 'NATIONAL CHAMPIONSHIP', color: '#ff2c91' },
+  { cat: 'PARTY', label: 'WELCOME PARTY', color: '#f4c14d' },
+  { cat: 'SOUNDS', label: 'LIVE ENTERTAINMENT', color: '#4dd9f4' },
+  { cat: 'NIGHT', label: 'AWARDS NIGHT', color: '#ff2c91' },
+  { cat: 'EAT', label: 'FOOD TRUCKS & MORE', color: '#f4c14d' },
+  { cat: 'EXPLORE', label: 'GOLD COAST EXPERIENCES', color: '#4dd9f4' },
+  { cat: 'CAPTURED', label: 'PROFESSIONAL PHOTOGRAPHY', color: '#ff2c91' },
 ]
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
-}
-
-const item = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } },
-}
-
 export default function Experience() {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
+  const [hovered, setHovered] = useState<number | null>(null)
 
   return (
-    <section id="experience" className="py-16 lg:py-20 overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, #fff0f8 0%, #fff6fb 100%)' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8">
+    <section id="experience" className="overflow-hidden" style={{ background: '#111111' }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-28">
 
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-          className="text-center mb-14"
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12"
         >
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="h-px flex-1 max-w-[80px] bg-[#ff2c91] origin-right"
-            />
-            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">More Than A Tournament</span>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="h-px flex-1 max-w-[80px] bg-[#ff2c91] origin-left"
-            />
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-[3px] w-8 bg-[#ff2c91]" />
+              <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">More Than a Tournament</span>
+            </div>
+            <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3.2rem, 8vw, 7rem)' }}>
+              WHAT'S ON
+            </h2>
           </div>
-          <h2 className="font-display text-[#1a1a1a]" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)' }}>
-            EVERYTHING YOUR CLUB DESERVES
-          </h2>
+          <p className="text-white/35 text-sm leading-relaxed max-w-xs pb-1">
+            Four days of netball, parties, and Gold Coast memories. The full weekend — for everyone.
+          </p>
         </motion.div>
 
-        {/* Icon grid */}
-        <motion.div
-          ref={ref}
-          variants={container}
-          initial="hidden"
-          animate={inView ? 'show' : 'hidden'}
-          className="grid grid-cols-3 lg:grid-cols-9 gap-2 lg:gap-0"
-        >
-          {items.map(({ icon: Icon, label }) => (
+        {/* Festival lineup rows */}
+        <div className="border-t border-white/10">
+          {lineup.map(({ cat, label, color }, i) => (
             <motion.div
               key={label}
-              variants={item}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group flex flex-col items-center text-center gap-3 py-5 px-2 rounded-2xl cursor-default transition-colors duration-200 hover:bg-white/70"
+              initial={{ opacity: 0, x: -32 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+              onHoverStart={() => setHovered(i)}
+              onHoverEnd={() => setHovered(null)}
+              className="group flex items-center justify-between py-5 sm:py-6 border-b border-white/10 cursor-default transition-colors duration-300"
+              style={{ background: hovered === i ? `${color}0d` : 'transparent' }}
             >
-              <motion.div
-                className="icon-circle transition-all duration-200 group-hover:shadow-md"
-                style={{ background: '#fff0f8' }}
-                whileHover={{ scale: 1.12, backgroundColor: '#ff2c91' }}
-                transition={{ duration: 0.2 }}
+              <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+                <span
+                  className="font-bold text-[10px] tracking-[0.18em] uppercase w-5 text-right shrink-0 transition-colors duration-300"
+                  style={{ color: hovered === i ? color : 'rgba(255,255,255,0.2)' }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <motion.span
+                  className="font-display leading-none truncate transition-colors duration-300"
+                  style={{
+                    fontSize: 'clamp(1.6rem, 4vw, 3.4rem)',
+                    color: hovered === i ? color : '#ffffff',
+                  }}
+                >
+                  {label}
+                </motion.span>
+              </div>
+              <motion.span
+                className="shrink-0 ml-4 text-[9px] font-bold tracking-[0.22em] uppercase px-3 py-1.5 rounded-full transition-all duration-300"
+                style={{
+                  color: hovered === i ? '#111111' : color,
+                  background: hovered === i ? color : `${color}18`,
+                  border: `1px solid ${color}40`,
+                }}
               >
-                <Icon size={22} className="text-[#ff2c91] group-hover:text-white transition-colors duration-200" />
-              </motion.div>
-              <span className="text-[10px] lg:text-xs font-bold text-[#1a1a1a]/70 leading-tight uppercase tracking-wide group-hover:text-[#ff2c91] transition-colors duration-200">
-                {label}
-              </span>
+                {cat}
+              </motion.span>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

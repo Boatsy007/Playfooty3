@@ -1,56 +1,66 @@
 import { motion } from 'framer-motion'
-import { Mail } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 export default function Prize() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section className="relative overflow-hidden bg-[#ff2c91] py-14">
-      {/* Subtle shimmer overlay */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%, rgba(255,255,255,0.04) 100%)' }} />
+    <section className="relative overflow-hidden bg-[#ff2c91] py-24 lg:py-32">
+      {/* Moving shimmer */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        animate={{ x: ['-100%', '100%'] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+        style={{ background: 'linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.12) 50%, transparent 80%)' }}
+      />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
+      {/* Big background text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
+        <span className="font-display text-white/[0.04] whitespace-nowrap"
+          style={{ fontSize: 'clamp(10rem, 30vw, 28rem)', lineHeight: 1 }}>
+          ACNC
+        </span>
+      </div>
 
-          <div>
-            <motion.p
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-              className="font-display text-white leading-none"
-              style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}
-            >
-              PLAY. CELEBRATE. BELONG.
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-              className="text-white/75 font-semibold text-lg mt-1.5 italic"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              This is your moment.
-            </motion.p>
-          </div>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 text-center">
 
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => go('#invitation')}
-            className="shrink-0 flex items-center gap-3 bg-white font-bold text-sm px-8 py-4 rounded-full shadow-lg transition-shadow duration-200"
-            style={{ color: '#ff2c91' }}
-          >
-            <Mail size={16} />
-            REQUEST AN INVITATION
-          </motion.button>
-        </div>
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="font-display text-white leading-none mb-6"
+          style={{ fontSize: 'clamp(4rem, 12vw, 11rem)' }}
+        >
+          PLAY.<br />
+          <span style={{ color: 'rgba(255,255,255,0.55)' }}>TRAVEL.</span><br />
+          CELEBRATE.
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="text-white/65 text-lg lg:text-xl font-semibold mb-12 max-w-lg mx-auto"
+        >
+          The biggest end-of-season experience in Australian country netball.
+        </motion.p>
+
+        <motion.button
+          initial={{ opacity: 0, scale: 0.85 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.25, ease: [0.34, 1.56, 0.64, 1] as [number,number,number,number] }}
+          whileHover={{ scale: 1.06, y: -3 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => go('#invitation')}
+          className="inline-flex items-center gap-3 bg-white font-bold text-base px-10 py-5 rounded-full shadow-2xl"
+          style={{ color: '#ff2c91' }}
+        >
+          REQUEST AN INVITATION
+          <ChevronRight size={18} />
+        </motion.button>
       </div>
     </section>
   )
