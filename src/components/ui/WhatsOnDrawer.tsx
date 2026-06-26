@@ -1,14 +1,16 @@
 import { Drawer } from 'vaul'
-import { Calendar, MapPin, Lock, Trophy, PartyPopper, Music, Utensils, Camera, Award } from 'lucide-react'
+import { Calendar, MapPin, Lock, Trophy, Music, Utensils, Camera, Award, Users, Tv } from 'lucide-react'
 
 const lineup = [
-  { icon: Trophy,       cat: 'COMPETE',   label: 'National Championship',     color: '#ff2c91' },
-  { icon: PartyPopper,  cat: 'PARTY',     label: 'Welcome Party',             color: '#f4c14d' },
-  { icon: Music,        cat: 'SOUNDS',    label: 'Live Entertainment',        color: '#4dd9f4' },
-  { icon: Award,        cat: 'NIGHT',     label: 'Awards Night',              color: '#ff2c91' },
-  { icon: Utensils,     cat: 'EAT',       label: 'Food Trucks & More',        color: '#f4c14d' },
-  { icon: MapPin,       cat: 'EXPLORE',   label: 'Gold Coast Experiences',    color: '#4dd9f4' },
-  { icon: Camera,       cat: 'CAPTURED',  label: 'Professional Photography',  color: '#ff2c91' },
+  { icon: Trophy,  cat: 'COMPETE',   label: 'National Championship',      color: '#ff2c91' },
+  { icon: Users,   cat: 'SOCIAL',    label: 'Opening Function',           color: '#f4c14d' },
+  { icon: Music,   cat: 'SOUNDS',    label: 'Live Entertainment',         color: '#4dd9f4' },
+  { icon: Award,   cat: 'CELEBRATE', label: 'Awards Presentation',        color: '#ff2c91' },
+  { icon: Utensils,cat: 'EAT',       label: 'Food Trucks & Festival Zone',color: '#f4c14d' },
+  { icon: MapPin,  cat: 'EXPLORE',   label: 'Gold Coast Experiences',     color: '#4dd9f4' },
+  { icon: Camera,  cat: 'CAPTURED',  label: 'Professional Photography',   color: '#ff2c91' },
+  { icon: Tv,      cat: 'LIVE',      label: 'Livestream Coverage',        color: '#f4c14d' },
+  { icon: MapPin,  cat: 'TRAVEL',    label: 'Club Travel Packages',       color: '#4dd9f4' },
 ]
 
 interface Props {
@@ -86,7 +88,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
                   ))}
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Your A Grade premiers compete for the national title. Bring the whole club to celebrate on the Gold Coast.
+                  A Grade premiers from across Australia competing for the national title. Gold Coast, 5–8 November 2026.
                 </p>
               </div>
             </div>

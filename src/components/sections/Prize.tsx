@@ -1,66 +1,67 @@
 import { motion } from 'framer-motion'
-import { ChevronRight } from 'lucide-react'
+import { Trophy, ChevronRight } from 'lucide-react'
 
 export default function Prize() {
   const go = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <section className="relative overflow-hidden bg-[#ff2c91] py-24 lg:py-32">
-      {/* Moving shimmer */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={{ x: ['-100%', '100%'] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-        style={{ background: 'linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.12) 50%, transparent 80%)' }}
-      />
+    <section className="relative overflow-hidden py-24 lg:py-32" style={{ background: '#0d0d0d' }}>
+      {/* Subtle radial glow */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(244,193,77,0.07) 0%, transparent 70%)' }} />
 
-      {/* Big background text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
-        <span className="font-display text-white/[0.04] whitespace-nowrap"
-          style={{ fontSize: 'clamp(10rem, 30vw, 28rem)', lineHeight: 1 }}>
-          ACNC
-        </span>
-      </div>
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-8 text-center">
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 text-center">
-
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-          className="font-display text-white leading-none mb-6"
-          style={{ fontSize: 'clamp(4rem, 12vw, 11rem)' }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
+          className="flex flex-col items-center"
         >
-          PLAY.<br />
-          <span style={{ color: 'rgba(255,255,255,0.55)' }}>TRAVEL.</span><br />
-          CELEBRATE.
-        </motion.p>
+          {/* Icon */}
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8"
+            style={{ background: 'rgba(244,193,77,0.1)', border: '1px solid rgba(244,193,77,0.25)' }}>
+            <Trophy size={28} style={{ color: '#f4c14d' }} />
+          </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-          className="text-white/65 text-lg lg:text-xl font-semibold mb-12 max-w-lg mx-auto"
-        >
-          The biggest end-of-season experience in Australian country netball.
-        </motion.p>
+          {/* Eyebrow */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-[2px] w-6" style={{ background: '#f4c14d' }} />
+            <span className="text-[11px] font-bold tracking-[0.22em] uppercase" style={{ color: '#f4c14d' }}>The Prize</span>
+            <div className="h-[2px] w-6" style={{ background: '#f4c14d' }} />
+          </div>
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.96, y: 8 }}
-          whileInView={{ opacity: 1, scale: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.25, ease: [0.23, 1, 0.32, 1] as [number,number,number,number] }}
-          whileHover={{ scale: 1.04, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => go('#invitation')}
-          className="inline-flex items-center gap-3 bg-white font-bold text-base px-10 py-5 rounded-full shadow-2xl"
-          style={{ color: '#ff2c91' }}
-        >
-          REQUEST AN INVITATION
-          <ChevronRight size={18} />
-        </motion.button>
+          {/* Headline */}
+          <h2 className="font-display text-white leading-none mb-8"
+            style={{ fontSize: 'clamp(3rem, 8vw, 7rem)' }}>
+            CHAMPIONSHIP<br />
+            <span style={{ color: '#f4c14d' }}>PRIZE</span>
+          </h2>
+
+          {/* Copy */}
+          <p className="text-white/50 text-base lg:text-lg leading-relaxed mb-3 max-w-xl">
+            A major prize package will be awarded to the 2026 CNCA Champion Club.
+          </p>
+          <p className="text-white/30 text-sm leading-relaxed mb-12 max-w-md">
+            Full details announced prior to the event.
+          </p>
+
+          {/* Divider */}
+          <div className="w-px h-12 mb-10" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+          {/* CTA */}
+          <button
+            onClick={() => go('#invitation')}
+            className="group inline-flex items-center gap-2.5 font-bold text-sm px-8 py-4 rounded-full transition-all duration-200"
+            style={{ background: '#f4c14d', color: '#0d0d0d' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#d4a832')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#f4c14d')}
+          >
+            Request Invitation
+            <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+          </button>
+        </motion.div>
       </div>
     </section>
   )

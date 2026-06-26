@@ -53,7 +53,7 @@ export default function Invitation() {
               REQUEST<br /><span style={{ color: '#ff2c91' }}>AN</span><br />INVITATION
             </h2>
             <p className="text-white/55 text-base leading-relaxed mb-8">
-              Fill in your details and our team will be in touch with everything your club needs to know.
+              Invitation requests are now open for eligible A Grade premiership clubs. Complete the registration form to express interest in the 2026 Country Netball Championships Australia.
             </p>
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
@@ -62,7 +62,8 @@ export default function Invitation() {
                 <p><span className="font-bold text-white">Date:</span> 5–8 November 2026</p>
                 <p><span className="font-bold text-white">Location:</span> Gold Coast, Queensland</p>
                 <p><span className="font-bold text-white">Eligibility:</span> A Grade Premiership Clubs</p>
-                <p><span className="font-bold text-white">Website:</span> clubnetball.com.au</p>
+                <p><span className="font-bold text-white">Website:</span> cnca.com.au</p>
+                <p><span className="font-bold text-white">Email:</span> info@cnca.com.au</p>
               </div>
             </div>
           </motion.div>
