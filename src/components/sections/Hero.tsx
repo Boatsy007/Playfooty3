@@ -1,116 +1,205 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, Lock } from 'lucide-react'
-import Button from '../ui/Button'
+import { Lock, MapPin, ChevronDown } from 'lucide-react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import MagneticButton from '../ui/MagneticButton'
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay },
-})
+gsap.registerPlugin(ScrollTrigger)
 
 const stats = [
-  { label: 'A Grade', sub: 'Championship' },
-  { label: 'Premiers', sub: 'Invitation Only' },
-  { label: '4 Days', sub: '5–8 Nov 2026' },
-  { label: 'Gold Coast', sub: 'Queensland' },
+  { value: 'A Grade', label: 'Championship' },
+  { value: 'Premiers', label: 'Invitation Only' },
+  { value: '4 Days', label: '5–8 Nov 2026' },
+  { value: 'Gold Coast', label: 'Queensland' },
 ]
 
+const word_variants = {
+  hidden: { y: 100, opacity: 0 },
+  visible: (i: number) => ({
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.9, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] },
+  }),
+}
+
 export default function Hero() {
-  const scrollToFormat = () => {
-    document.querySelector('#format')?.scrollIntoView({ behavior: 'smooth' })
-  }
-  const scrollToRegister = () => {
-    document.querySelector('#register')?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const imgRef = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const img = imgRef.current
+    if (!img) return
+
+    const ctx = gsap.context(() => {
+      gsap.to(img, {
+        yPercent: 25,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      })
+    })
+
+    return () => ctx.revert()
+  }, [])
+
+  const scrollTo = (id: string) => document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' })
+
+  const headline = ['Country', 'Netball', 'Championships']
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col">
-      {/* Background Image */}
-      <div className="absolute inset-0 overflow-hidden">
+    <section ref={heroRef} className="relative w-full min-h-screen flex flex-col overflow-hidden">
+
+      {/* Parallax BG image */}
+      <div ref={imgRef} className="absolute inset-0 scale-110 will-change-transform">
         <img
           src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=1920&q=85&auto=format&fit=crop"
-          alt="Netball action"
+          alt=""
           className="w-full h-full object-cover object-center"
+          loading="eager"
         />
-        <div className="hero-overlay absolute inset-0" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-900/60 via-transparent to-transparent" />
       </div>
 
-      {/* Pink accent top */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-pink-gradient z-10" />
+      {/* Overlay layers */}
+      <div className="bg-hero-overlay absolute inset-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#081a3d] via-transparent to-transparent" />
+
+      {/* Pink top accent */}
+      <div className="pink-line-top" />
 
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col justify-center">
-        <div className="max-w-container mx-auto px-6 pt-24 pb-12 w-full">
-          <div className="max-w-2xl">
+        <div className="container-main w-full pt-28 pb-8">
 
-            {/* Invitation badge */}
-            <motion.div {...fadeUp(0.1)} className="flex flex-wrap items-center gap-3 mb-8">
-              <span className="inline-flex items-center gap-1.5 bg-pink-500 text-white text-xs font-bold tracking-[0.12em] uppercase px-4 py-2 rounded-full">
-                <Lock size={10} />
-                Invitation Only
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm text-white text-xs font-semibold px-4 py-2 rounded-full border border-white/20">
-                <MapPin size={11} />
-                Gold Coast, Queensland
-              </span>
-            </motion.div>
+          {/* Badges row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 2.4, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-wrap gap-3 mb-10"
+          >
+            <span className="badge-pink">
+              <Lock size={10} />
+              Invitation Only
+            </span>
+            <span className="badge-glass">
+              <MapPin size={10} />
+              Gold Coast, Queensland
+            </span>
+            <span className="badge-glass">
+              A Grade Premiership Clubs
+            </span>
+          </motion.div>
 
-            {/* Headline */}
-            <motion.h1 {...fadeUp(0.2)} className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[1.02] tracking-tight mb-6">
-              Country Netball<br />
-              <span className="text-pink-400">Championships</span><br />
-              Australia
-            </motion.h1>
-
-            {/* Subheadline */}
-            <motion.p {...fadeUp(0.35)} className="text-lg md:text-xl text-white/85 font-medium mb-3 leading-relaxed max-w-xl">
-              Australia's invitation-only country netball championship for A Grade premiership clubs.
-            </motion.p>
-
-            {/* Date */}
-            <motion.div {...fadeUp(0.42)} className="flex items-center gap-2 text-white/70 text-sm font-medium mb-10">
-              <Calendar size={15} className="text-pink-400" />
-              <span>5–8 November 2026 · Gold Coast, Queensland</span>
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div {...fadeUp(0.5)} className="flex flex-wrap gap-3">
-              <Button size="lg" onClick={scrollToRegister}>
-                Request Invitation
-              </Button>
-              <button
-                onClick={scrollToFormat}
-                className="inline-flex items-center gap-2 px-8 py-4 text-base font-bold text-white border-2 border-white/40 rounded-full hover:border-white hover:bg-white/10 transition-all duration-200"
+          {/* Headline — animated word by word */}
+          <div className="mb-4">
+            {headline.map((word, i) => (
+              <div key={word} className="overflow-hidden block">
+                <motion.span
+                  custom={i}
+                  variants={word_variants}
+                  initial="hidden"
+                  animate="visible"
+                  className={`
+                    block font-display leading-none tracking-wide
+                    text-[clamp(4.5rem,11vw,10rem)]
+                    ${i === 1 ? 'text-pink-grad' : 'text-white'}
+                  `}
+                  style={{ transitionDelay: `${2.0 + i * 0.1}s` }}
+                >
+                  {word}
+                </motion.span>
+              </div>
+            ))}
+            <div className="overflow-hidden">
+              <motion.span
+                custom={3}
+                variants={word_variants}
+                initial="hidden"
+                animate="visible"
+                className="block font-display leading-none tracking-wide text-white/90 text-[clamp(4.5rem,11vw,10rem)]"
               >
-                How It Works
-              </button>
-            </motion.div>
+                Australia
+              </motion.span>
+            </div>
           </div>
+
+          {/* Sub copy */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 2.7, ease: [0.16, 1, 0.3, 1] }}
+            className="text-white/70 text-lg md:text-xl font-medium max-w-lg mb-10 leading-relaxed"
+          >
+            Australia's invitation-only country netball championship for A Grade premiership clubs.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 2.9, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-wrap gap-4"
+          >
+            <MagneticButton
+              onClick={() => scrollTo('#register')}
+              className="bg-pink-grad text-white font-bold text-sm px-9 py-4 rounded-full shadow-pink hover:shadow-pink-lg transition-shadow duration-300"
+            >
+              Request Invitation
+            </MagneticButton>
+            <button
+              onClick={() => scrollTo('#experience')}
+              className="inline-flex items-center gap-2 text-white font-semibold text-sm px-8 py-4 rounded-full border border-white/30 hover:border-white hover:bg-white/10 transition-all duration-300"
+            >
+              Explore Experience
+              <ChevronDown size={15} />
+            </button>
+          </motion.div>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="relative z-10 w-full">
+      {/* Glass stats bar */}
+      <div className="relative z-10 container-main pb-0 w-full">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.7 }}
-          className="mx-4 md:mx-6 mb-0 max-w-container lg:mx-auto"
+          transition={{ duration: 0.9, delay: 3.1, ease: [0.16, 1, 0.3, 1] }}
+          className="glass rounded-2xl md:rounded-3xl px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-white/10"
         >
-          <div className="bg-white/10 nav-blur border border-white/20 rounded-2xl px-6 py-5 md:py-6 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
-            {stats.map(({ label, sub }) => (
-              <div key={label} className="text-center">
-                <div className="text-2xl md:text-3xl font-extrabold text-white leading-none">{label}</div>
-                <div className="text-xs font-semibold tracking-widest uppercase mt-1.5 text-white/60">{sub}</div>
-              </div>
-            ))}
-          </div>
+          {stats.map(({ value, label }) => (
+            <div key={label} className="text-center md:px-6 pt-4 md:pt-0 first:pt-0">
+              <div className="font-display text-3xl md:text-4xl text-white leading-none mb-1">{value}</div>
+              <div className="text-xs font-semibold text-white/55 tracking-widest uppercase">{label}</div>
+            </div>
+          ))}
         </motion.div>
       </div>
 
-      {/* Pink bottom edge */}
-      <div className="relative z-10 h-1.5 bg-pink-gradient mt-5" />
+      {/* Scroll indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 3.4 }}
+        className="relative z-10 flex justify-center py-8"
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          className="flex flex-col items-center gap-2 text-white/40 cursor-default"
+        >
+          <div className="w-5 h-8 border border-white/30 rounded-full flex justify-center pt-1.5">
+            <div className="w-1 h-2 bg-white/60 rounded-full" />
+          </div>
+          <span className="text-[10px] tracking-widest uppercase font-medium">Scroll</span>
+        </motion.div>
+      </motion.div>
+
+      {/* Pink bottom accent */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-grad" />
     </section>
   )
 }
