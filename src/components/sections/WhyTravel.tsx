@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { Users, Target, Briefcase, Heart, Star } from 'lucide-react'
 
 const roles = [
-  { title: 'PLAYERS',   desc: "Compete against Australia's leading country clubs.",          accent: '#ff2c91' },
-  { title: 'COACHES',   desc: 'Lead your club on the national stage.',                       accent: '#f4c14d' },
-  { title: 'OFFICIALS', desc: 'Celebrate the season with your committee and volunteers.',    accent: '#4dd9f4' },
-  { title: 'FAMILIES',  desc: 'Support your club and enjoy the Gold Coast.',                accent: '#ff2c91' },
-  { title: 'SUPPORTERS',desc: 'Travel with your team and be part of the atmosphere.',       accent: '#f4c14d' },
+  { icon: Users,     title: 'PLAYERS',    desc: "Compete against Australia's leading country clubs." },
+  { icon: Target,    title: 'COACHES',    desc: 'Lead your club on the national stage.' },
+  { icon: Briefcase, title: 'OFFICIALS',  desc: 'Celebrate the season with the volunteers and committee members who made it possible.' },
+  { icon: Heart,     title: 'FAMILIES',   desc: 'Turn the championship into a Gold Coast getaway.' },
+  { icon: Star,      title: 'SUPPORTERS', desc: 'Travel with your club and be part of the atmosphere.' },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -35,7 +36,7 @@ export default function WhyTravel() {
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {roles.map(({ title, desc, accent }, i) => (
+          {roles.map(({ icon: Icon, title, desc }, i) => (
             <motion.div
               key={title}
               initial={{ opacity: 0, y: prefersReduced ? 0 : 20 }}
@@ -44,38 +45,50 @@ export default function WhyTravel() {
               transition={{ duration: 0.5, delay: prefersReduced ? 0 : i * 0.08, ease }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
-              className="relative flex flex-col p-5 rounded-xl cursor-default overflow-hidden"
+              animate={{ y: hovered === i ? -4 : 0, transition: { duration: 0.22, ease } }}
+              className="relative flex flex-col p-5 rounded-2xl cursor-default overflow-hidden"
               style={{
-                background: hovered === i ? '#111111' : '#ffffff',
-                borderTop: `2px solid ${hovered === i ? accent : 'rgba(17,17,17,0.1)'}`,
+                background: '#0a0a0a',
+                borderTop: `2px solid ${hovered === i ? '#ff2c91' : 'rgba(255,44,145,0.25)'}`,
                 boxShadow: hovered === i
-                  ? `0 8px 32px rgba(0,0,0,0.18)`
-                  : '0 1px 8px rgba(0,0,0,0.05)',
-                transition: 'background 0.25s, border-color 0.25s, box-shadow 0.25s',
+                  ? '0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,44,145,0.12)'
+                  : '0 2px 12px rgba(0,0,0,0.2)',
+                transition: 'border-color 0.25s, box-shadow 0.25s',
               }}
             >
-              <h3
-                className="font-display leading-none mb-3 transition-colors duration-250"
+              {/* Icon */}
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 transition-all duration-250"
                 style={{
-                  fontSize: 'clamp(1.4rem, 2.5vw, 1.9rem)',
-                  color: hovered === i ? '#ffffff' : '#111111',
+                  background: hovered === i ? 'rgba(255,44,145,0.18)' : 'rgba(255,44,145,0.08)',
+                  border: '1px solid rgba(255,44,145,0.22)',
                 }}
+              >
+                <Icon size={15} style={{ color: '#ff2c91' }} />
+              </div>
+
+              {/* Title */}
+              <h3
+                className="font-display text-white leading-none mb-2"
+                style={{ fontSize: 'clamp(1.35rem, 2.4vw, 1.8rem)' }}
               >
                 {title}
               </h3>
+
+              {/* Description */}
               <p
                 className="text-xs leading-relaxed transition-colors duration-250"
-                style={{ color: hovered === i ? 'rgba(255,255,255,0.45)' : 'rgba(17,17,17,0.45)' }}
+                style={{ color: hovered === i ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}
               >
                 {desc}
               </p>
 
-              {/* Pink accent line bottom */}
+              {/* Radial glow on hover */}
               <div
-                className="absolute bottom-0 left-0 h-[2px] rounded-full transition-all duration-300"
+                className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300"
                 style={{
-                  background: accent,
-                  width: hovered === i ? '60%' : '0%',
+                  background: 'radial-gradient(ellipse at 50% 0%, rgba(255,44,145,0.1) 0%, transparent 70%)',
+                  opacity: hovered === i ? 1 : 0,
                 }}
               />
             </motion.div>
