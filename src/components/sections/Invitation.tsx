@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
-import { CheckCircle, Mail } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
 
 interface FormData {
   contactName: string
@@ -20,6 +20,8 @@ const stateOptions = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']
 const inputCls = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-[#ff2c91] focus:ring-2 focus:ring-[#ff2c91]/10 transition-all duration-200"
 const labelCls = "block text-xs font-bold tracking-wide text-[#1a1a1a]/60 mb-1.5 uppercase"
 
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
+
 export default function Invitation() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -33,8 +35,14 @@ export default function Invitation() {
   }
 
   return (
-    <section id="invitation" className="py-14 lg:py-20" style={{ background: '#111111' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8">
+    <section id="invitation" className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>
+      {/* Subtle photo tint at top */}
+      <div className="relative h-16 lg:h-24 overflow-hidden">
+        <img src="/hero-photo.webp" alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '65% 80%' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.3) 0%, rgba(13,13,13,1) 100%)' }} />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pb-20 lg:pb-28">
         <div className="grid lg:grid-cols-[5fr,7fr] gap-10 lg:gap-16 items-start">
 
           {/* Left */}
@@ -42,25 +50,50 @@ export default function Invitation() {
             initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.7, ease }}
             className="lg:sticky lg:top-24 pt-2"
           >
-            <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 4.5rem)' }}>
-              CHAMPIONSHIP<br />INVITATION<br /><span style={{ color: '#ff2c91' }}>REQUEST</span>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full" style={{ background: 'rgba(255,44,145,0.12)', border: '1px solid rgba(255,44,145,0.3)' }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#ff2c91' }} />
+              <span className="font-condensed font-bold text-[10px] tracking-[0.22em] uppercase" style={{ color: '#ff2c91' }}>
+                Invitation Only
+              </span>
+            </div>
+
+            <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)' }}>
+              REQUEST AN<br /><span style={{ color: '#ff2c91' }}>INVITATION</span>
             </h2>
-            <p className="text-white/55 text-base leading-relaxed mb-8">
-              Invitation requests are now open for eligible A Grade premiership clubs. Complete the form below to express interest in the 2026 Country Netball Championships Australia.
+            <p className="leading-relaxed mb-8" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)' }}>
+              Places are limited. Invitation requests are now open for eligible A Grade premiership clubs across Australia.
             </p>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#ff2c91] mb-4">Event Details</p>
-              <div className="space-y-2 text-sm text-white/70">
-                <p><span className="font-bold text-white">Date:</span> 5–8 November 2026</p>
-                <p><span className="font-bold text-white">Location:</span> Gold Coast, Queensland</p>
-                <p><span className="font-bold text-white">Eligibility:</span> A Grade Premiership Clubs</p>
-                <p><span className="font-bold text-white">Website:</span> cnca.com.au</p>
-                <p><span className="font-bold text-white">Email:</span> info@cnca.com.au</p>
-              </div>
+            {/* Prestige divider */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-[1px] flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <span className="font-condensed font-bold text-[9px] tracking-[0.25em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                Event Details
+              </span>
+              <div className="h-[1px] flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { label: 'Date', value: '5–8 November 2026' },
+                { label: 'Location', value: 'Gold Coast, Queensland' },
+                { label: 'Eligibility', value: 'A Grade Premiership Clubs' },
+                { label: 'Website', value: 'cnca.com.au' },
+                { label: 'Email', value: 'info@cnca.com.au' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="font-condensed font-bold text-xs tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    {label}
+                  </span>
+                  <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {value}
+                  </span>
+                </div>
+              ))}
             </div>
           </motion.div>
 
@@ -69,7 +102,7 @@ export default function Invitation() {
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7, delay: 0.1 }}
+            transition={{ duration: 0.7, delay: 0.1, ease }}
             className="bg-white rounded-3xl p-8 lg:p-10"
           >
             <AnimatePresence mode="wait">
@@ -90,9 +123,11 @@ export default function Invitation() {
                 </motion.div>
               ) : (
                 <form key="form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Mail size={16} style={{ color: '#ff2c91' }} />
-                    <h3 className="font-bold text-[#1a1a1a] text-base">Club Registration of Interest</h3>
+                  <div className="mb-6">
+                    <h3 className="font-display text-[#1a1a1a] leading-none mb-1" style={{ fontSize: '1.6rem' }}>
+                      Club Registration
+                    </h3>
+                    <p className="text-xs" style={{ color: 'rgba(17,17,17,0.4)' }}>Complete the form below to request your invitation.</p>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">

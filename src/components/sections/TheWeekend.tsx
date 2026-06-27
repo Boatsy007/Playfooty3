@@ -1,14 +1,38 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Trophy, Star, Music, Award, Utensils, MapPin } from 'lucide-react'
+import { Trophy, Star, Award, Music, Utensils, MapPin } from 'lucide-react'
 
 const events = [
-  { icon: Trophy,   title: 'National Championship', tag: 'Compete',   color: '#ff2c91' },
-  { icon: Star,     title: 'Opening Function',       tag: 'Social',    color: '#f4c14d' },
-  { icon: Award,    title: 'Awards Presentation',    tag: 'Celebrate', color: '#ff2c91' },
-  { icon: Music,    title: 'Live Entertainment',     tag: 'Sounds',    color: '#4dd9f4' },
-  { icon: Utensils, title: 'Food & Festival Zone',   tag: 'Eat',       color: '#f4c14d' },
-  { icon: MapPin,   title: 'Gold Coast Experiences', tag: 'Explore',   color: '#4dd9f4' },
+  {
+    num: '01', icon: Trophy, color: '#ff2c91',
+    title: 'National Championship',
+    desc: "Compete for Australia's premier A Grade country netball title.",
+  },
+  {
+    num: '02', icon: Star, color: '#f4c14d',
+    title: 'Opening Function',
+    desc: 'Celebrate with clubs from across Australia on night one.',
+  },
+  {
+    num: '03', icon: Award, color: '#ff2c91',
+    title: 'Awards Night',
+    desc: 'The nation\'s best recognised at the championship gala.',
+  },
+  {
+    num: '04', icon: Music, color: '#4dd9f4',
+    title: 'Live Entertainment',
+    desc: 'Music, atmosphere and celebration across the four days.',
+  },
+  {
+    num: '05', icon: Utensils, color: '#f4c14d',
+    title: 'Food & Festival Zone',
+    desc: 'A central hub throughout the event for the whole club.',
+  },
+  {
+    num: '06', icon: MapPin, color: '#4dd9f4',
+    title: 'Gold Coast Experiences',
+    desc: 'Beaches, dining and world-class attractions on your doorstep.',
+  },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -19,88 +43,108 @@ export default function TheWeekend() {
 
   return (
     <section id="the-weekend" style={{ background: '#0d0d0d' }}>
+
       {/* Photo band */}
-      <div className="relative w-full overflow-hidden" style={{ height: 'clamp(220px, 38vw, 420px)' }}>
+      <div className="relative w-full overflow-hidden" style={{ height: 'clamp(260px, 42vw, 500px)' }}>
         <img
           src="/hero-photo.webp"
           alt="Championship action"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: '65% 25%' }}
+          style={{ objectPosition: '65% 28%' }}
         />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.15) 0%, rgba(13,13,13,0.0) 40%, rgba(13,13,13,0.9) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,0.0) 35%, rgba(13,13,13,1) 100%)' }} />
+        <div className="absolute inset-x-0 bottom-0 px-6 sm:px-10 lg:px-16 pb-12">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease }}
+            className="font-display text-white leading-none"
+            style={{ fontSize: 'clamp(3.5rem, 10vw, 9rem)' }}
+          >
+            THE <span style={{ color: '#ff2c91' }}>WEEKEND</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.15, ease }}
+            className="font-condensed font-semibold tracking-wide mt-2"
+            style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)', color: 'rgba(255,255,255,0.4)' }}
+          >
+            Four days of competition, celebration and connection.
+          </motion.p>
+        </div>
       </div>
 
-      {/* Editorial layout */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-16 lg:py-24">
-        <div className="grid lg:grid-cols-[5fr,7fr] gap-12 lg:gap-20">
-
-          {/* Left: header + pull quote */}
-          <div className="lg:sticky lg:top-28 self-start">
-            <motion.div
-              initial={{ opacity: 0, x: prefersReduced ? 0 : -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.7, ease }}
+      {/* Event cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map(({ num, icon: Icon, color, title, desc }, i) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, y: prefersReduced ? 0 : 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.55, delay: prefersReduced ? 0 : i * 0.07, ease }}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            className="relative flex flex-col p-8 lg:p-10 cursor-default overflow-hidden"
+            style={{
+              borderTop: `3px solid ${hovered === i ? color : 'rgba(255,255,255,0.07)'}`,
+              borderRight: '1px solid rgba(255,255,255,0.05)',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              background: hovered === i ? `${color}08` : 'transparent',
+              transition: 'border-color 0.3s, background 0.3s',
+            }}
+          >
+            {/* Number */}
+            <span
+              className="font-condensed font-bold text-xs tracking-[0.18em] mb-6 block transition-colors duration-300"
+              style={{ color: hovered === i ? color : 'rgba(255,255,255,0.2)' }}
             >
-              <h2 className="font-display text-white leading-none mb-6" style={{ fontSize: 'clamp(3.5rem, 8vw, 7rem)' }}>
-                THE<br />WEEKEND
-              </h2>
-              <p className="leading-relaxed mb-10" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.38)', maxWidth: '26ch' }}>
-                Four days of competition, celebration and connection on the Gold Coast.
-              </p>
-              <blockquote className="font-serif italic border-l-2 pl-5" style={{ borderColor: '#ff2c91', color: 'rgba(255,255,255,0.5)', fontSize: '1.1rem', lineHeight: 1.7 }}>
-                "A weekend your whole club will never forget."
-              </blockquote>
-            </motion.div>
-          </div>
+              {num}
+            </span>
 
-          {/* Right: event list */}
-          <div>
-            {events.map(({ icon: Icon, title, tag, color }, i) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: prefersReduced ? 0 : 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.5, delay: prefersReduced ? 0 : i * 0.07, ease }}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
-                className="flex items-center justify-between py-6 cursor-default"
-                style={{ borderBottom: `1px solid ${hovered === i ? `${color}35` : 'rgba(255,255,255,0.07)'}`, transition: 'border-color 0.25s' }}
-              >
-                <div className="flex items-center gap-5">
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{
-                      background: hovered === i ? `${color}22` : `${color}10`,
-                      border: `1px solid ${color}28`,
-                      transition: 'background 0.25s',
-                    }}
-                  >
-                    <Icon size={14} style={{ color }} />
-                  </div>
-                  <span
-                    className="font-display leading-none"
-                    style={{
-                      fontSize: 'clamp(1.4rem, 3vw, 2rem)',
-                      color: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.7)',
-                      transition: 'color 0.25s',
-                    }}
-                  >
-                    {title.toUpperCase()}
-                  </span>
-                </div>
-                <span
-                  className="font-condensed font-bold text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full shrink-0 ml-4"
-                  style={{ color, background: `${color}12`, border: `1px solid ${color}22` }}
-                >
-                  {tag}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+            {/* Icon */}
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center mb-6 transition-all duration-300"
+              style={{
+                background: hovered === i ? `${color}25` : `${color}12`,
+                border: `1px solid ${color}30`,
+              }}
+            >
+              <Icon size={18} style={{ color }} />
+            </div>
 
-        </div>
+            {/* Title */}
+            <h3
+              className="font-display text-white leading-none mb-3 transition-colors duration-300"
+              style={{
+                fontSize: 'clamp(1.6rem, 3vw, 2.2rem)',
+                color: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.85)',
+              }}
+            >
+              {title.toUpperCase()}
+            </h3>
+
+            {/* Description */}
+            <p
+              className="text-sm leading-relaxed transition-colors duration-300"
+              style={{ color: hovered === i ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.28)' }}
+            >
+              {desc}
+            </p>
+
+            {/* Glow on hover */}
+            <div
+              className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+              style={{
+                background: `radial-gradient(ellipse at 50% 0%, ${color}12 0%, transparent 70%)`,
+                opacity: hovered === i ? 1 : 0,
+              }}
+            />
+          </motion.div>
+        ))}
       </div>
     </section>
   )

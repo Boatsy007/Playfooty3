@@ -8,74 +8,82 @@ export default function WhoAttends() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section id="who-attends" style={{ background: '#f7f5f2' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-16 lg:py-0">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-0 items-start">
+    <section
+      id="who-attends"
+      className="relative overflow-hidden"
+      style={{ minHeight: 'clamp(560px, 90vh, 1000px)' }}
+    >
+      {/* Full-bleed photo */}
+      <img
+        src="/hero-photo.webp"
+        alt="The whole club"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: '70% center' }}
+      />
 
-          {/* Left: sticky photo */}
-          <div className="lg:sticky lg:top-0 lg:h-screen flex flex-col justify-center lg:pr-16 py-16 lg:py-0">
-            <motion.div
-              initial={{ opacity: 0, y: prefersReduced ? 0 : 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.7, ease }}
-            >
-              <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: '4/5' }}>
-                <img
-                  src="/hero-photo.webp"
-                  alt="Championship players and supporters"
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: '65% 15%' }}
-                />
-                <div className="absolute inset-0 rounded-2xl" style={{ background: 'linear-gradient(to top, rgba(17,17,17,0.55) 0%, transparent 55%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-7">
-                  <p className="font-serif italic leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)', fontSize: '1rem' }}>
-                    "Country netball is built by more than players alone."
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+      {/* Overlays */}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.55) 0%, rgba(13,13,13,0.1) 30%, rgba(13,13,13,0.85) 100%)' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(13,13,13,0.7) 0%, rgba(13,13,13,0.2) 60%, transparent 100%)' }} />
 
-          {/* Right: large stacked type */}
-          <div className="lg:pl-16 lg:py-24 flex flex-col justify-center" style={{ borderLeft: '1px solid rgba(17,17,17,0.08)' }}>
-            <motion.div
-              initial={{ opacity: 0, y: prefersReduced ? 0 : 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.7, ease }}
-            >
-              <h2 className="font-display leading-none mb-6" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', color: '#111111' }}>
-                THE<br />WHOLE<br />CLUB
-              </h2>
-              <p className="leading-relaxed mb-12" style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '32ch' }}>
-                CNCA brings together everyone who contributes to country netball.
-              </p>
-            </motion.div>
+      {/* Content */}
+      <div className="relative z-10 flex flex-col justify-between h-full min-h-[inherit] px-6 sm:px-10 lg:px-16 py-14">
 
-            <div>
-              {roles.map((role, i) => (
-                <motion.div
-                  key={role}
-                  initial={{ opacity: 0, x: prefersReduced ? 0 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: '-20px' }}
-                  transition={{ duration: 0.5, delay: prefersReduced ? 0 : i * 0.07, ease }}
-                  className="py-4"
-                  style={{ borderBottom: '1px solid rgba(17,17,17,0.07)' }}
+        {/* Top label */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease }}
+        >
+          <p className="font-condensed font-bold tracking-[0.28em] text-xs uppercase" style={{ color: '#f4c14d' }}>
+            Who Attends
+          </p>
+        </motion.div>
+
+        {/* Center headline */}
+        <motion.div
+          initial={{ opacity: 0, scale: prefersReduced ? 1 : 0.96 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease }}
+          className="text-center"
+        >
+          <h2
+            className="font-display text-white leading-none"
+            style={{ fontSize: 'clamp(4rem, 14vw, 13rem)', textShadow: '0 4px 40px rgba(0,0,0,0.5)' }}
+          >
+            THE WHOLE<br /><span style={{ color: '#ff2c91' }}>CLUB</span>
+          </h2>
+        </motion.div>
+
+        {/* Bottom roles band */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.2, ease }}
+          className="flex flex-wrap items-center gap-x-0 gap-y-2"
+        >
+          {roles.map((role, i) => (
+            <div key={role} className="flex items-center">
+              <span
+                className="font-display text-white leading-none"
+                style={{ fontSize: 'clamp(1.4rem, 3.5vw, 2.8rem)', textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}
+              >
+                {role}
+              </span>
+              {i < roles.length - 1 && (
+                <span
+                  className="mx-3 lg:mx-5 font-condensed font-bold"
+                  style={{ color: '#ff2c91', fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}
                 >
-                  <span
-                    className="font-display leading-none block"
-                    style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', color: '#111111' }}
-                  >
-                    {role}
-                  </span>
-                </motion.div>
-              ))}
+                  ·
+                </span>
+              )}
             </div>
-          </div>
+          ))}
+        </motion.div>
 
-        </div>
       </div>
     </section>
   )
