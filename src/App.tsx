@@ -6,10 +6,11 @@ import Hero from './components/sections/Hero'
 import Stats from './components/sections/Stats'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
-const TheWeekend         = lazy(() => import('./components/sections/TheWeekend'))
-const WhoAttends         = lazy(() => import('./components/sections/WhoAttends'))
+const TheWeekend          = lazy(() => import('./components/sections/TheWeekend'))
+const Invitation          = lazy(() => import('./components/sections/Invitation'))
+const Statement           = lazy(() => import('./components/sections/Statement'))
+const WhoAttends          = lazy(() => import('./components/sections/WhoAttends'))
 const OneNationalChampion = lazy(() => import('./components/sections/OneNationalChampion'))
-const Invitation         = lazy(() => import('./components/sections/Invitation'))
 
 const Blank = ({ h = 400 }: { h?: number }) => (
   <div style={{ minHeight: `${h}px` }} />
@@ -26,14 +27,17 @@ export default function App() {
         <Suspense fallback={<Blank h={600} />}>
           <TheWeekend />
         </Suspense>
+        <Suspense fallback={<Blank h={600} />}>
+          <Invitation />
+        </Suspense>
+        <Suspense fallback={<Blank h={400} />}>
+          <Statement />
+        </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <WhoAttends />
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <OneNationalChampion />
-        </Suspense>
-        <Suspense fallback={<Blank h={600} />}>
-          <Invitation />
         </Suspense>
       </main>
       <Footer />
