@@ -6,32 +6,32 @@ const events = [
   {
     num: '01', icon: Trophy, color: '#ff2c91',
     title: 'National Championship',
-    desc: "Compete for Australia's premier A Grade country netball title.",
+    desc: "Australia's leading A Grade country clubs compete for one national title.",
   },
   {
     num: '02', icon: Star, color: '#f4c14d',
     title: 'Opening Function',
-    desc: 'Celebrate with clubs from across Australia on night one.',
+    desc: 'Clubs from across Australia come together to launch championship weekend.',
   },
   {
     num: '03', icon: Award, color: '#ff2c91',
     title: 'Awards Night',
-    desc: 'The nation\'s best recognised at the championship gala.',
+    desc: 'Celebrate the players, coaches and clubs that define the season.',
   },
   {
     num: '04', icon: Music, color: '#4dd9f4',
     title: 'Live Entertainment',
-    desc: 'Music, atmosphere and celebration across the four days.',
+    desc: 'Music, atmosphere and celebration throughout the championship.',
   },
   {
     num: '05', icon: Utensils, color: '#f4c14d',
     title: 'Food & Festival Zone',
-    desc: 'A central hub throughout the event for the whole club.',
+    desc: 'A central meeting place for players, families and supporters.',
   },
   {
     num: '06', icon: MapPin, color: '#4dd9f4',
     title: 'Gold Coast Experiences',
-    desc: 'Beaches, dining and world-class attractions on your doorstep.',
+    desc: 'Extend the trip and enjoy everything the Gold Coast has to offer.',
   },
 ]
 
@@ -72,7 +72,7 @@ export default function TheWeekend() {
             className="font-condensed font-semibold tracking-wide mt-2"
             style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)', color: 'rgba(255,255,255,0.4)' }}
           >
-            Four days of competition, celebration and connection.
+            Four days of competition, celebration and unforgettable country netball moments.
           </motion.p>
         </div>
       </div>

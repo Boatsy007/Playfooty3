@@ -25,14 +25,14 @@ export default function App() {
         <Ticker />
         <Hero />
         <Stats />
+        <Suspense fallback={<Blank h={400} />}>
+          <Statement />
+        </Suspense>
         <Suspense fallback={<Blank h={600} />}>
           <TheWeekend />
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <WhyTravel />
-        </Suspense>
-        <Suspense fallback={<Blank h={400} />}>
-          <Statement />
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <WhoAttends />
