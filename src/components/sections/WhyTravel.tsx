@@ -3,9 +3,9 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Users, Target, Briefcase, Heart, Star } from 'lucide-react'
 
 const roles = [
-  { icon: Users,     title: 'PLAYERS',    desc: "Compete against Australia's leading country clubs." },
-  { icon: Target,    title: 'COACHES',    desc: 'Lead your club on the national stage.' },
-  { icon: Briefcase, title: 'OFFICIALS',  desc: 'Celebrate the season with the volunteers and committee members who made it possible.' },
+  { icon: Users,     title: 'PLAYERS',    desc: "Compete against Australia's leading country netball clubs for the national title." },
+  { icon: Target,    title: 'COACHES',    desc: 'Lead your club onto the national stage.' },
+  { icon: Briefcase, title: 'OFFICIALS',  desc: 'Celebrate the season alongside the volunteers and committee members who made it possible.' },
   { icon: Heart,     title: 'FAMILIES',   desc: 'Turn the championship into a Gold Coast getaway.' },
   { icon: Star,      title: 'SUPPORTERS', desc: 'Travel with your club and be part of the atmosphere.' },
 ]
@@ -28,10 +28,10 @@ export default function WhyTravel() {
           className="mb-10"
         >
           <h2 className="font-display leading-none mb-4" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)', color: '#111111' }}>
-            ONE CLUB.<br /><span style={{ color: '#ff2c91' }}>THE WHOLE COMMUNITY.</span>
+            MORE THAN A<br /><span style={{ color: '#ff2c91' }}>CHAMPIONSHIP.</span>
           </h2>
           <p className="leading-relaxed" style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '56ch' }}>
-            CNCA is designed for more than players. Clubs travel together, celebrate together and create memories that last long after the final whistle.
+            The Country Netball Championships is where players, coaches, officials, families and supporters come together to celebrate the season and experience a true national event.
           </p>
         </motion.div>
 
