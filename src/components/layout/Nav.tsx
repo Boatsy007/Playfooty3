@@ -9,7 +9,7 @@ const links = [
 ]
 
 const Logo = () => (
-  <img src="/logo.webp" alt="CNCA Country Netball Championships Australia" className="h-14 w-auto" />
+  <img src="/logo.webp" alt="CNCA Country Netball Championships Australia" className="h-20 w-auto" />
 )
 
 export default function Nav() {
