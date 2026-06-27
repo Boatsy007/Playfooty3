@@ -10,6 +10,7 @@ const Statement           = lazy(() => import('./components/sections/Statement')
 const TheWeekend          = lazy(() => import('./components/sections/TheWeekend'))
 const WhyTravel           = lazy(() => import('./components/sections/WhyTravel'))
 const OneNationalChampion = lazy(() => import('./components/sections/OneNationalChampion'))
+const NotCompeting        = lazy(() => import('./components/sections/NotCompeting'))
 const Invitation          = lazy(() => import('./components/sections/Invitation'))
 
 const Blank = ({ h = 400 }: { h?: number }) => (
@@ -35,6 +36,9 @@ export default function App() {
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <OneNationalChampion />
+        </Suspense>
+        <Suspense fallback={<Blank h={700} />}>
+          <NotCompeting />
         </Suspense>
         <Suspense fallback={<Blank h={600} />}>
           <Invitation />
