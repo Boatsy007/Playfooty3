@@ -6,32 +6,32 @@ const events = [
   {
     num: '01', icon: Trophy, color: '#ff2c91',
     title: 'National Championship',
-    desc: "Australia's leading A Grade country clubs compete for one national title.",
+    desc: "The country's best A Grade clubs competing for one national title.",
   },
   {
     num: '02', icon: Star, color: '#f4c14d',
     title: 'Opening Function',
-    desc: 'Clubs from across Australia come together to launch championship weekend.',
+    desc: 'A championship welcome bringing together clubs from across Australia.',
   },
   {
     num: '03', icon: Award, color: '#ff2c91',
     title: 'Awards Night',
-    desc: 'Celebrate the players, coaches and clubs that define the season.',
+    desc: 'Recognising outstanding players, coaches and clubs from the season.',
   },
   {
     num: '04', icon: Music, color: '#4dd9f4',
     title: 'Live Entertainment',
-    desc: 'Music, atmosphere and celebration throughout the championship.',
+    desc: 'Music, atmosphere and entertainment throughout the championship weekend.',
   },
   {
     num: '05', icon: Utensils, color: '#f4c14d',
     title: 'Food & Festival Zone',
-    desc: 'A central meeting place for players, families and supporters.',
+    desc: 'A central gathering place for players, families and supporters.',
   },
   {
     num: '06', icon: MapPin, color: '#4dd9f4',
     title: 'Gold Coast Experiences',
-    desc: 'Extend the trip and enjoy everything the Gold Coast has to offer.',
+    desc: 'Beaches, attractions and unforgettable moments beyond the court.',
   },
 ]
 
@@ -44,7 +44,7 @@ export default function TheWeekend() {
   return (
     <section id="the-weekend" style={{ background: '#0d0d0d' }}>
 
-      {/* Photo band */}
+      {/* Photo band with headline overlay */}
       <div className="relative w-full overflow-hidden" style={{ height: 'clamp(260px, 42vw, 500px)' }}>
         <img
           src="/hero-photo.webp"
@@ -52,76 +52,76 @@ export default function TheWeekend() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: '65% 28%' }}
         />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,0.0) 35%, rgba(13,13,13,1) 100%)' }} />
-        <div className="absolute inset-x-0 bottom-0 px-6 sm:px-10 lg:px-16 pb-12">
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,13,13,0.1) 0%, rgba(13,13,13,0.0) 30%, rgba(13,13,13,1) 100%)' }} />
+        <div className="absolute inset-x-0 bottom-0 px-6 sm:px-10 lg:px-16 pb-10">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease }}
             className="font-display text-white leading-none"
-            style={{ fontSize: 'clamp(3.5rem, 10vw, 9rem)' }}
+            style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
           >
-            THE <span style={{ color: '#ff2c91' }}>WEEKEND</span>
+            THE <span style={{ color: '#ff2c91' }}>CHAMPIONSHIP</span><br />EXPERIENCE
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.15, ease }}
-            className="font-condensed font-semibold tracking-wide mt-2"
-            style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)', color: 'rgba(255,255,255,0.4)' }}
+            className="mt-3 leading-relaxed"
+            style={{ fontSize: 'clamp(0.85rem, 1.6vw, 1rem)', color: 'rgba(255,255,255,0.38)', maxWidth: '56ch' }}
           >
-            Four days of competition, celebration and unforgettable country netball moments.
+            Four days of competition, connection and celebration as Australia's leading country netball clubs come together on the Gold Coast.
           </motion.p>
         </div>
       </div>
 
-      {/* Event cards */}
+      {/* Event cards — compact */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {events.map(({ num, icon: Icon, color, title, desc }, i) => (
           <motion.div
             key={title}
-            initial={{ opacity: 0, y: prefersReduced ? 0 : 24 }}
+            initial={{ opacity: 0, y: prefersReduced ? 0 : 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.55, delay: prefersReduced ? 0 : i * 0.07, ease }}
+            viewport={{ once: true, margin: '-30px' }}
+            transition={{ duration: 0.5, delay: prefersReduced ? 0 : i * 0.06, ease }}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
-            className="relative flex flex-col p-8 lg:p-10 cursor-default overflow-hidden"
+            className="relative flex flex-col p-5 lg:p-6 cursor-default overflow-hidden"
             style={{
-              borderTop: `3px solid ${hovered === i ? color : 'rgba(255,255,255,0.07)'}`,
+              borderTop: `2px solid ${hovered === i ? color : 'rgba(255,255,255,0.07)'}`,
               borderRight: '1px solid rgba(255,255,255,0.05)',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
               background: hovered === i ? `${color}08` : 'transparent',
-              transition: 'border-color 0.3s, background 0.3s',
+              transition: 'border-color 0.25s, background 0.25s',
             }}
           >
-            {/* Number */}
-            <span
-              className="font-condensed font-bold text-xs tracking-[0.18em] mb-6 block transition-colors duration-300"
-              style={{ color: hovered === i ? color : 'rgba(255,255,255,0.2)' }}
-            >
-              {num}
-            </span>
-
-            {/* Icon */}
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center mb-6 transition-all duration-300"
-              style={{
-                background: hovered === i ? `${color}25` : `${color}12`,
-                border: `1px solid ${color}30`,
-              }}
-            >
-              <Icon size={18} style={{ color }} />
+            {/* Number + icon row */}
+            <div className="flex items-center justify-between mb-4">
+              <span
+                className="font-condensed font-bold text-xs tracking-[0.18em] transition-colors duration-250"
+                style={{ color: hovered === i ? color : 'rgba(255,255,255,0.22)' }}
+              >
+                {num}
+              </span>
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-250"
+                style={{
+                  background: hovered === i ? `${color}28` : `${color}12`,
+                  border: `1px solid ${color}28`,
+                }}
+              >
+                <Icon size={14} style={{ color }} />
+              </div>
             </div>
 
             {/* Title */}
             <h3
-              className="font-display text-white leading-none mb-3 transition-colors duration-300"
+              className="font-display leading-none mb-2 transition-colors duration-250"
               style={{
-                fontSize: 'clamp(1.6rem, 3vw, 2.2rem)',
-                color: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.85)',
+                fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)',
+                color: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.88)',
               }}
             >
               {title.toUpperCase()}
@@ -129,17 +129,17 @@ export default function TheWeekend() {
 
             {/* Description */}
             <p
-              className="text-sm leading-relaxed transition-colors duration-300"
-              style={{ color: hovered === i ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.28)' }}
+              className="text-xs leading-relaxed transition-colors duration-250"
+              style={{ color: hovered === i ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}
             >
               {desc}
             </p>
 
-            {/* Glow on hover */}
+            {/* Radial glow */}
             <div
               className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
-                background: `radial-gradient(ellipse at 50% 0%, ${color}12 0%, transparent 70%)`,
+                background: `radial-gradient(ellipse at 50% 0%, ${color}10 0%, transparent 65%)`,
                 opacity: hovered === i ? 1 : 0,
               }}
             />
