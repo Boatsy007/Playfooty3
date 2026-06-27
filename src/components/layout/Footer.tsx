@@ -13,7 +13,7 @@ export default memo(function Footer() {
           </div>
         </div>
         <p className="text-white/30 text-xs text-center">
-          &copy; 2026 Australian Club Netball Championships. All rights reserved.
+          &copy; 2027 Australian Club Netball Championships. All rights reserved.
         </p>
         <div className="flex gap-5">
           {['Privacy', 'Terms'].map(t => (

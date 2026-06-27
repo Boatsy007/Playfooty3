@@ -20,8 +20,8 @@ interface Day {
 const days: Day[] = [
   {
     id: 'thu',
-    day: 'Thursday',
-    date: '5 Nov',
+    day: 'Day One',
+    date: 'Oct 2027',
     theme: 'Arrival + Welcome Function',
     events: [
       { time: 'Morning', title: 'Venue Opens', desc: 'Championship venue opens for arrivals', icon: Sun },
@@ -31,8 +31,8 @@ const days: Day[] = [
   },
   {
     id: 'fri',
-    day: 'Friday',
-    date: '6 Nov',
+    day: 'Day Two',
+    date: 'Day 2',
     theme: 'Pool Matches',
     events: [
       { time: 'Morning', title: 'Pool Play Begins', desc: 'A Grade pool matches get underway', icon: Sun },
@@ -43,8 +43,8 @@ const days: Day[] = [
   },
   {
     id: 'sat',
-    day: 'Saturday',
-    date: '7 Nov',
+    day: 'Day Three',
+    date: 'Day 3',
     theme: 'Finals + Celebration',
     events: [
       { time: 'Morning', title: 'Semi-Finals', desc: 'Top clubs from pool play compete for a Grand Final spot', icon: Sun },
@@ -54,8 +54,8 @@ const days: Day[] = [
   },
   {
     id: 'sun',
-    day: 'Sunday',
-    date: '8 Nov',
+    day: 'Day Four',
+    date: 'Day 4',
     theme: 'Grand Final + Presentation',
     events: [
       { time: 'Morning', title: 'Grand Final Day Opens', desc: 'The final day of championship begins', icon: Sun },

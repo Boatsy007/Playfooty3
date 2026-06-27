@@ -88,7 +88,7 @@ export default function HowItWorks() {
               THE CHAMPIONSHIP WEEKEND
             </p>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Competition by day. Celebration by night. Gold Coast, 5–8 November 2026.
+              Competition by day. Celebration by night. Gold Coast, October 2027.
             </p>
           </div>
           <button

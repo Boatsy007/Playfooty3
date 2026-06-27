@@ -46,7 +46,7 @@ export default function TheWeekend() {
           className="max-w-4xl"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-xs uppercase mb-5" style={{ color: '#f4c14d' }}>
-            Gold Coast · 5–8 November 2026
+            Gold Coast · October 2027
           </p>
           <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(3rem, 9vw, 9rem)' }}>
             THE <span style={{ color: '#ff2c91' }}>EVENT</span><br />EXPERIENCE

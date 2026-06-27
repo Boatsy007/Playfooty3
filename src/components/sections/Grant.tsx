@@ -82,7 +82,7 @@ export default function Grant() {
             <div className="col-span-2 bg-pink-gradient rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">CNCA 2026</p>
+                  <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">CNCA 2027</p>
                   <p className="text-xl font-extrabold text-white mb-1">Major Prize Package</p>
                   <p className="text-white/65 text-sm">Details to be announced. Register interest to stay informed.</p>
                 </div>

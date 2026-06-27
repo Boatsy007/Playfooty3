@@ -97,7 +97,7 @@ export default function PageLoader() {
             className="absolute bottom-8 left-0 right-0 flex justify-center"
           >
             <span className="text-xs text-white/30 tracking-widest uppercase">
-              Gold Coast · 5–8 November 2026
+              Gold Coast · October 2027
             </span>
           </motion.div>
         </motion.div>

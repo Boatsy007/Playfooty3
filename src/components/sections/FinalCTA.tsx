@@ -82,7 +82,7 @@ export default function FinalCTA() {
             transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="text-white/80 text-base md:text-xl font-medium max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — 5–8 November 2026.
+            A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — October 2027.
           </motion.p>
 
           {/* CTA */}

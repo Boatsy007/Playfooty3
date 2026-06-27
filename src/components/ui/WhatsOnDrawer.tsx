@@ -43,7 +43,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
                 THE WEEKEND
               </Drawer.Title>
               <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#ff2c91' }}>
-                Gold Coast · 5–8 November 2026
+                Gold Coast · October 2027
               </p>
             </div>
 
@@ -75,7 +75,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
               <div className="mt-5 mb-2 rounded-2xl p-5" style={{ background: 'rgba(255,44,145,0.08)', border: '1px solid rgba(255,44,145,0.2)' }}>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {[
-                    { icon: Calendar, text: '5–8 Nov 2026' },
+                    { icon: Calendar, text: 'October 2027' },
                     { icon: MapPin,   text: 'Gold Coast, QLD' },
                     { icon: Lock,     text: 'Invite Only' },
                     { icon: Trophy,   text: 'A Grade Premiers' },
@@ -88,7 +88,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
                   ))}
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  A Grade premiers from across Australia competing for the national title. Gold Coast, 5–8 November 2026.
+                  A Grade premiers from across Australia competing for the national title. Gold Coast, October 2027.
                 </p>
               </div>
             </div>

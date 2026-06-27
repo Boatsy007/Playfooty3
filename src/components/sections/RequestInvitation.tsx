@@ -82,7 +82,7 @@ export default function RequestInvitation() {
                 {[
                   ['Name', 'Country Netball Championships Australia'],
                   ['Short Name', 'CNCA'],
-                  ['Date', '5–8 November 2026'],
+                  ['Date', 'October 2027'],
                   ['Location', 'Gold Coast, Queensland'],
                   ['Competition', 'A Grade — Invitation Only'],
                 ].map(([label, value]) => (
@@ -114,7 +114,7 @@ export default function RequestInvitation() {
                 </div>
                 <h3 className="text-2xl font-extrabold text-navy-700 mb-3">Request Received</h3>
                 <p className="text-navy-400 leading-relaxed max-w-sm mx-auto">
-                  Thank you for your interest in CNCA 2026. We'll be in touch with invitation details, competition format and accommodation information.
+                  Thank you for your interest in CNCA 2027. We'll be in touch with invitation details, competition format and accommodation information.
                 </p>
               </motion.div>
             ) : (

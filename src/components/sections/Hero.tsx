@@ -37,7 +37,7 @@ export default function Hero() {
           className="font-condensed font-bold tracking-[0.28em] uppercase mb-7"
           style={{ fontSize: '0.75rem', color: '#f4c14d' }}
         >
-          Gold Coast &nbsp;•&nbsp; 5–8 November 2026
+          Gold Coast &nbsp;•&nbsp; October 2027
         </motion.p>
 
         {/* Headline */}

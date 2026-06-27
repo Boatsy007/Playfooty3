@@ -82,7 +82,7 @@ export default function Invitation() {
 
             <div className="space-y-3">
               {[
-                { label: 'Date', value: '5–8 November 2026' },
+                { label: 'Date', value: 'October 2027' },
                 { label: 'Location', value: 'Gold Coast, Queensland' },
                 { label: 'Eligibility', value: 'A Grade Premiership Clubs' },
                 { label: 'Website', value: 'cnca.com.au' },
