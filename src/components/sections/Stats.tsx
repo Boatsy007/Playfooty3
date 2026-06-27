@@ -1,10 +1,10 @@
 import { motion, useReducedMotion } from 'framer-motion'
 
 const stats = [
-  { num: '343+',     numSize: 'clamp(3.5rem, 8vw, 7.5rem)', label: 'Eligible Clubs',    sub: 'A Grade premiers from leagues across Australia', accent: '#ff2c91' },
-  { num: '24',       numSize: 'clamp(4rem, 9vw, 8rem)',      label: 'Invited Clubs',     sub: 'A limited national championship field',          accent: '#f4c14d' },
-  { num: '1',        numSize: 'clamp(4rem, 9vw, 8rem)',      label: 'National Champion', sub: 'One club will lift the CNCA Championship Trophy', accent: '#ff2c91' },
-  { num: 'AUSTRALIA',numSize: 'clamp(1.6rem, 3.5vw, 3.2rem)', label: 'Wide',            sub: 'Clubs from regional and country communities across the nation', accent: '#4dd9f4' },
+  { num: '2027',  numSize: 'clamp(3rem, 7vw, 6.5rem)',  label: 'Inaugural Year',       sub: 'Gold Coast, Queensland',                          accent: '#ff2c91' },
+  { num: '4',     numSize: 'clamp(4rem, 9vw, 8rem)',    label: 'Days',                  sub: 'Championship weekend',                            accent: '#f4c14d' },
+  { num: '1',     numSize: 'clamp(4rem, 9vw, 8rem)',    label: 'National Title',        sub: 'One champion crowned',                            accent: '#ff2c91' },
+  { num: '100+',  numSize: 'clamp(3rem, 7vw, 6.5rem)', label: 'Leagues & Associations', sub: 'Country and regional pathways across Australia',  accent: '#4dd9f4' },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
