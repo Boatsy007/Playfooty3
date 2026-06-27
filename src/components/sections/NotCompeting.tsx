@@ -116,8 +116,8 @@ export default function NotCompeting() {
               transition={{ duration: 0.5, delay: prefersReduced ? 0 : i * 0.07, ease }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
-              animate={{ scale: hovered === i ? 1.01 : 1, transition: { duration: 0.2, ease } }}
-              className="relative flex flex-col p-7 lg:p-8 cursor-default"
+              animate={{ y: hovered === i ? -3 : 0, transition: { duration: 0.2, ease } }}
+              className="relative flex flex-col p-7 lg:p-8 cursor-default min-w-0"
               style={{
                 background: hovered === i ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
                 borderTop: `2px solid ${hovered === i ? accent : `${accent}30`}`,
@@ -224,7 +224,6 @@ export default function NotCompeting() {
                 padding: '0.9rem 2rem',
                 letterSpacing: '0.06em',
                 boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
-                whiteSpace: 'nowrap',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.background = '#cc1f6e'
