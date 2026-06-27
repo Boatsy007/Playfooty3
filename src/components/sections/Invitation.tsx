@@ -64,8 +64,11 @@ export default function Invitation() {
             <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)' }}>
               REQUEST AN<br /><span style={{ color: '#ff2c91' }}>INVITATION</span>
             </h2>
-            <p className="leading-relaxed mb-8" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)' }}>
-              Places are limited. Invitation requests are now open for eligible A Grade premiership clubs across Australia.
+            <p className="leading-relaxed mb-3" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)' }}>
+              Invitation requests are now open for eligible A Grade premiership clubs across Australia. Places are limited.
+            </p>
+            <p className="mb-8 font-condensed font-bold text-xs tracking-[0.18em] uppercase" style={{ color: 'rgba(255,44,145,0.7)' }}>
+              Limited inaugural championship field.
             </p>
 
             {/* Prestige divider */}

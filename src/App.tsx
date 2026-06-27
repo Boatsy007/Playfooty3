@@ -6,10 +6,9 @@ import Hero from './components/sections/Hero'
 import Stats from './components/sections/Stats'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
+const Statement           = lazy(() => import('./components/sections/Statement'))
 const TheWeekend          = lazy(() => import('./components/sections/TheWeekend'))
 const WhyTravel           = lazy(() => import('./components/sections/WhyTravel'))
-const Statement           = lazy(() => import('./components/sections/Statement'))
-const WhoAttends          = lazy(() => import('./components/sections/WhoAttends'))
 const OneNationalChampion = lazy(() => import('./components/sections/OneNationalChampion'))
 const Invitation          = lazy(() => import('./components/sections/Invitation'))
 
@@ -25,7 +24,7 @@ export default function App() {
         <Ticker />
         <Hero />
         <Stats />
-        <Suspense fallback={<Blank h={400} />}>
+        <Suspense fallback={<Blank h={300} />}>
           <Statement />
         </Suspense>
         <Suspense fallback={<Blank h={600} />}>
@@ -33,9 +32,6 @@ export default function App() {
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <WhyTravel />
-        </Suspense>
-        <Suspense fallback={<Blank h={500} />}>
-          <WhoAttends />
         </Suspense>
         <Suspense fallback={<Blank h={500} />}>
           <OneNationalChampion />
