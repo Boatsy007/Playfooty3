@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const NAV_H = 96 // px — tall enough for the full logo
 
 const links = [
-  { label: 'The Event',   href: '#the-weekend'     },
-  { label: 'Gold Coast',  href: '#gold-coast'       },
-  { label: 'Who Attends', href: '#who-attends'      },
-  { label: 'Club Travel', href: '#club-travel'      },
-  { label: 'Partners',    href: '#partners'         },
-  { label: 'FAQ',         href: '#faq'              },
+  { label: 'The Event',      href: '#the-weekend',  route: '/' },
+  { label: 'Gold Coast',     href: '#gold-coast',   route: '/' },
+  { label: 'Who Attends',    href: '#who-attends',  route: '/' },
+  { label: 'Club Packages',  href: '/club-packages', route: '/club-packages' },
+  { label: 'Partners',       href: '#partners',     route: '/' },
+  { label: 'FAQ',            href: '#faq',          route: '/' },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -20,6 +21,8 @@ export default function Nav() {
   const [open, setOpen]             = useState(false)
   const [activeLink, setActiveLink] = useState<string | null>(null)
   const prefersReduced              = useReducedMotion()
+  const navigate                    = useNavigate()
+  const location                    = useLocation()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 32)
@@ -33,15 +36,35 @@ export default function Nav() {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  const go = useCallback((href: string) => {
+  const go = useCallback((href: string, route?: string) => {
     setActiveLink(href)
     setOpen(false)
+    // Page-level navigation
+    if (href.startsWith('/') && !href.startsWith('/#')) {
+      navigate(href)
+      window.scrollTo({ top: 0, behavior: 'auto' })
+      return
+    }
+    // Hash scroll — navigate to home first if not already there
     const delay = open ? 300 : 0
+    if (route && route !== '/' && location.pathname !== '/') {
+      navigate('/')
+      setTimeout(() => {
+        document.querySelector(href)?.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' })
+      }, 400)
+      return
+    }
+    if (location.pathname !== '/') {
+      navigate('/')
+      setTimeout(() => {
+        document.querySelector(href)?.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' })
+      }, 400)
+      return
+    }
     setTimeout(() => {
-      const el = document.querySelector(href)
-      if (el) el.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' })
+      document.querySelector(href)?.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' })
     }, delay)
-  }, [open, prefersReduced])
+  }, [open, prefersReduced, navigate, location.pathname])
 
   return (
     <>
@@ -68,7 +91,7 @@ export default function Nav() {
         >
           {/* Logo */}
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' })}
+            onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }) }}
             aria-label="Back to top"
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
@@ -88,11 +111,11 @@ export default function Nav() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.08 + i * 0.05, ease }}
-                onClick={() => go(l.href)}
+                onClick={() => go(l.href, l.route)}
                 className="relative px-4 py-2.5 text-[14.5px] font-semibold tracking-wide transition-colors duration-200 group"
-                style={{ color: activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
-                onMouseEnter={e => { if (activeLink !== l.href) e.currentTarget.style.color = '#111111' }}
-                onMouseLeave={e => { e.currentTarget.style.color = activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                style={{ color: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                onMouseEnter={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); if (!isActive) e.currentTarget.style.color = '#111111' }}
+                onMouseLeave={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); e.currentTarget.style.color = isActive ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
               >
                 {l.label}
                 {/* Animated underline */}
@@ -101,7 +124,7 @@ export default function Nav() {
                   style={{
                     height: '2px',
                     background: '#ff2c91',
-                    transform: activeLink === l.href ? 'scaleX(1)' : 'scaleX(0)',
+                    transform: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? 'scaleX(1)' : 'scaleX(0)',
                     transformOrigin: 'left',
                     transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1)',
                   }}
@@ -115,7 +138,7 @@ export default function Nav() {
                     transform: 'scaleX(0)',
                     transformOrigin: 'left',
                     transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1), opacity 0.2s',
-                    display: activeLink === l.href ? 'none' : undefined,
+                    display: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? 'none' : undefined,
                   }}
                 />
               </motion.button>
@@ -210,7 +233,7 @@ export default function Nav() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.35, delay: 0.05 + i * 0.06, ease }}
-                  onClick={() => go(l.href)}
+                  onClick={() => go(l.href, l.route)}
                   className="flex items-center justify-between w-full text-left py-4 group"
                   style={{ borderBottom: '1px solid rgba(17,17,17,0.07)' }}
                 >
