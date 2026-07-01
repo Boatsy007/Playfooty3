@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
-const NAV_H = 76 // px — tall enough for the full logo
+const NAV_H = 96 // px — tall enough for the full logo
 
 const links = [
   { label: 'The Event',   href: '#the-weekend'     },
@@ -76,12 +76,12 @@ export default function Nav() {
             <img
               src="/logo.webp"
               alt="CNCA — Country Netball Championships Australia"
-              style={{ height: NAV_H - 16, width: 'auto', objectFit: 'contain', objectPosition: 'left center' }}
+              style={{ height: NAV_H - 10, width: 'auto', objectFit: 'contain', objectPosition: 'left center' }}
             />
           </button>
 
           {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-0.5">
+          <div className="hidden lg:flex items-center gap-1">
             {links.map((l, i) => (
               <motion.button
                 key={l.label}
@@ -89,7 +89,7 @@ export default function Nav() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.08 + i * 0.05, ease }}
                 onClick={() => go(l.href)}
-                className="relative px-3.5 py-2 text-[13px] font-semibold tracking-wide transition-colors duration-200 group"
+                className="relative px-4 py-2.5 text-[14.5px] font-semibold tracking-wide transition-colors duration-200 group"
                 style={{ color: activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
                 onMouseEnter={e => { if (activeLink !== l.href) e.currentTarget.style.color = '#111111' }}
                 onMouseLeave={e => { e.currentTarget.style.color = activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
