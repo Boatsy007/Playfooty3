@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
 // CNCA 2027 opens Thursday 7 October 2027, 08:00 AEST (UTC+10)
