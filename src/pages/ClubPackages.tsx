@@ -1081,7 +1081,7 @@ function ItinerarySection() {
 
               {/* Events */}
               <div className="flex-1 relative pl-5" style={{ borderLeft: `1px solid rgba(255,255,255,0.07)` }}>
-                {events.map(({ time, label: evLabel, desc }, ei) => (
+                {events.map(({ time, label: evLabel, desc }) => (
                   <div key={evLabel} className="relative pb-5 last:pb-0">
                     {/* Dot */}
                     <div className="absolute -left-[1.35rem] w-2.5 h-2.5 rounded-full top-0.5" style={{ background: accent, opacity: 0.7, border: '2px solid #0d0d0d', outline: `2px solid ${accent}30` }} />
