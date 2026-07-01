@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import {
-  CheckCircle, Users, FileText, Building, Plane, Bus, Star, PartyPopper,
+  CheckCircle, Users, FileText, Building, Plane, Bus, Star,
   Trophy, Ticket, Heart, Clock, ChevronDown, ChevronRight, MapPin,
   Utensils, Camera, Waves, ShoppingBag, Plus, ArrowRight, Calendar,
-  Shield, Zap, Gift, Coffee
+  Zap
 } from 'lucide-react'
 import Nav from '../components/layout/Nav'
 import Ticker from '../components/layout/Ticker'
@@ -1507,7 +1507,7 @@ function PackageRequestModal({ open: isOpen, onClose }: { open: boolean; onClose
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     await new Promise(r => setTimeout(r, 900))
