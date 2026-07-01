@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
 // CNCA 2027 opens Thursday 7 October 2027, 08:00 AEST (UTC+10)
@@ -26,20 +26,11 @@ interface FlipDigitProps {
 
 function FlipDigit({ value, label, accent }: FlipDigitProps) {
   const prev = useRef(value)
-  const [flip, setFlip] = useState(false)
   const prefersReduced = useReducedMotion()
 
   useEffect(() => {
-    if (value !== prev.current && !prefersReduced) {
-      setFlip(true)
-      const id = setTimeout(() => {
-        setFlip(false)
-        prev.current = value
-      }, 300)
-      return () => clearTimeout(id)
-    }
     prev.current = value
-  }, [value, prefersReduced])
+  }, [value])
 
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-3">
