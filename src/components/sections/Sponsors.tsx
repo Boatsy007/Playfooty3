@@ -52,7 +52,7 @@ export default function Sponsors() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section style={{ background: '#111111' }}>
+    <section id="partners" style={{ background: '#111111' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-28">
 
         {/* Header */}

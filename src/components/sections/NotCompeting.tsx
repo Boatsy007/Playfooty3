@@ -58,7 +58,7 @@ export default function NotCompeting() {
   }, [])
 
   return (
-    <section className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>
+    <section id="club-travel" className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>
 
       {/* Ambient background glow */}
       <div

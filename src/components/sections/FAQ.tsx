@@ -67,7 +67,7 @@ export default function FAQ() {
   const filtered = activecat === 'All' ? faqs : faqs.filter(f => f.cat === activecat)
 
   return (
-    <section style={{ background: '#f5f4f0' }}>
+    <section id="faq" style={{ background: '#f5f4f0' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-28">
 
         {/* Header */}

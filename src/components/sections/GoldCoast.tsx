@@ -53,7 +53,7 @@ export default function GoldCoast() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section className="relative overflow-hidden" style={{ background: '#f5f4f0' }}>
+    <section id="gold-coast" className="relative overflow-hidden" style={{ background: '#f5f4f0' }}>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-16 lg:pt-24 pb-0">
 

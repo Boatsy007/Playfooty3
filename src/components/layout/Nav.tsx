@@ -1,114 +1,258 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 
+const NAV_H = 76 // px — tall enough for the full logo
+
 const links = [
-  { label: 'The Weekend', href: '#the-weekend' },
-  { label: 'Who Attends', href: '#who-attends' },
-  { label: 'Invitation', href: '#invitation' },
+  { label: 'The Event',   href: '#the-weekend'     },
+  { label: 'Gold Coast',  href: '#gold-coast'       },
+  { label: 'Who Attends', href: '#who-attends'      },
+  { label: 'Club Travel', href: '#club-travel'      },
+  { label: 'Partners',    href: '#partners'         },
+  { label: 'FAQ',         href: '#faq'              },
 ]
 
-const Logo = () => (
-  <img src="/logo.webp" alt="CNCA Country Netball Championships Australia" className="h-20 w-auto" />
-)
+const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled]     = useState(false)
+  const [open, setOpen]             = useState(false)
+  const [activeLink, setActiveLink] = useState<string | null>(null)
+  const prefersReduced              = useReducedMotion()
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
+    const onScroll = () => setScrolled(window.scrollY > 32)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const go = (href: string) => {
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  const go = useCallback((href: string) => {
+    setActiveLink(href)
     setOpen(false)
-    setTimeout(() => document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' }), open ? 250 : 0)
-  }
+    const delay = open ? 300 : 0
+    setTimeout(() => {
+      const el = document.querySelector(href)
+      if (el) el.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' })
+    }, delay)
+  }, [open, prefersReduced])
 
   return (
     <>
+      {/* ─── Desktop / tablet nav bar ─── */}
       <motion.nav
-        initial={{ y: -80, opacity: 0 }}
+        initial={{ y: -NAV_H, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? 'nav-scrolled' : 'bg-white/90 backdrop-blur-sm'}`}
+        transition={{ duration: 0.7, ease }}
+        className="fixed top-0 left-0 right-0 z-50"
+        style={{
+          height: NAV_H,
+          background: scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: scrolled ? '1px solid rgba(17,17,17,0.07)' : '1px solid transparent',
+          boxShadow: scrolled ? '0 2px 24px rgba(0,0,0,0.07)' : 'none',
+          transition: 'background 0.35s, border-color 0.35s, box-shadow 0.35s',
+        }}
+        role="navigation"
+        aria-label="Main navigation"
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between h-[68px]">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <Logo />
+        <div
+          className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between h-full"
+        >
+          {/* Logo */}
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' })}
+            aria-label="Back to top"
+            className="shrink-0 flex items-center"
+            style={{ height: NAV_H - 8 }}
+          >
+            <img
+              src="/logo.webp"
+              alt="CNCA — Country Netball Championships Australia"
+              style={{ height: NAV_H - 16, width: 'auto', objectFit: 'contain', objectPosition: 'left center' }}
+            />
           </button>
 
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-0.5">
             {links.map((l, i) => (
               <motion.button
                 key={l.label}
-                initial={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
+                transition={{ duration: 0.45, delay: 0.08 + i * 0.05, ease }}
                 onClick={() => go(l.href)}
-                className="relative px-4 py-2 text-sm font-semibold text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors group"
+                className="relative px-3.5 py-2 text-[13px] font-semibold tracking-wide transition-colors duration-200 group"
+                style={{ color: activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                onMouseEnter={e => { if (activeLink !== l.href) e.currentTarget.style.color = '#111111' }}
+                onMouseLeave={e => { e.currentTarget.style.color = activeLink === l.href ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
               >
                 {l.label}
-                <span className="absolute bottom-1 left-4 right-4 h-[2px] bg-[#ff2c91] scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-left rounded-full" />
+                {/* Animated underline */}
+                <span
+                  className="absolute bottom-0 left-3.5 right-3.5 rounded-full"
+                  style={{
+                    height: '2px',
+                    background: '#ff2c91',
+                    transform: activeLink === l.href ? 'scaleX(1)' : 'scaleX(0)',
+                    transformOrigin: 'left',
+                    transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1)',
+                  }}
+                />
+                {/* Hover underline (separate element so active + hover don't clash) */}
+                <span
+                  className="absolute bottom-0 left-3.5 right-3.5 rounded-full opacity-0 group-hover:opacity-100 group-hover:scale-x-100"
+                  style={{
+                    height: '2px',
+                    background: 'rgba(17,17,17,0.15)',
+                    transform: 'scaleX(0)',
+                    transformOrigin: 'left',
+                    transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1), opacity 0.2s',
+                    display: activeLink === l.href ? 'none' : undefined,
+                  }}
+                />
               </motion.button>
             ))}
+
             <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.32 }}
-              whileHover={{ scale: 1.03, y: -1 }}
+              transition={{ duration: 0.45, delay: 0.42, ease }}
+              whileHover={{ scale: 1.04, y: -1 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => go('#invitation')}
-              className="ml-3 btn-pink text-sm px-6 py-2.5 rounded-full font-bold"
+              className="ml-4 font-bold rounded-full text-white text-[13px] tracking-wide"
+              style={{
+                background: '#ff2c91',
+                padding: '0.6rem 1.4rem',
+                boxShadow: '0 4px 20px rgba(255,44,145,0.3)',
+                transition: 'background 0.2s, box-shadow 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#cc1f6e'
+                e.currentTarget.style.boxShadow = '0 8px 28px rgba(255,44,145,0.4)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#ff2c91'
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,44,145,0.3)'
+              }}
             >
               Request Invitation
             </motion.button>
           </div>
 
-          <button className="md:hidden p-2 text-[#1a1a1a]" onClick={() => setOpen(o => !o)}>
-            {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Mobile hamburger */}
+          <motion.button
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl"
+            style={{ background: open ? 'rgba(17,17,17,0.06)' : 'transparent' }}
+            onClick={() => setOpen(o => !o)}
+            aria-expanded={open}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            whileTap={{ scale: 0.92 }}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {open ? (
+                <motion.span
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.18, ease }}
+                >
+                  <X size={20} strokeWidth={2} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.18, ease }}
+                >
+                  <Menu size={20} strokeWidth={2} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
       </motion.nav>
 
-      {/* Mobile overlay */}
+      {/* ─── Mobile full-screen overlay ─── */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
-            animate={{ opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
-            exit={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] }}
-            className="fixed inset-0 z-40 bg-white flex flex-col pt-[68px]"
+            key="mobile-menu"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease }}
+            className="fixed inset-0 z-40 lg:hidden"
+            style={{ background: '#ffffff' }}
           >
-            <div className="flex flex-col p-8 gap-2">
+            {/* Top bar fill (matches nav) */}
+            <div style={{ height: NAV_H }} />
+
+            {/* Pink accent line */}
+            <div style={{ height: '2px', background: 'linear-gradient(to right, #ff2c91, #f4c14d, #ff2c91)' }} />
+
+            {/* Links */}
+            <nav className="flex flex-col px-6 pt-6 pb-10 overflow-y-auto" style={{ maxHeight: `calc(100vh - ${NAV_H + 2}px)` }}>
               {links.map((l, i) => (
                 <motion.button
                   key={l.label}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.07 }}
+                  transition={{ duration: 0.35, delay: 0.05 + i * 0.06, ease }}
                   onClick={() => go(l.href)}
-                  className="text-left py-4 border-b border-gray-100 font-display text-4xl text-[#1a1a1a] hover:text-[#ff2c91] transition-colors"
+                  className="flex items-center justify-between w-full text-left py-4 group"
+                  style={{ borderBottom: '1px solid rgba(17,17,17,0.07)' }}
                 >
-                  {l.label}
+                  <span
+                    className="font-display leading-none transition-colors duration-200 group-active:text-[#ff2c91]"
+                    style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', color: '#111111' }}
+                  >
+                    {l.label.toUpperCase()}
+                  </span>
+                  <span className="font-condensed font-bold text-[10px] tracking-[0.22em] uppercase" style={{ color: 'rgba(17,17,17,0.25)' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </motion.button>
               ))}
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.28 }}
-                onClick={() => go('#invitation')}
-                className="mt-6 btn-pink text-sm py-4 rounded-2xl font-bold w-full"
+                transition={{ duration: 0.4, delay: 0.42, ease }}
+                className="mt-8 space-y-3"
               >
-                Request Invitation
-              </motion.button>
-            </div>
+                <button
+                  onClick={() => go('#invitation')}
+                  className="w-full font-bold rounded-2xl text-white text-base py-4"
+                  style={{
+                    background: '#ff2c91',
+                    boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
+                  }}
+                >
+                  Request Invitation
+                </button>
+                <p className="text-center text-xs" style={{ color: 'rgba(17,17,17,0.3)' }}>
+                  CNCA · Gold Coast · October 2027
+                </p>
+              </motion.div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Spacer so page content clears the fixed nav */}
+      <div style={{ height: NAV_H }} aria-hidden />
     </>
   )
 }

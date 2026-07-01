@@ -17,7 +17,7 @@ export default function WhyTravel() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section style={{ background: '#f5f4f0' }}>
+    <section id="who-attends" style={{ background: '#f5f4f0' }}>
       {/* Heading — mirrors Stats heading padding */}
       <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-14 lg:pt-20 pb-10">
         <motion.div

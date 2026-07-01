@@ -9,7 +9,7 @@ const segments = [
 
 export default memo(function Ticker() {
   return (
-    <div className="mt-[68px] h-10 bg-[#ff2c91] overflow-hidden flex items-center select-none">
+    <div className="h-10 bg-[#ff2c91] overflow-hidden flex items-center select-none">
       <div className="marquee-track">
         {[...segments, ...segments].map((seg, i) => (
           <span

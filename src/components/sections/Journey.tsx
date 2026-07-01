@@ -57,7 +57,7 @@ export default function Journey() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section style={{ background: '#0d0d0d' }}>
+    <section id="the-journey" style={{ background: '#0d0d0d' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-32">
 
         {/* Header */}

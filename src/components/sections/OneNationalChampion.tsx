@@ -19,7 +19,7 @@ export default function OneNationalChampion() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section className="relative overflow-hidden" style={{ minHeight: 'clamp(600px, 85vh, 1000px)', background: '#0d0d0d' }}>
+    <section id="the-championship" className="relative overflow-hidden" style={{ minHeight: 'clamp(600px, 85vh, 1000px)', background: '#0d0d0d' }}>
       {/* Full-bleed photo */}
       <img
         src="/hero-photo.webp"

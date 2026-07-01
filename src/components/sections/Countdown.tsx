@@ -104,7 +104,7 @@ export default function Countdown() {
   ]
 
   return (
-    <section style={{ background: '#111111' }}>
+    <section id="countdown" style={{ background: '#111111' }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-16 lg:py-24">
 
         {/* Header */}
