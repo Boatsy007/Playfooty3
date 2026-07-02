@@ -1,7 +1,7 @@
 /**
  * CNCA National Power Rankings
  * Editorial weekly rankings — designed for future live-data integration.
- * Data lives in `RANKINGS_DATA` — swap for API fetch when backend is ready.
+ * Live data fetched from /api/top10 on mount.
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from 'framer-motion'
@@ -56,116 +56,52 @@ interface WeeklyAnalysis {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PLACEHOLDER DATA — replace with API response shape when backend is ready
-// All club names, statistics and records are fictional sample data only.
+// Live data — fetched from /api/top10 on mount
 // ─────────────────────────────────────────────────────────────────────────────
-const SAMPLE_NOTICE = 'Sample data only. Live rankings will update every Monday.'
 
-const WEEK_LABEL = 'Week 18 · Season 2025'
-const UPDATED = 'Monday 30 June 2025'
+let WEEK_LABEL = 'Loading...'
+let UPDATED    = ''
 
-const RANKINGS_DATA: RankedClub[] = [
-  {
-    id: 'dubbo-nc',
-    rank: 1, previousRank: 2,
-    name: 'Dubbo Netball Club', league: 'Western Plains Netball', state: 'NSW', region: 'Central West',
-    powerRating: 98.4,
-    record: { wins: 14, losses: 0, draws: 0 },
-    form: ['W','W','W','W','W'],
-    goalsFor: 842, goalsAgainst: 311, leagueStrength: 5,
-    accent: '#ff2c91', tag: 'Sample Data',
-  },
-  {
-    id: 'ballarat-nc',
-    rank: 2, previousRank: 1,
-    name: 'Ballarat Lightning', league: 'Central Highlands Netball', state: 'VIC', region: 'Central Highlands',
-    powerRating: 96.1,
-    record: { wins: 13, losses: 1, draws: 0 },
-    form: ['W','L','W','W','W'],
-    goalsFor: 791, goalsAgainst: 344, leagueStrength: 5,
-    accent: '#f4c14d', tag: 'Sample Data',
-  },
-  {
-    id: 'toowoomba-nc',
-    rank: 3, previousRank: 5,
-    name: 'Toowoomba Storm', league: 'Darling Downs Netball', state: 'QLD', region: 'Darling Downs',
-    powerRating: 94.7,
-    record: { wins: 12, losses: 2, draws: 0 },
-    form: ['W','W','W','W','W'],
-    goalsFor: 768, goalsAgainst: 390, leagueStrength: 4,
-    accent: '#4dd9f4', tag: 'Sample Data',
-  },
-  {
-    id: 'wagga-nc',
-    rank: 4, previousRank: 3,
-    name: 'Wagga United', league: 'Riverina Netball', state: 'NSW', region: 'Riverina',
-    powerRating: 93.2,
-    record: { wins: 12, losses: 2, draws: 0 },
-    form: ['W','W','L','W','W'],
-    goalsFor: 744, goalsAgainst: 401, leagueStrength: 4,
-    accent: '#ff2c91', tag: 'Sample Data',
-  },
-  {
-    id: 'bendigo-nc',
-    rank: 5, previousRank: 6,
-    name: 'Bendigo Falcons', league: 'Loddon Mallee Netball', state: 'VIC', region: 'North Central',
-    powerRating: 91.8,
-    record: { wins: 11, losses: 3, draws: 0 },
-    form: ['W','W','W','L','W'],
-    goalsFor: 712, goalsAgainst: 422, leagueStrength: 4,
-    accent: '#f4c14d', tag: 'Sample Data',
-  },
-  {
-    id: 'bunbury-nc',
-    rank: 6, previousRank: 4,
-    name: 'Bunbury Netball Club', league: 'Southwest Netball', state: 'WA', region: 'South West',
-    powerRating: 90.3,
-    record: { wins: 11, losses: 3, draws: 0 },
-    form: ['W','L','W','L','W'],
-    goalsFor: 698, goalsAgainst: 445, leagueStrength: 4,
-    accent: '#4dd9f4', tag: 'Sample Data',
-  },
-  {
-    id: 'albury-nc',
-    rank: 7, previousRank: 9,
-    name: 'Albury City Netball', league: 'Murray Valley Netball', state: 'NSW', region: 'Murray',
-    powerRating: 88.9,
-    record: { wins: 10, losses: 4, draws: 0 },
-    form: ['W','W','W','W','L'],
-    goalsFor: 671, goalsAgainst: 467, leagueStrength: 3,
-    accent: '#ff2c91', tag: 'Sample Data',
-  },
-  {
-    id: 'rockhampton-nc',
-    rank: 8, previousRank: 7,
-    name: 'Rockhampton Blaze', league: 'Central Queensland Netball', state: 'QLD', region: 'Central QLD',
-    powerRating: 87.4,
-    record: { wins: 10, losses: 4, draws: 0 },
-    form: ['L','W','W','W','W'],
-    goalsFor: 658, goalsAgainst: 488, leagueStrength: 3,
-    accent: '#f4c14d', tag: 'Sample Data',
-  },
-  {
-    id: 'launceston-nc',
-    rank: 9, previousRank: 11,
-    name: 'Launceston Netball Club', league: 'Northern Tasmanian Netball', state: 'TAS', region: 'Northern Tasmania',
-    powerRating: 86.2,
-    record: { wins: 10, losses: 4, draws: 0 },
-    form: ['W','W','L','W','W'],
-    goalsFor: 643, goalsAgainst: 499, leagueStrength: 3,
-    accent: '#4dd9f4', tag: 'Sample Data',
-  },
-  {
-    id: 'mount-gambier-nc',
-    rank: 10, previousRank: 8,
-    name: 'Mount Gambier Aces', league: 'Limestone Coast Netball', state: 'SA', region: 'South East SA',
-    powerRating: 85.1,
-    record: { wins: 9, losses: 5, draws: 0 },
-    form: ['W','W','W','L','L'],
-    goalsFor: 624, goalsAgainst: 512, leagueStrength: 3,
-    accent: '#ff2c91', tag: 'Sample Data',
-  },
-]
+const ACCENT_PALETTE = ['#ff2c91', '#f4c14d', '#4dd9f4'] as const
+
+interface ApiEntry {
+  rank:            number
+  previousRank:    number | null
+  rankMovement:    number
+  clubId:          string
+  clubName:        string
+  leagueName:      string
+  state:           string
+  powerRating:     number
+  recentForm:      string[]
+  componentScores: Record<string, number>
+  calculatedAt:    string
+}
+
+function mapApiEntry(entry: ApiEntry, index: number): RankedClub {
+  const accent = ACCENT_PALETTE[index % ACCENT_PALETTE.length]
+  const leagueStrengthRaw = entry.componentScores?.leagueStrength ?? 58
+  const leagueStrength = Math.max(1, Math.min(5, Math.round(leagueStrengthRaw / 20)))
+  const prevRank = entry.previousRank != null
+    ? entry.previousRank
+    : entry.rank - entry.rankMovement || entry.rank
+  return {
+    id:           entry.clubId,
+    rank:         entry.rank,
+    previousRank: prevRank,
+    name:         entry.clubName,
+    league:       entry.leagueName,
+    state:        entry.state,
+    region:       entry.state,
+    powerRating:  Math.round(entry.powerRating * 100) / 100,
+    record:       { wins: 0, losses: 0, draws: 0 },
+    form:         entry.recentForm as FormResult[],
+    goalsFor:     0,
+    goalsAgainst: 0,
+    leagueStrength,
+    accent,
+  }
+}
 
 const RANKING_FACTORS: RankingFactor[] = [
   { label: 'Win Rate',              weight: 92, description: 'Wins divided by total games played this season.',              icon: Trophy,   accent: '#ff2c91' },
@@ -320,7 +256,7 @@ function PercentageBar({ value, accent }: { value: number; accent: string }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // HERO
 // ─────────────────────────────────────────────────────────────────────────────
-function RankingsHero({ onScrollToTop10, onScrollToMethod }: { onScrollToTop10: () => void; onScrollToMethod: () => void }) {
+function RankingsHero({ onScrollToTop10, onScrollToMethod, clubs }: { onScrollToTop10: () => void; onScrollToMethod: () => void; clubs: RankedClub[] }) {
   const prefersReduced = useReducedMotion()
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
@@ -517,17 +453,19 @@ function RankingsHero({ onScrollToTop10, onScrollToMethod }: { onScrollToTop10: 
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}
       >
         <div className="flex items-center gap-8 px-6 sm:px-10 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {RANKINGS_DATA.slice(0, 5).map(club => (
+          {clubs.slice(0, 5).map(club => (
             <div key={club.id} className="flex items-center gap-2.5 shrink-0">
               <span className="font-condensed font-bold text-[10px] tracking-[0.12em]" style={{ color: '#f4c14d' }}>#{club.rank}</span>
               <span className="font-condensed font-bold text-[10px] tracking-[0.1em] uppercase text-white/60">{club.name}</span>
-              <span className="font-condensed font-bold text-[10px]" style={{ color: club.powerRating >= 95 ? '#ff2c91' : 'rgba(255,255,255,0.3)' }}>{club.powerRating}</span>
+              <span className="font-condensed font-bold text-[10px]" style={{ color: club.powerRating >= 80 ? '#ff2c91' : 'rgba(255,255,255,0.3)' }}>{club.powerRating}</span>
               <Movement current={club.rank} previous={club.previousRank} />
             </div>
           ))}
-          <div className="shrink-0 font-condensed font-bold text-[9px] tracking-[0.25em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            · {SAMPLE_NOTICE}
-          </div>
+          {clubs.length === 0 && (
+            <div className="shrink-0 font-condensed font-bold text-[9px] tracking-[0.25em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
+              Loading rankings...
+            </div>
+          )}
         </div>
       </motion.div>
     </section>
@@ -539,8 +477,11 @@ function RankingsHero({ onScrollToTop10, onScrollToMethod }: { onScrollToTop10: 
 // ─────────────────────────────────────────────────────────────────────────────
 function FeaturedClub({ club }: { club: RankedClub }) {
   const prefersReduced = useReducedMotion()
-  const pct = ((club.goalsFor / (club.goalsFor + club.goalsAgainst)) * 100).toFixed(1)
-  const avgMargin = ((club.goalsFor - club.goalsAgainst) / (club.record.wins + club.record.losses + club.record.draws)).toFixed(1)
+  const totalGoals = club.goalsFor + club.goalsAgainst
+  const totalGames = club.record.wins + club.record.losses + club.record.draws
+  const pct = totalGoals > 0 ? ((club.goalsFor / totalGoals) * 100).toFixed(1) : '–'
+  const avgMarginNum = totalGames > 0 ? ((club.goalsFor - club.goalsAgainst) / totalGames).toFixed(1) : null
+  const avgMargin = avgMarginNum != null ? (parseFloat(avgMarginNum) >= 0 ? `+${avgMarginNum}` : avgMarginNum) : '–'
 
   return (
     <section id="featured" style={{ background: '#111111' }}>
@@ -558,7 +499,7 @@ function FeaturedClub({ club }: { club: RankedClub }) {
           </p>
           <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
           <span className="font-condensed font-bold text-[9px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,44,145,0.12)', color: '#ff2c91', border: '1px solid rgba(255,44,145,0.3)' }}>
-            {SAMPLE_NOTICE}
+            Live Rankings · NGFNL 2026 Pilot
           </span>
         </motion.div>
 
@@ -615,10 +556,10 @@ function FeaturedClub({ club }: { club: RankedClub }) {
               {/* Stats grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-0" style={{ border: '1px solid rgba(255,255,255,0.07)', borderRadius: '1rem', overflow: 'hidden' }}>
                 {[
-                  { label: 'Record',   value: `${club.record.wins}–${club.record.losses}` },
-                  { label: 'Goals For', value: club.goalsFor.toString() },
-                  { label: 'Goals Ag.', value: club.goalsAgainst.toString() },
-                  { label: 'Avg. Margin', value: `+${avgMargin}` },
+                  { label: 'Record',     value: totalGames > 0 ? `${club.record.wins}–${club.record.losses}` : `${club.form.filter(r => r === 'W').length}–${club.form.filter(r => r === 'L').length}` },
+                  { label: 'Goals For', value: club.goalsFor > 0 ? club.goalsFor.toString() : '–' },
+                  { label: 'Goals Ag.', value: club.goalsAgainst > 0 ? club.goalsAgainst.toString() : '–' },
+                  { label: 'Avg. Margin', value: avgMargin },
                 ].map(({ label, value }, i) => (
                   <div
                     key={label}
@@ -671,10 +612,12 @@ function FilterBar({
   stateFilter, setStateFilter,
   formFilter, setFormFilter,
   strengthFilter, setStrengthFilter,
+  count,
 }: {
   stateFilter: string; setStateFilter: (v: string) => void
   formFilter: string; setFormFilter: (v: string) => void
   strengthFilter: string; setStrengthFilter: (v: string) => void
+  count: number
 }) {
   const [open, setOpen] = useState(false)
 
@@ -750,7 +693,7 @@ function FilterBar({
         </AnimatePresence>
 
         <div className="ml-auto font-condensed font-bold text-[9px] tracking-[0.22em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
-          {RANKINGS_DATA.length} clubs ranked · {WEEK_LABEL}
+          {count} clubs ranked · {WEEK_LABEL}
         </div>
       </div>
     </div>
@@ -761,8 +704,11 @@ function FilterBar({
 // CLUB PROFILE DRAWER (click to expand)
 // ─────────────────────────────────────────────────────────────────────────────
 function ClubDrawer({ club, onClose }: { club: RankedClub; onClose: () => void }) {
-  const pct = ((club.goalsFor / (club.goalsFor + club.goalsAgainst)) * 100).toFixed(1)
-  const avgMargin = ((club.goalsFor - club.goalsAgainst) / (club.record.wins + club.record.losses + club.record.draws)).toFixed(1)
+  const drawerTotalGoals = club.goalsFor + club.goalsAgainst
+  const drawerTotalGames = club.record.wins + club.record.losses + club.record.draws
+  const pct = drawerTotalGoals > 0 ? ((club.goalsFor / drawerTotalGoals) * 100).toFixed(1) : '–'
+  const avgMarginRaw = drawerTotalGames > 0 ? ((club.goalsFor - club.goalsAgainst) / drawerTotalGames).toFixed(1) : null
+  const avgMargin = avgMarginRaw != null ? (parseFloat(avgMarginRaw) >= 0 ? `+${avgMarginRaw}` : avgMarginRaw) : '–'
 
   return (
     <motion.div
@@ -804,11 +750,11 @@ function ClubDrawer({ club, onClose }: { club: RankedClub; onClose: () => void }
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { l: 'Record', v: `${club.record.wins}–${club.record.losses}` },
-              { l: 'Goals For', v: club.goalsFor },
-              { l: 'Goals Ag.', v: club.goalsAgainst },
-              { l: 'Avg. Margin', v: `+${avgMargin}` },
-              { l: 'Attack %', v: `${pct}%` },
+              { l: 'Record', v: drawerTotalGames > 0 ? `${club.record.wins}–${club.record.losses}` : `${club.form.filter(r => r === 'W').length}–${club.form.filter(r => r === 'L').length}` },
+              { l: 'Goals For', v: club.goalsFor > 0 ? club.goalsFor : '–' },
+              { l: 'Goals Ag.', v: club.goalsAgainst > 0 ? club.goalsAgainst : '–' },
+              { l: 'Avg. Margin', v: avgMargin },
+              { l: 'Attack %', v: pct !== '–' ? `${pct}%` : '–' },
               { l: 'League Strength', v: '·'.repeat(club.leagueStrength) },
             ].map(({ l, v }) => (
               <div key={l} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -1062,7 +1008,7 @@ function Top10Section({
           >
             <Info size={13} style={{ color: 'rgba(255,255,255,0.3)', marginTop: '1px', flexShrink: 0 }} />
             <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Sample data only.</strong> All club names, records and ratings shown above are fictional placeholders for demonstration purposes. Live rankings will update every Monday during the competitive season using publicly available results. CNCA Power Rankings are an editorial ranking — not an official Netball Australia or governing body ranking.
+              <strong style={{ color: 'rgba(255,255,255,0.5)' }}>CNCA Power Rankings</strong> are an editorial ranking — not an official Netball Australia or governing body ranking. Rankings update each Monday during the competitive season using publicly available results. Pilot data: NGFNL A Grade Netball, 2026 Season.
             </p>
           </motion.div>
         </div>
@@ -1351,69 +1297,102 @@ function RankingsCTA() {
 // PAGE ROOT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PowerRankings() {
+  const [rankings, setRankings]             = useState<RankedClub[]>([])
+  const [isLoading, setIsLoading]           = useState(true)
+  const [fetchError, setFetchError]         = useState<string | null>(null)
   const [stateFilter, setStateFilter]       = useState('All States')
   const [formFilter, setFormFilter]         = useState('All Form')
   const [strengthFilter, setStrengthFilter] = useState('All Strengths')
 
-  const top10Ref   = useRef<HTMLDivElement>(null)
-  const methodRef  = useRef<HTMLDivElement>(null)
+  const top10Ref  = useRef<HTMLDivElement>(null)
+  const methodRef = useRef<HTMLDivElement>(null)
 
   const scrollToTop10  = useCallback(() => top10Ref.current?.scrollIntoView({ behavior: 'smooth' }), [])
   const scrollToMethod = useCallback(() => methodRef.current?.scrollIntoView({ behavior: 'smooth' }), [])
 
-  const featuredClub = RANKINGS_DATA[0]
+  useEffect(() => {
+    fetch('/api/top10')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json() as Promise<{ data: ApiEntry[]; meta: { weekLabel: string; season: string } }>
+      })
+      .then(({ data, meta }) => {
+        WEEK_LABEL = `${meta.weekLabel} · Season ${meta.season}`
+        UPDATED    = new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        setRankings(data.map(mapApiEntry))
+      })
+      .catch(err => setFetchError(String(err)))
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const featuredClub = rankings[0]
+
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "CNCA National Power Rankings — Australia's Best Country Netball Clubs",
+    "description": "The CNCA National Power Rankings rank Australia's strongest country netball clubs each week using a transparent performance formula. Updated every Monday during the competitive season.",
+    "url": "https://cnca.com.au/power-rankings",
+    "publisher": { "@type": "SportsOrganization", "name": "CNCA — Country Netball Championships Australia", "url": "https://cnca.com.au" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://cnca.com.au" },
+        { "@type": "ListItem", "position": 2, "name": "Power Rankings", "item": "https://cnca.com.au/power-rankings" },
+      ]
+    },
+    "mainEntity": {
+      "@type": "ItemList",
+      "name": `CNCA National Power Rankings — ${WEEK_LABEL}`,
+      "description": "Weekly editorial ranking of Australia's strongest country netball clubs.",
+      "itemListElement": rankings.map(c => ({ "@type": "ListItem", "position": c.rank, "name": `${c.name} — Power Rating ${c.powerRating}` }))
+    }
+  }
 
   return (
     <>
-      {/* SEO structured data */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "name": "CNCA National Power Rankings — Australia's Best Country Netball Clubs",
-        "description": "The CNCA National Power Rankings rank Australia's strongest country netball clubs each week using a transparent performance formula. Updated every Monday during the competitive season.",
-        "url": "https://cnca.com.au/power-rankings",
-        "publisher": {
-          "@type": "SportsOrganization",
-          "name": "CNCA — Country Netball Championships Australia",
-          "url": "https://cnca.com.au"
-        },
-        "breadcrumb": {
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://cnca.com.au" },
-            { "@type": "ListItem", "position": 2, "name": "Power Rankings", "item": "https://cnca.com.au/power-rankings" },
-          ]
-        },
-        "mainEntity": {
-          "@type": "ItemList",
-          "name": `CNCA National Power Rankings — ${WEEK_LABEL}`,
-          "description": "Weekly editorial ranking of Australia's strongest country netball clubs.",
-          "itemListElement": RANKINGS_DATA.map(c => ({
-            "@type": "ListItem",
-            "position": c.rank,
-            "name": `${c.name} — Power Rating ${c.powerRating}`,
-          }))
-        }
-      })}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }} />
 
       <Ticker />
       <Nav />
 
       <main id="power-rankings-main">
-        <RankingsHero onScrollToTop10={scrollToTop10} onScrollToMethod={scrollToMethod} />
-        <FeaturedClub club={featuredClub} />
-        <FilterBar
-          stateFilter={stateFilter} setStateFilter={setStateFilter}
-          formFilter={formFilter} setFormFilter={setFormFilter}
-          strengthFilter={strengthFilter} setStrengthFilter={setStrengthFilter}
-        />
-        <Top10Section
-          clubs={RANKINGS_DATA}
-          stateFilter={stateFilter}
-          formFilter={formFilter}
-          strengthFilter={strengthFilter}
-          sectionRef={top10Ref}
-        />
+        <RankingsHero clubs={rankings} onScrollToTop10={scrollToTop10} onScrollToMethod={scrollToMethod} />
+
+        {isLoading && (
+          <div style={{ background: '#111111', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p className="font-condensed font-bold text-[11px] tracking-[0.28em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>Loading rankings...</p>
+          </div>
+        )}
+
+        {fetchError && !isLoading && (
+          <div style={{ background: '#111111', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p className="font-condensed font-bold text-[11px] tracking-[0.2em] uppercase" style={{ color: '#ef4444' }}>Unable to load rankings. Please try again later.</p>
+          </div>
+        )}
+
+        {!isLoading && !fetchError && featuredClub && (
+          <FeaturedClub club={featuredClub} />
+        )}
+
+        {!isLoading && !fetchError && rankings.length > 0 && (
+          <>
+            <FilterBar
+              stateFilter={stateFilter} setStateFilter={setStateFilter}
+              formFilter={formFilter} setFormFilter={setFormFilter}
+              strengthFilter={strengthFilter} setStrengthFilter={setStrengthFilter}
+              count={rankings.length}
+            />
+            <Top10Section
+              clubs={rankings}
+              stateFilter={stateFilter}
+              formFilter={formFilter}
+              strengthFilter={strengthFilter}
+              sectionRef={top10Ref}
+            />
+          </>
+        )}
+
         <WeeklyAnalysisSection />
         <RankingFormula sectionRef={methodRef} />
         <ComingSoonSection />
