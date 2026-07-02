@@ -15,11 +15,6 @@ import { logger }        from '../../utils/logger.js'
 
 const router = Router()
 
-function parseLimit(query: unknown, max: number): number {
-  const n = parseInt(String(query), 10)
-  return isNaN(n) ? max : Math.min(n, max)
-}
-
 async function getLatestRun(season?: string) {
   return prisma.rankingRun.findFirst({
     where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
@@ -60,7 +55,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { season, state } = req.query as Record<string, string>
     const run = await getLatestRun(season)
-    if (!run) return res.json({ data: [], meta: { weekLabel: null, season: null, total: 0 } })
+    if (!run) { res.json({ data: [], meta: { weekLabel: null, season: null, total: 0 } }); return }
 
     const entries = await getEntries(run.id, undefined, state)
     res.json({
@@ -68,7 +63,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, generatedAt: run.completedAt },
     })
   } catch (err) {
-    logger.error('GET /rankings error', err)
+    logger.error('GET /rankings error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
@@ -80,7 +75,7 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
       where:   { weekLabel: req.params.weekLabel, status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     })
-    if (!run) return res.status(404).json({ error: 'No rankings found for this week' })
+    if (!run) { res.status(404).json({ error: 'No rankings found for this week' }); return }
 
     const entries = await getEntries(run.id)
     res.json({
@@ -88,7 +83,7 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length },
     })
   } catch (err) {
-    logger.error('Rankings route error', err)
+    logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
@@ -98,12 +93,12 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) return res.json({ data: [], meta: {} })
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 10, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
-    logger.error('Rankings route error', err)
+    logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
@@ -113,12 +108,12 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) return res.json({ data: [], meta: {} })
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 25, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
-    logger.error('Rankings route error', err)
+    logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
@@ -128,12 +123,12 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) return res.json({ data: [], meta: {} })
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 100, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
-    logger.error('Rankings route error', err)
+    logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })

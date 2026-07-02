@@ -5,11 +5,23 @@
  * Australia affiliated associations. This adapter targets the PlayHQ public
  * website (https://www.playhq.com) as no official public API exists.
  *
- * Implementation strategy:
- * • Use Cheerio to parse ladder and results pages
- * • Respect robots.txt and add 1–2s delays between requests
- * • Cache responses for 6 hours to avoid hammering the site
- * • Mark leagues as PENDING_REVIEW if page structure changes
+ * Implementation strategy (current — HTML fallback):
+ * • fetch() + regex to parse any static ladder content
+ * • Cache responses for 6 hours, 1.5 s between requests
+ * • Marks league PENDING_REVIEW if zero entries parsed
+ *
+ * ⚠️  KNOWN LIMITATION — PlayHQ is Next.js (JavaScript-rendered):
+ * Ladder data is loaded via internal XHR after page hydration. A raw
+ * fetch() of the page HTML returns only the shell — no ladder rows.
+ * The regex parser will return 0 entries and flag PENDING_REVIEW.
+ *
+ * NEXT ITERATION: Replace with a Playwright (headless Chromium) adapter:
+ *   await page.goto(ladderUrl)
+ *   await page.waitForSelector('[data-testid="ladder-row"]')
+ *   const rows = await page.$$eval('[data-testid="ladder-row"]', ...)
+ *
+ * Alternatively, inspect the Network tab on the PlayHQ ladder page and
+ * target the XHR/GraphQL endpoint directly (no browser required).
  *
  * IMPORTANT: Review PlayHQ's Terms of Service before deploying at scale.
  * Replace with an official API integration if/when one becomes available.

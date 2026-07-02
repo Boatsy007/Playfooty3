@@ -14,6 +14,8 @@
     "db:studio": "prisma studio",
     "job:run": "node dist/jobs/trigger.js",
     "job:dev": "tsx src/jobs/trigger.ts",
+    "pilot:run": "node dist/jobs/pilot-trigger.js",
+    "pilot:dev": "tsx src/jobs/pilot-trigger.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

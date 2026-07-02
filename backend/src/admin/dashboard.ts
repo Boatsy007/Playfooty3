@@ -18,6 +18,7 @@ import { adminRateLimit }  from '../api/middleware/rate-limit.js'
 import { noCache }         from '../api/middleware/cache-middleware.js'
 import { checkAdapterHealth } from '../scrapers/scraper.engine.js'
 import { runWeeklyUpdate }    from '../jobs/weekly-update.job.js'
+import { runNGFNLPilot }      from '../jobs/pilot.js'
 import { logger }             from '../utils/logger.js'
 
 const router = Router()
@@ -127,6 +128,36 @@ router.post('/review-queue/:id/reject', async (req, res) => {
     res.json({ message: 'Rejected' })
   } catch {
     res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// POST /admin/pilot
+// Seeds NGFNL 2026 A Grade Netball data and generates a ranking run.
+// Safe to call multiple times — upserts reference data idempotently.
+router.post('/pilot', async (req, res) => {
+  try {
+    const { weekLabel } = req.body as { weekLabel?: string }
+    logger.info('AdminDashboard: NGFNL pilot triggered', { weekLabel })
+
+    const result = await runNGFNLPilot(weekLabel)
+
+    if (result.status === 'FAILED') {
+      res.status(500).json({ error: 'Pilot failed', detail: result.error })
+      return
+    }
+
+    res.json({
+      message:     'NGFNL pilot complete',
+      runId:       result.runId,
+      weekLabel:   result.weekLabel,
+      season:      result.season,
+      clubsRanked: result.clubsRanked,
+      leagueId:    result.leagueId,
+      next:        'GET /api/top10 to see ranked clubs',
+    })
+  } catch (err) {
+    logger.error('AdminDashboard: pilot endpoint error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
