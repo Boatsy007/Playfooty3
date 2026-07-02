@@ -34,7 +34,15 @@ async function getEntries(runId: string, limit?: number, state?: string) {
 }
 
 /** Shape a ranking entry for public API response. */
-function formatEntry(entry: Awaited<ReturnType<typeof getEntries>>[number]) {
+function formatEntry(
+  entry: Awaited<ReturnType<typeof getEntries>>[number],
+  stats?: { played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number },
+) {
+  let recentForm: unknown = []
+  let componentScores: unknown = {}
+  try { recentForm = JSON.parse((entry.recentForm as string) || '[]') } catch { /* keep [] */ }
+  try { componentScores = JSON.parse((entry.componentScores as string) || '{}') } catch { /* keep {} */ }
+
   return {
     rank:         entry.rank,
     previousRank: entry.previousRank,
@@ -44,10 +52,35 @@ function formatEntry(entry: Awaited<ReturnType<typeof getEntries>>[number]) {
     leagueName:   entry.leagueName,
     state:        entry.state,
     powerRating:  entry.powerRating,
-    recentForm:   JSON.parse(entry.recentForm as string ?? '[]'),
-    componentScores: JSON.parse(entry.componentScores as string ?? '{}'),
+    // Raw season stats (from ClubLeagueSeason) so the frontend can show record + goals
+    record:       { wins: stats?.wins ?? 0, losses: stats?.losses ?? 0, draws: stats?.draws ?? 0, played: stats?.played ?? 0 },
+    goalsFor:     stats?.goalsFor ?? 0,
+    goalsAgainst: stats?.goalsAgainst ?? 0,
+    percentage:   stats?.percentage ?? 0,
+    recentForm,
+    componentScores,
     calculatedAt: entry.calculatedAt,
   }
+}
+
+/** Format a list of entries, enriching each with its season stats. */
+async function formatEntries(
+  entries: Awaited<ReturnType<typeof getEntries>>,
+  season: string,
+) {
+  const clubIds = entries.map(e => e.clubId)
+  const seasons = await prisma.clubLeagueSeason.findMany({
+    where:  { clubId: { in: clubIds }, season },
+    select: { clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true },
+  })
+  type SeasonStats = { clubId: string; leagueId: string; played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number }
+  const byClubLeague = new Map<string, SeasonStats>(seasons.map((s: SeasonStats) => [`${s.clubId}:${s.leagueId}`, s]))
+  const byClub       = new Map<string, SeasonStats>(seasons.map((s: SeasonStats) => [s.clubId, s]))
+
+  return entries.map(e => {
+    const stats = byClubLeague.get(`${e.clubId}:${e.leagueId}`) ?? byClub.get(e.clubId)
+    return formatEntry(e, stats)
+  })
 }
 
 // GET /api/rankings
@@ -59,7 +92,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const entries = await getEntries(run.id, undefined, state)
     res.json({
-      data: entries.map(formatEntry),
+      data: await formatEntries(entries, run.season),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, generatedAt: run.completedAt },
     })
   } catch (err) {
@@ -79,7 +112,7 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
 
     const entries = await getEntries(run.id)
     res.json({
-      data: entries.map(formatEntry),
+      data: await formatEntries(entries, run.season),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length },
     })
   } catch (err) {
@@ -96,7 +129,7 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
     if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 10, state)
-    res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
+    res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
@@ -111,7 +144,7 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
     if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 25, state)
-    res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
+    res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
@@ -126,7 +159,7 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
     if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 100, state)
-    res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
+    res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })

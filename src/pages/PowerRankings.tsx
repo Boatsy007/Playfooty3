@@ -73,6 +73,10 @@ interface ApiEntry {
   leagueName:      string
   state:           string
   powerRating:     number
+  record?:         { wins: number; losses: number; draws: number; played: number }
+  goalsFor?:       number
+  goalsAgainst?:   number
+  percentage?:     number
   recentForm:      string[]
   componentScores: Record<string, number>
   calculatedAt:    string
@@ -94,10 +98,10 @@ function mapApiEntry(entry: ApiEntry, index: number): RankedClub {
     state:        entry.state,
     region:       entry.state,
     powerRating:  Math.round(entry.powerRating * 100) / 100,
-    record:       { wins: 0, losses: 0, draws: 0 },
+    record:       { wins: entry.record?.wins ?? 0, losses: entry.record?.losses ?? 0, draws: entry.record?.draws ?? 0 },
     form:         entry.recentForm as FormResult[],
-    goalsFor:     0,
-    goalsAgainst: 0,
+    goalsFor:     entry.goalsFor ?? 0,
+    goalsAgainst: entry.goalsAgainst ?? 0,
     leagueStrength,
     accent,
   }
