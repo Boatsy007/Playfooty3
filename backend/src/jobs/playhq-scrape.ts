@@ -63,6 +63,16 @@ export const LEAGUE_CONFIGS: LeagueConfig[] = [
     urlEnvVar:  'GDFNL_PLAYHQ_URL',
     defaultUrl: 'https://www.playhq.com/netball-australia/org/geelong-and-district-football-netball-league/gdfnl-netball-winter-competition-2026/a-grade-buckleys-cup/74c225ef/ladder',
   },
+  {
+    name:       'Bellarine FNL - A Grade Netball',
+    shortName:  'Bellarine FNL A Grade',
+    state:      'VIC',
+    region:     'Bellarine',
+    slugSuffix: 'bfnl',
+    stars:      5.0,
+    urlEnvVar:  'BELLARINE_PLAYHQ_URL',
+    defaultUrl: 'https://www.playhq.com/netball-australia/org/geelong-amateur/ada7613a/afl-barwon-fnl-winter-2026/teams/geelong-amateur-a-grade/76aa95bb/ladder',
+  },
 ]
 
 // ─── Result types ─────────────────────────────────────────────────────────────

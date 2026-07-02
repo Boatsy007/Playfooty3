@@ -27,6 +27,7 @@ jobs:
       # Per-league ladder URL overrides (optional — defaults live in the config).
       GIPPSLAND_PLAYHQ_URL: ${{ secrets.GIPPSLAND_PLAYHQ_URL }}
       GDFNL_PLAYHQ_URL:     ${{ secrets.GDFNL_PLAYHQ_URL }}
+      BELLARINE_PLAYHQ_URL: ${{ secrets.BELLARINE_PLAYHQ_URL }}
 
     steps:
       - name: Checkout repository
@@ -66,4 +67,4 @@ jobs:
           echo "## PlayHQ Scrape Result" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Date**: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "- **Leagues**: Gippsland League, Geelong & District FNL (A Grade Netball 2026)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Leagues**: Gippsland League, Geelong & District FNL, Bellarine FNL (A Grade Netball 2026)" >> $GITHUB_STEP_SUMMARY

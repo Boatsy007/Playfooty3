@@ -66,6 +66,7 @@ export function strengthForStars(stars: number): StrengthTierDef {
 
 export const LEAGUE_STARS: { name: string; stars: number }[] = [
   { name: 'Geelong Football Netball League',              stars: 5.0 },
+  { name: 'Bellarine Football Netball League',            stars: 5.0 },
   { name: 'Goulburn Valley Football Netball League',      stars: 4.5 },
   { name: 'Ballarat Football Netball League',             stars: 4.5 },
   { name: 'Gippsland League',                             stars: 4.0 },
