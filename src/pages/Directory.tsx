@@ -44,12 +44,12 @@ function ClubRow({ club, index }: { club: DirClub; index: number }) {
         borderTop: index === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}
     >
-      {/* Ladder position */}
+      {/* National power rank (falls back to ladder position if unranked) */}
       <span
         className="font-display text-right leading-none"
-        style={{ color: '#ff2c91', fontSize: 'clamp(1.4rem, 4vw, 2rem)', minWidth: '1.8rem' }}
+        style={{ color: '#ff2c91', fontSize: 'clamp(1.4rem, 4vw, 2rem)', minWidth: '2.4rem' }}
       >
-        {index + 1}
+        {club.rank ?? index + 1}
       </span>
 
       {/* Name + region */}
@@ -67,7 +67,6 @@ function ClubRow({ club, index }: { club: DirClub; index: number }) {
         <p className="font-display text-white text-sm">{club.wins}–{club.losses}{club.draws ? `–${club.draws}` : ''}</p>
         <p className="font-condensed font-bold text-[9px] tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
           {club.percentage ? `${club.percentage}%` : '—'}
-          {club.rank ? ` · #${club.rank}` : ''}
         </p>
       </div>
 
