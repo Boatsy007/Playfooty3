@@ -216,68 +216,95 @@ export class PlayHQPlaywrightAdapter {
     }
   }
 
-  // ─── DOM fallback — uses Playwright locator API (no browser-context eval) ───
+  // ─── DOM fallback — header-driven column mapping ────────────────────────────
+  // Reads the ladder table's header row to map column NAMES → indices, so it
+  // works regardless of PlayHQ's column order or which stats are shown.
+  // PlayHQ netball ladders vary: some show P|W|L|D|For|Against|%|Pts, others
+  // show P|Pts|%|W|L|D with no goals columns (e.g. Gippsland League).
 
   private async scrapeDom(page: import('playwright').Page): Promise<RawLadderEntry[]> {
-    const ladderSelectors = [
-      '[data-testid*="ladder-row"]',
-      '[data-testid*="standings-row"]',
-      '[class*="LadderRow"]',
-      '[class*="StandingRow"]',
-      'table tbody tr',
-    ]
+    // Find every table on the page and pick the one whose header looks like a ladder
+    const tables = await page.locator('table').all()
 
-    let foundSelector = ''
-    for (const sel of ladderSelectors) {
-      try {
-        await page.waitForSelector(sel, { timeout: 8000 })
-        foundSelector = sel
-        break
-      } catch { /* try next */ }
-    }
+    for (const table of tables) {
+      const headerCells = await table.locator('thead th, thead td, tr:first-child th').allTextContents()
+      const headers = headerCells.map(h => h.trim().toUpperCase())
 
-    if (!foundSelector) {
-      logger.warn('PlayHQPlaywright: no ladder selector matched — returning empty')
-      return []
-    }
+      // A ladder header must contain a TEAM column and at least Played + Points
+      const hasTeam = headers.some(h => h === 'TEAM' || h === 'CLUB' || h.includes('TEAM'))
+      if (!hasTeam || headers.length < 4) continue
 
-    const rows = await page.locator(foundSelector).all()
-    const entries: RawLadderEntry[] = []
+      const colIndex = this.buildColumnMap(headers)
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
+      const bodyRows = await table.locator('tbody tr').all()
+      const rows = bodyRows.length > 0 ? bodyRows : await table.locator('tr').all()
 
-      // Try data-testid child approach first, then positional cells
-      const cellText = async (testIdPattern: string): Promise<string> => {
-        try {
-          return (await row.locator(`[data-testid*="${testIdPattern}"]`).first().textContent({ timeout: 500 }))?.trim() ?? ''
-        } catch { return '' }
+      const entries: RawLadderEntry[] = []
+      for (const row of rows) {
+        const cellsRaw = await row.locator('td, th, [role="cell"]').allTextContents()
+        const cells = cellsRaw.map(c => c.trim())
+        if (cells.length < 4) continue   // skip header / spacer rows
+
+        const at = (key: string): string => {
+          const idx = colIndex[key]
+          return idx != null && idx < cells.length ? cells[idx] : ''
+        }
+
+        const teamName = at('team')
+        if (!teamName || /^\d+$/.test(teamName)) continue   // skip if empty or numeric
+
+        const num = (s: string) => { const n = parseInt(s.replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n }
+        const flt = (s: string) => { const n = parseFloat(s.replace(/[^\d.-]/g, '')); return isNaN(n) ? 0 : n }
+
+        entries.push({
+          rank:         entries.length + 1,
+          teamRaw:      teamName,
+          played:       num(at('played')),
+          wins:         num(at('wins')),
+          losses:       num(at('losses')),
+          draws:        num(at('draws')),
+          goalsFor:     num(at('goalsFor')),
+          goalsAgainst: num(at('goalsAgainst')),
+          percentage:   flt(at('percentage')),
+          points:       num(at('points')),
+        })
       }
 
-      const allCells = await row.locator('td, [role="cell"]').allTextContents()
-      const cells    = allCells.map(t => t.trim()).filter(t => t.length > 0)
-
-      const teamName = (await cellText('team-name')) || (await cellText('club-name')) || cells[1] || cells[0] || ''
-      if (!teamName) continue
-
-      const num = (s: string, fallback: string) => parseInt(s || fallback || '0', 10)
-      const flt = (s: string, fallback: string) => parseFloat(s || fallback || '0')
-
-      entries.push({
-        rank:         i + 1,
-        teamRaw:      teamName,
-        played:       num(await cellText('played'),       cells[2]),
-        wins:         num(await cellText('wins'),         cells[3]),
-        losses:       num(await cellText('losses'),       cells[4]),
-        draws:        num(await cellText('draws'),        cells[5]),
-        goalsFor:     num(await cellText('goals-for'),    cells[6]),
-        goalsAgainst: num(await cellText('goals-against'), cells[7]),
-        percentage:   flt(await cellText('percentage'),   cells[8]),
-        points:       num(await cellText('points'),       cells[9]),
-      })
+      if (entries.length > 0) {
+        logger.info('PlayHQPlaywright: parsed ladder table via header map', {
+          entries: entries.length,
+          headers: headers.join('|'),
+        })
+        return entries
+      }
     }
 
-    return entries
+    logger.warn('PlayHQPlaywright: no ladder table matched — returning empty')
+    return []
+  }
+
+  /** Map PlayHQ header labels → our field keys, by column index. */
+  private buildColumnMap(headers: string[]): Record<string, number> {
+    const map: Record<string, number> = {}
+    headers.forEach((h, i) => {
+      const label = h.trim().toUpperCase()
+      // Team name column
+      if ((label === 'TEAM' || label === 'CLUB' || label.includes('TEAM')) && map.team == null) map.team = i
+      // Played
+      else if (label === 'P' || label === 'PLD' || label === 'PLAYED' || label === 'GP') map.played = i
+      // Points
+      else if (label === 'PTS' || label === 'POINTS') map.points = i
+      // Percentage
+      else if (label === '%' || label.includes('PERC') || label === 'PCT') map.percentage = i
+      // Wins / Losses / Draws
+      else if (label === 'W' || label === 'WON' || label === 'WINS') map.wins = i
+      else if (label === 'L' || label === 'LOST' || label === 'LOSSES') map.losses = i
+      else if (label === 'D' || label === 'DRAWN' || label === 'DRAWS') map.draws = i
+      // Goals for / against (only present on some ladders)
+      else if (label === 'FOR' || label === 'GF' || label === 'PF' || label.includes('FOR')) map.goalsFor = i
+      else if (label === 'AGAINST' || label === 'GA' || label === 'PA' || label.includes('AGAINST')) map.goalsAgainst = i
+    })
+    return map
   }
 
   // ─── JSON response parser ───────────────────────────────────────────────────
