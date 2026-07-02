@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import ClubPackages from './pages/ClubPackages.tsx'
 import PowerRankings from './pages/PowerRankings.tsx'
+import Directory from './pages/Directory.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />} />
         <Route path="/club-packages" element={<ClubPackages />} />
         <Route path="/power-rankings" element={<PowerRankings />} />
+        <Route path="/directory" element={<Directory />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

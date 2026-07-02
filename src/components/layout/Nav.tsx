@@ -9,6 +9,7 @@ const links = [
   { label: 'The Event',      href: '#the-weekend',    route: '/'                },
   { label: 'Gold Coast',     href: '#gold-coast',     route: '/'                },
   { label: 'Rankings',       href: '/power-rankings', route: '/power-rankings'  },
+  { label: 'Directory',      href: '/directory',      route: '/directory'       },
   { label: 'Club Packages',  href: '/club-packages',  route: '/club-packages'   },
   { label: 'Partners',       href: '#partners',       route: '/'                },
   { label: 'FAQ',            href: '#faq',            route: '/'                },
