@@ -18,6 +18,7 @@
     "pilot:dev": "tsx src/jobs/pilot-trigger.ts",
     "playhq:scrape": "tsx src/jobs/playhq-trigger.ts",
     "playhq:install-browser": "playwright install chromium",
+    "discover:preview": "tsx src/discovery/discovery-trigger.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

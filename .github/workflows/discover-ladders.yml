@@ -1,0 +1,55 @@
+name: Discover A Grade Women's Ladders (preview)
+
+# Preview-only PlayHQ discovery crawl. Crawls the Netball Australia association
+# directory and samples a few associations' season/grade/ladder structure.
+# Writes NOTHING to the database — download the "discovery-preview" artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: 'Max directory pages to crawl'
+        required: false
+        default: '40'
+        type: string
+      drilldown:
+        description: 'How many associations to drill into for structure'
+        required: false
+        default: '3'
+        type: string
+
+jobs:
+  discover:
+    name: Crawl association directory (preview)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install chromium --with-deps
+
+      - name: Run discovery preview
+        working-directory: backend
+        run: npx tsx src/discovery/discovery-trigger.ts --max-pages=${{ inputs.max_pages }} --drilldown=${{ inputs.drilldown }}
+
+      - name: Upload preview artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: discovery-preview
+          path: backend/discovery-preview.json
+          if-no-files-found: warn
