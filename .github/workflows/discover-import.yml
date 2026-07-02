@@ -55,7 +55,9 @@ jobs:
       - name: Apply additive migration (idempotent)
         if: ${{ inputs.apply_migration }}
         working-directory: backend
-        run: npx prisma db execute --url "$DIRECT_URL" --file prisma/migrations/manual/2026_discovery_fields.sql
+        # Use the pooler URL (DATABASE_URL) — the direct host (DIRECT_URL) is not
+        # reachable from GitHub Actions. DDL runs fine over the session pooler.
+        run: npx prisma db execute --url "$DATABASE_URL" --file prisma/migrations/manual/2026_discovery_fields.sql
 
       - name: Install Playwright Chromium
         working-directory: backend
