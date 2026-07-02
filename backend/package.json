@@ -16,12 +16,15 @@
     "job:dev": "tsx src/jobs/trigger.ts",
     "pilot:run": "node dist/jobs/pilot-trigger.js",
     "pilot:dev": "tsx src/jobs/pilot-trigger.ts",
+    "gippsland:scrape": "tsx src/jobs/gippsland-trigger.ts",
+    "gippsland:install-browser": "playwright install chromium",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "playwright": "^1.61.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

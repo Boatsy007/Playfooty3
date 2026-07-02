@@ -19,6 +19,7 @@ import { noCache }         from '../api/middleware/cache-middleware.js'
 import { checkAdapterHealth } from '../scrapers/scraper.engine.js'
 import { runWeeklyUpdate }    from '../jobs/weekly-update.job.js'
 import { runNGFNLPilot }      from '../jobs/pilot.js'
+import { runGippslandScrape } from '../jobs/gippsland-scrape.js'
 import { logger }             from '../utils/logger.js'
 
 const router = Router()
@@ -157,6 +158,43 @@ router.post('/pilot', async (req, res) => {
     })
   } catch (err) {
     logger.error('AdminDashboard: pilot endpoint error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// POST /admin/gippsland-scrape
+// Scrapes Gippsland League A Grade Netball from PlayHQ, stores data, and
+// re-runs the ranking engine. Requires a valid PlayHQ ladder URL.
+router.post('/gippsland-scrape', async (req, res) => {
+  try {
+    const { ladderUrl, weekLabel } = req.body as { ladderUrl?: string; weekLabel?: string }
+    const url = ladderUrl ?? process.env.GIPPSLAND_PLAYHQ_URL
+
+    if (!url) {
+      res.status(400).json({
+        error:   'Missing ladderUrl',
+        detail:  'Provide { "ladderUrl": "https://www.playhq.com/..." } in the request body, or set GIPPSLAND_PLAYHQ_URL env var.',
+        howTo:   'Find the URL: open PlayHQ → Gippsland League 2026 → A Grade Netball → Ladder → copy address bar URL',
+      })
+      return
+    }
+
+    logger.info('AdminDashboard: Gippsland scrape triggered', { url, weekLabel })
+
+    // Respond immediately with 202 — scrape may take 30–60s with Playwright
+    res.status(202).json({
+      message:    'Gippsland League scrape started',
+      ladderUrl:  url,
+      startedAt:  new Date().toISOString(),
+      note:       'Check /admin/status for the latest ranking run once complete.',
+    })
+
+    runGippslandScrape({ ladderUrl: url, weekLabel }).catch(err => {
+      logger.error('AdminDashboard: Gippsland scrape failed', { error: String(err) })
+    })
+
+  } catch (err) {
+    logger.error('AdminDashboard: gippsland-scrape endpoint error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })

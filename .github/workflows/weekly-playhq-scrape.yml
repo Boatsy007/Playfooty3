@@ -1,0 +1,74 @@
+name: Weekly PlayHQ Scrape — Gippsland League A Grade Netball
+
+# Runs every Monday at 11:00 PM AEST (13:00 UTC) — after weekend rounds are finalised.
+# Also triggered manually via the Actions tab.
+on:
+  schedule:
+    - cron: '0 13 * * 1'   # Monday 11pm AEST (UTC+10)
+  workflow_dispatch:
+    inputs:
+      ladder_url:
+        description: 'PlayHQ ladder URL (overrides secret if provided)'
+        required: false
+        type: string
+      week_label:
+        description: 'ISO week label, e.g. 2026-W28 (leave blank for auto)'
+        required: false
+        type: string
+
+jobs:
+  scrape-and-rank:
+    name: Scrape Gippsland League + Rank All
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      DATABASE_URL:      ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:        ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY:     ${{ secrets.ADMIN_API_KEY }}
+      # Set this secret in GitHub → Settings → Secrets → Actions:
+      GIPPSLAND_PLAYHQ_URL: ${{ secrets.GIPPSLAND_PLAYHQ_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Gippsland League scrape
+        working-directory: backend
+        env:
+          # Prefer manual URL input over secret (allows ad-hoc runs with different URLs)
+          GIPPSLAND_PLAYHQ_URL: ${{ inputs.ladder_url || secrets.GIPPSLAND_PLAYHQ_URL }}
+        run: |
+          if [ -n "${{ inputs.week_label }}" ]; then
+            npx tsx src/jobs/gippsland-trigger.ts --week=${{ inputs.week_label }}
+          else
+            npx tsx src/jobs/gippsland-trigger.ts
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Gippsland League Scrape Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **League**: Gippsland League A Grade Netball 2026" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: $GIPPSLAND_PLAYHQ_URL" >> $GITHUB_STEP_SUMMARY
