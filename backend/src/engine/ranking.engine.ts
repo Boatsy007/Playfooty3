@@ -192,7 +192,32 @@ export class RankingEngine {
       return { club, components, powerRating }
     })
 
-    // Sort descending by power rating
+    // Ranking rule:
+    //  • Within the SAME league, record comes first — an undefeated team ranks
+    //    above a team with a loss (fewer losses wins; then more wins).
+    //  • Teams with an identical record, and teams in different leagues, fall
+    //    back to the formula power rating.
+    // To keep displayed ratings monotonic with the order, we reassign each
+    // league's set of rating values in record order — the formula still sets
+    // the magnitudes (and cross-league placement), the record sets the order.
+    const byLeague = new Map<string, typeof scored>()
+    for (const s of scored) {
+      const arr = byLeague.get(s.club.leagueId) ?? []
+      arr.push(s)
+      byLeague.set(s.club.leagueId, arr)
+    }
+    for (const group of byLeague.values()) {
+      const ratingsDesc = group.map(s => s.powerRating).sort((a, b) => b - a)
+      group.sort((a, b) => {
+        if (a.club.losses !== b.club.losses) return a.club.losses - b.club.losses  // fewer losses first
+        if (a.club.wins   !== b.club.wins)   return b.club.wins   - a.club.wins    // more wins first
+        return b.powerRating - a.powerRating                                       // equal record → formula
+      })
+      group.forEach((s, i) => { s.powerRating = ratingsDesc[i] })
+    }
+
+    // Global order by the (record-aligned) rating — a valid total order that
+    // reproduces within-league record order and interleaves leagues by formula.
     scored.sort((a, b) => b.powerRating - a.powerRating)
 
     const calculatedAt = new Date().toISOString()
