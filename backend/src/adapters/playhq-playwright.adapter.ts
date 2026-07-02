@@ -33,45 +33,6 @@ export interface PlayHQScrapedLadder {
   method:     'json-intercept' | 'dom' | 'next-data'
 }
 
-// ─── JSON response shapes PlayHQ returns internally ──────────────────────────
-
-interface PlayHQApiTeam {
-  id:            string
-  name:          string
-  shortName?:    string
-  logo?:         { sizes?: { url: string }[]; url?: string }
-}
-
-interface PlayHQApiLadderEntry {
-  team:          PlayHQApiTeam
-  rank?:         number
-  position?:     number
-  played?:       number
-  gamesPlayed?:  number
-  wins?:         number
-  losses?:       number
-  draws?:        number
-  goalsFor?:     number
-  pointsFor?:    number
-  goalsAgainst?: number
-  pointsAgainst?: number
-  percentage?:   number
-  points?:       number
-  totalPoints?:  number
-}
-
-interface PlayHQApiResponse {
-  data?: {
-    competition?: { name?: string }
-    ladder?:      PlayHQApiLadderEntry[]
-    standings?:   PlayHQApiLadderEntry[]
-    teams?:       PlayHQApiLadderEntry[]
-  }
-  ladder?:        PlayHQApiLadderEntry[]
-  standings?:     PlayHQApiLadderEntry[]
-  competition?:   { name?: string }
-}
-
 // ─── Main adapter ─────────────────────────────────────────────────────────────
 
 export class PlayHQPlaywrightAdapter {
@@ -119,26 +80,12 @@ export class PlayHQPlaywrightAdapter {
 
       const html = await res.text()
 
-      // Extract __NEXT_DATA__ JSON
+      // Extract __NEXT_DATA__ JSON and search it for a ladder array
       const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/)
       if (!match) return []
 
-      const nextData = JSON.parse(match[1]) as {
-        props?: {
-          pageProps?: {
-            ladder?: PlayHQApiLadderEntry[]
-            standings?: PlayHQApiLadderEntry[]
-            competition?: { name?: string }
-            initialState?: { ladder?: PlayHQApiLadderEntry[] }
-          }
-        }
-      }
-
-      const props = nextData?.props?.pageProps
-      if (!props) return []
-
-      const raw = props.ladder ?? props.standings ?? props.initialState?.ladder ?? []
-      return this.normaliseEntries(raw)
+      const nextData = JSON.parse(match[1]) as unknown
+      return this.findLadderInJson(nextData)
 
     } catch (err) {
       logger.debug('PlayHQPlaywright: __NEXT_DATA__ extraction failed', { error: String(err) })
@@ -170,46 +117,51 @@ export class PlayHQPlaywrightAdapter {
       })
       const page = await ctx.newPage()
 
-      // Intercept all JSON responses — PlayHQ fetches ladder via XHR/fetch
-      const capturedApiResponses: PlayHQApiResponse[] = []
+      // Capture every JSON body the page fetches. PlayHQ loads its ladder from
+      // api.playhq.com/graphql (rendered inside an embed.playhq.com iframe), so
+      // the reliable data source is the intercepted GraphQL JSON — not the DOM.
+      const capturedJson: unknown[] = []
       page.on('response', async response => {
-        const url     = response.url()
-        const ct      = response.headers()['content-type'] ?? ''
-        const isJson  = ct.includes('json')
-        const isApi   = url.includes('/api/') || url.includes('graphql') || url.includes('ladder') || url.includes('standing')
-        if (isJson && isApi) {
-          try {
-            const json = await response.json() as PlayHQApiResponse
-            capturedApiResponses.push(json)
-            logger.debug('PlayHQPlaywright: captured JSON response', { url, bytes: JSON.stringify(json).length })
-          } catch {
-            // some json endpoints return non-ladder data; ignore
-          }
-        }
+        const ct = response.headers()['content-type'] ?? ''
+        if (!ct.includes('json')) return
+        const url = response.url()
+        // Ignore ad/analytics networks that never settle (rubicon, posthog, split.io …)
+        if (/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs/.test(url)) return
+        try {
+          capturedJson.push(await response.json())
+        } catch { /* non-JSON body — ignore */ }
       })
 
       logger.info('PlayHQPlaywright: navigating to ladder page', { url: ladderUrl })
-      await page.goto(ladderUrl, {
-        waitUntil: 'networkidle',
-        timeout:   this.timeoutMs,
-      })
+      // Do NOT wait for networkidle — ad/analytics polling prevents it from
+      // ever settling. Load the DOM, then give XHR/GraphQL time to land.
+      try {
+        await page.goto(ladderUrl, { waitUntil: 'domcontentloaded', timeout: this.timeoutMs })
+      } catch (err) {
+        logger.warn('PlayHQPlaywright: goto did not fully settle, continuing', { detail: String(err) })
+      }
+      // Let the ladder GraphQL request complete and the iframe hydrate
+      await page.waitForTimeout(8000)
 
-      // 1. Try to parse captured JSON responses first
-      for (const json of capturedApiResponses) {
-        const raw = this.extractLadderFromJson(json)
-        if (raw.length > 0) {
-          const entries = this.normaliseEntries(raw)
-          if (entries.length > 0) {
-            logger.info('PlayHQPlaywright: parsed ladder from JSON intercept', { entries: entries.length })
-            return this.makeResult(entries, 'json-intercept')
-          }
+      // 1. Find the ladder inside any captured JSON (GraphQL or REST)
+      logger.info('PlayHQPlaywright: scanning captured JSON responses', { count: capturedJson.length })
+      for (const json of capturedJson) {
+        const entries = this.findLadderInJson(json)
+        if (entries.length >= 4) {
+          logger.info('PlayHQPlaywright: parsed ladder from intercepted JSON', { entries: entries.length })
+          return this.makeResult(entries, 'json-intercept')
         }
       }
 
-      // 2. Fall back to DOM scraping
-      logger.info('PlayHQPlaywright: JSON intercept yielded no data, falling back to DOM')
-      const domEntries = await this.scrapeDom(page)
-      return this.makeResult(domEntries, 'dom')
+      // 2. Fall back to DOM scraping across the main page AND any iframes
+      logger.info('PlayHQPlaywright: JSON scan found no ladder, falling back to DOM (incl. frames)')
+      for (const frame of page.frames()) {
+        try {
+          const domEntries = await this.scrapeDom(frame)
+          if (domEntries.length > 0) return this.makeResult(domEntries, 'dom')
+        } catch { /* frame detached — skip */ }
+      }
+      return this.makeResult([], 'dom')
 
     } finally {
       await browser.close()
@@ -222,7 +174,7 @@ export class PlayHQPlaywrightAdapter {
   // PlayHQ netball ladders vary: some show P|W|L|D|For|Against|%|Pts, others
   // show P|Pts|%|W|L|D with no goals columns (e.g. Gippsland League).
 
-  private async scrapeDom(page: import('playwright').Page): Promise<RawLadderEntry[]> {
+  private async scrapeDom(page: import('playwright').Page | import('playwright').Frame): Promise<RawLadderEntry[]> {
     // Collect candidate row containers: real <table> rows AND ARIA/div grids
     // (PlayHQ sometimes renders ladders as role="row"/"cell" grids, not tables).
     const containers = [
@@ -312,74 +264,95 @@ export class PlayHQPlaywrightAdapter {
       else if (label === 'W' || label === 'WON' || label === 'WINS') map.wins = i
       else if (label === 'L' || label === 'LOST' || label === 'LOSSES') map.losses = i
       else if (label === 'D' || label === 'DRAWN' || label === 'DRAWS') map.draws = i
-      // Goals for / against (only present on some ladders)
-      else if (label === 'FOR' || label === 'GF' || label === 'PF' || label.includes('FOR')) map.goalsFor = i
-      else if (label === 'AGAINST' || label === 'GA' || label === 'PA' || label.includes('AGAINST')) map.goalsAgainst = i
+      // Goals for / against (F/A on PlayHQ). Exact matches only so FORF/ADJ
+      // are never mistaken for FOR/AGAINST.
+      else if (label === 'F' || label === 'FOR' || label === 'GF' || label === 'PF') map.goalsFor = i
+      else if (label === 'A' || label === 'AGAINST' || label === 'GA' || label === 'PA') map.goalsAgainst = i
     })
     return map
   }
 
-  // ─── JSON response parser ───────────────────────────────────────────────────
+  // ─── JSON response parser — recursively find the ladder array ───────────────
+  // PlayHQ returns the ladder via GraphQL, whose exact shape we don't hardcode.
+  // We walk the whole JSON tree, and for every array of objects we try to map
+  // it as a ladder (fuzzy key matching). The largest confidently-mapped array
+  // wins. This survives GraphQL schema changes and different query names.
 
-  private extractLadderFromJson(json: PlayHQApiResponse): PlayHQApiLadderEntry[] {
-    // Try multiple known PlayHQ response shapes
-    if (Array.isArray(json)) {
-      const arr = json as PlayHQApiLadderEntry[]
-      if (arr.length > 0 && arr[0].team) return arr
-    }
+  private findLadderInJson(root: unknown): RawLadderEntry[] {
+    let best: RawLadderEntry[] = []
 
-    const candidates = [
-      json.ladder,
-      json.standings,
-      json.data?.ladder,
-      json.data?.standings,
-      json.data?.teams,
-    ]
-
-    for (const c of candidates) {
-      if (Array.isArray(c) && c.length > 0 && (c[0] as PlayHQApiLadderEntry).team) {
-        return c as PlayHQApiLadderEntry[]
+    const visit = (node: unknown): void => {
+      if (Array.isArray(node)) {
+        if (node.length >= 4 && node.every(x => x !== null && typeof x === 'object')) {
+          const mapped = this.tryMapLadderArray(node as Record<string, unknown>[])
+          if (mapped.length > best.length) best = mapped
+        }
+        for (const child of node) visit(child)
+      } else if (node !== null && typeof node === 'object') {
+        for (const v of Object.values(node as Record<string, unknown>)) visit(v)
       }
     }
 
-    return []
+    visit(root)
+    return best
   }
 
-  // ─── Normalise PlayHQ API entries → RawLadderEntry ─────────────────────────
+  /** Attempt to map an array of objects into ladder entries via fuzzy keys. */
+  private tryMapLadderArray(arr: Record<string, unknown>[]): RawLadderEntry[] {
+    const entries: RawLadderEntry[] = []
 
-  private normaliseEntries(raw: PlayHQApiLadderEntry[]): RawLadderEntry[] {
-    return raw
-      .map((e, i) => {
-        const gf = e.goalsFor ?? e.pointsFor ?? 0
-        const ga = e.goalsAgainst ?? e.pointsAgainst ?? 0
-        const pct = e.percentage ?? (ga > 0 ? parseFloat(((gf / ga) * 100).toFixed(1)) : 0)
-        return {
-          rank:         e.rank ?? e.position ?? i + 1,
-          teamRaw:      e.team?.name ?? '',
-          played:       e.played ?? e.gamesPlayed ?? 0,
-          wins:         e.wins    ?? 0,
-          losses:       e.losses  ?? 0,
-          draws:        e.draws   ?? 0,
-          goalsFor:     gf,
-          goalsAgainst: ga,
-          percentage:   pct,
-          points:       e.points  ?? e.totalPoints ?? 0,
-        }
+    arr.forEach((row, i) => {
+      const team = this.findTeamName(row)
+      if (!team) return
+      entries.push({
+        rank:         this.findNum(row, /^(rank|position|pos)$/i) ?? i + 1,
+        teamRaw:      team,
+        played:       this.findNum(row, /^(played|games?|gamesplayed|gp|p)$/i) ?? 0,
+        wins:         this.findNum(row, /^(w|won|wins)$/i) ?? 0,
+        losses:       this.findNum(row, /^(l|lost|losses)$/i) ?? 0,
+        draws:        this.findNum(row, /^(d|draw|draws|drawn|tie|tied|ties)$/i) ?? 0,
+        goalsFor:     this.findNum(row, /^(for|f|gf|pf|goalsfor|pointsfor|scoredfor)$/i) ?? 0,
+        goalsAgainst: this.findNum(row, /^(against|a|ga|pa|goalsagainst|pointsagainst)$/i) ?? 0,
+        percentage:   this.findNum(row, /^(percentage|percent|pct|per|ratio)$/i) ?? 0,
+        points:       this.findNum(row, /^(points|pts|competitionpoints|totalpoints|premiershippoints)$/i) ?? 0,
       })
-      .filter(e => e.teamRaw.length > 0)
-      .sort((a, b) => a.rank - b.rank)
+    })
+
+    // Confidence check: a real ladder has most rows carrying played/points/wins
+    const confident = entries.filter(e => e.played > 0 || e.points > 0 || e.wins > 0 || e.goalsFor > 0)
+    return confident.length >= 4 ? entries.sort((a, b) => a.rank - b.rank) : []
   }
 
-  /** Extract team badge/logo URLs from captured responses */
-  extractTeamLogos(raw: PlayHQApiLadderEntry[]): Map<string, string> {
-    const logos = new Map<string, string>()
-    for (const e of raw) {
-      const name = e.team?.name
-      if (!name) continue
-      const url = e.team.logo?.url ?? e.team.logo?.sizes?.[0]?.url
-      if (url) logos.set(name, url)
+  /** Find a numeric value whose key matches the pattern (searches one level deep). */
+  private findNum(obj: Record<string, unknown>, pattern: RegExp): number | undefined {
+    for (const [k, v] of Object.entries(obj)) {
+      if (pattern.test(k)) {
+        const n = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^\d.-]/g, ''))
+        if (!isNaN(n)) return n
+      }
     }
-    return logos
+    // one level deep (e.g. { stats: { wins: 5 } })
+    for (const v of Object.values(obj)) {
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        const n = this.findNum(v as Record<string, unknown>, pattern)
+        if (n !== undefined) return n
+      }
+    }
+    return undefined
+  }
+
+  /** Find a team/club name string (handles nested { team: { name } }). */
+  private findTeamName(obj: Record<string, unknown>): string {
+    for (const [k, v] of Object.entries(obj)) {
+      if (/^(team|club|teamname|clubname|name|displayname)$/i.test(k)) {
+        if (typeof v === 'string' && v.trim()) return v.trim()
+        if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+          const nested = (v as Record<string, unknown>).name ?? (v as Record<string, unknown>).displayName
+          if (typeof nested === 'string' && nested.trim()) return nested.trim()
+        }
+      }
+    }
+    return ''
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
