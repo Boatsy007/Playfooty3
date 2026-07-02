@@ -11,8 +11,36 @@ declare global {
   var __prisma: PrismaClient | undefined
 }
 
+/**
+ * Supabase's connection poolers (PgBouncer) reuse Postgres connections across
+ * serverless invocations. Prisma names its prepared statements (s0, s1, …) and,
+ * when a pooled connection is reused, those names collide — Postgres throws
+ * `42P05: prepared statement "s0" already exists`.
+ *
+ * The fix is to append `?pgbouncer=true`, which tells Prisma to stop using
+ * named prepared statements. We apply it automatically for any pooler URL
+ * (host contains "pooler" or port 6543) so the deployment doesn't depend on
+ * the env var being hand-edited correctly. Direct connections are left alone.
+ */
+function resolveDatasourceUrl(): string | undefined {
+  const raw = process.env.DATABASE_URL
+  if (!raw) return undefined
+  try {
+    const url = new URL(raw)
+    const isPooler = url.hostname.includes('pooler') || url.port === '6543'
+    if (isPooler && !url.searchParams.has('pgbouncer')) {
+      url.searchParams.set('pgbouncer', 'true')
+    }
+    return url.toString()
+  } catch {
+    return raw
+  }
+}
+
 function createClient(): PrismaClient {
+  const datasourceUrl = resolveDatasourceUrl()
   const client = new PrismaClient({
+    ...(datasourceUrl ? { datasources: { db: { url: datasourceUrl } } } : {}),
     log: process.env.NODE_ENV === 'development'
       ? [{ emit: 'event', level: 'query' }, 'warn', 'error']
       : ['warn', 'error'],
