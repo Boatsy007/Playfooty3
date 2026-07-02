@@ -60,10 +60,18 @@ model League {
   associationId String?
   isActive      Boolean          @default(true)
 
-  // League strength — set by admin, influences ranking calculation (UNCHANGED)
-  strengthScore Float            @default(50)  // 0–100
-  strengthTier  Int              @default(3)   // 1–5
+  // League strength (0–100 score the ranking engine consumes). Now DERIVED
+  // from finalStrengthRating × 20 — kept so the ranking formula is untouched.
+  strengthScore Float            @default(50)  // 0–100  (= finalStrengthRating × 20)
+  strengthTier  Int              @default(3)   // 1–5    (= round(finalStrengthRating))
   strengthNotes String?
+
+  // Automatic strength model (0–5). Ranking uses finalStrengthRating via
+  // strengthScore. Manual override is optional and wins when set.
+  automaticStrengthRating Float   @default(3.0)   // computed from ladder data
+  manualStrengthOverride  Float?                  // 0–5, null = no override
+  finalStrengthRating     Float   @default(3.0)   // = manualOverride ?? automatic
+  strengthConfidence      Float   @default(0.3)   // 0–1
 
   // PlayHQ discovery metadata (automated). Does NOT affect the ranking formula.
   playhqOrgSlug       String?

@@ -21,12 +21,11 @@ import { prisma }                  from '../db/client.js'
 import { PlayHQPlaywrightAdapter } from '../adapters/playhq-playwright.adapter.js'
 import { rankAndStore }            from './playhq-scrape.js'
 import { discoverAllAGradeLeagues, type DiscoveredLeague } from '../discovery/playhq-discovery.js'
-import { strengthForStars }        from '../config/league-strength.js'
+import { computeAutomaticStrength, finalStrength, strengthScoreFromRating } from '../config/league-strength-auto.js'
 import { getISOWeekLabel }         from '../utils/week-label.js'
 import { logger }                  from '../utils/logger.js'
 
 const GRADE  = 'A Grade'
-const DEFAULT_STRENGTH = strengthForStars(3.0)   // new leagues: 3★ until reviewed
 
 export interface DiscoveryImportResult {
   runId:            string
@@ -119,15 +118,15 @@ async function importLeague(
     league = await prisma.league.create({
       data: {
         name: `${dl.leagueName} - A Grade Netball`, shortName, stateId: state.id, associationId: association.id,
-        isActive: true, enabled: true, autoDiscovered: true, needsStrengthReview: true,
-        strengthScore: DEFAULT_STRENGTH.score, strengthTier: DEFAULT_STRENGTH.tier,
-        strengthNotes: `Auto-discovered — default ${DEFAULT_STRENGTH.stars}★, set the real rating in admin.`,
+        isActive: true, enabled: true, autoDiscovered: true, needsStrengthReview: false,
+        // Strength is computed from the ladder below; these are placeholders.
+        strengthScore: 60, strengthTier: 3, automaticStrengthRating: 3.0, finalStrengthRating: 3.0, strengthConfidence: 0.3,
+        strengthNotes: 'Auto-discovered — strength calculated from ladder data.',
         playhqOrgSlug: dl.associationSlug, playhqGradeId: dl.gradeId, playhqGradeName: dl.gradeName,
         ladderUrl, currentSeason: dl.season, lastSyncedAt: new Date(),
       },
     })
   } else {
-    // Never overwrite the manual strength; just refresh discovery metadata.
     if (!league.enabled) { logger.info('DiscoveryImport: league disabled, skipping', { league: league.name }); return null }
     league = await prisma.league.update({
       where: { id: league.id },
@@ -141,6 +140,23 @@ async function importLeague(
     await prisma.league.update({ where: { id: league.id }, data: { syncError: 'Ladder scrape returned 0 entries', lastSyncedAt: new Date() } })
     return null
   }
+
+  // ── Automatic league strength from the ladder ──────────────────────────────
+  // manual override (if the admin set one) wins; otherwise use the automatic
+  // rating. strengthScore (0–100) is derived so the ranking engine is untouched.
+  const auto  = computeAutomaticStrength(scraped.entries, 1)
+  const final = finalStrength(auto.rating, league.manualStrengthOverride)
+  await prisma.league.update({
+    where: { id: league.id },
+    data: {
+      automaticStrengthRating: auto.rating,
+      finalStrengthRating:     final,
+      strengthConfidence:      auto.confidence,
+      strengthScore:           strengthScoreFromRating(final),
+      strengthTier:            Math.max(1, Math.min(5, Math.round(final))),
+    },
+  })
+  logger.info('DiscoveryImport: strength computed', { league: league.name, auto: auto.rating, final, confidence: auto.confidence.toFixed(2) })
 
   // League source (PLAYHQ) so the ranking engine includes this league
   const existingSource = await prisma.leagueSource.findFirst({ where: { leagueId: league.id, season, sourceType: 'PLAYHQ' } })

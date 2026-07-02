@@ -17,8 +17,7 @@ ALTER TABLE associations
 CREATE UNIQUE INDEX IF NOT EXISTS "associations_playhqOrgSlug_key"
   ON associations ("playhqOrgSlug");
 
--- Leagues: discovery metadata. Strength fields (strengthScore/strengthTier/
--- strengthNotes) are the manual admin ratings and are NOT touched here.
+-- Leagues: discovery metadata + automatic strength model.
 ALTER TABLE leagues
   ADD COLUMN IF NOT EXISTS "playhqOrgSlug"       text,
   ADD COLUMN IF NOT EXISTS "playhqGradeId"       text,
@@ -31,7 +30,22 @@ ALTER TABLE leagues
   ADD COLUMN IF NOT EXISTS "gradeOverride"       text,
   ADD COLUMN IF NOT EXISTS "ladderUrlOverride"   text,
   ADD COLUMN IF NOT EXISTS "lastSyncedAt"        timestamp(3),
-  ADD COLUMN IF NOT EXISTS "syncError"           text;
+  ADD COLUMN IF NOT EXISTS "syncError"           text,
+  -- Automatic strength (0–5) + confidence. Manual override optional.
+  ADD COLUMN IF NOT EXISTS "automaticStrengthRating" double precision NOT NULL DEFAULT 3.0,
+  ADD COLUMN IF NOT EXISTS "manualStrengthOverride"  double precision,
+  ADD COLUMN IF NOT EXISTS "finalStrengthRating"     double precision NOT NULL DEFAULT 3.0,
+  ADD COLUMN IF NOT EXISTS "strengthConfidence"      double precision NOT NULL DEFAULT 0.3;
+
+-- Backfill: existing leagues were manually rated, so preserve those ratings as
+-- overrides (keeps current rankings stable). Uses the existing strengthTier
+-- (1–5) as the 0–5 rating. New/auto leagues will compute their own from ladder.
+UPDATE leagues
+SET "manualStrengthOverride"  = COALESCE("manualStrengthOverride", "strengthTier"::double precision),
+    "automaticStrengthRating" = "strengthTier"::double precision,
+    "finalStrengthRating"     = "strengthTier"::double precision,
+    "strengthConfidence"      = 0.5
+WHERE "manualStrengthOverride" IS NULL;
 
 -- Club league seasons: advanced-ladder columns from PlayHQ "Show advanced ladder"
 ALTER TABLE club_league_seasons

@@ -226,6 +226,7 @@ router.get('/leagues', async (_req, res) => {
       orderBy: [{ needsStrengthReview: 'desc' }, { name: 'asc' }],
       select: {
         id: true, name: true, shortName: true, strengthScore: true, strengthTier: true,
+        automaticStrengthRating: true, manualStrengthOverride: true, finalStrengthRating: true, strengthConfidence: true,
         enabled: true, autoDiscovered: true, needsStrengthReview: true, currentSeason: true,
         playhqGradeName: true, ladderUrl: true, ladderUrlOverride: true, gradeOverride: true,
         lastSyncedAt: true, syncError: true, association: { select: { name: true } },
@@ -239,23 +240,43 @@ router.get('/leagues', async (_req, res) => {
   }
 })
 
-// PATCH /admin/leagues/:id — edit strength / enable / overrides
+// PATCH /admin/leagues/:id — set/clear the manual strength OVERRIDE (0–5),
+// enable/disable, or set grade/ladder overrides. When the override changes we
+// recompute finalStrengthRating and the derived strengthScore the engine reads.
+// Pass manualStrengthOverride: null to clear it and fall back to automatic.
 router.patch('/leagues/:id', async (req, res) => {
   try {
-    const { strengthScore, strengthTier, strengthNotes, enabled, gradeOverride, ladderUrlOverride, needsStrengthReview } =
-      req.body as Partial<{ strengthScore: number; strengthTier: number; strengthNotes: string; enabled: boolean; gradeOverride: string; ladderUrlOverride: string; needsStrengthReview: boolean }>
+    const body = req.body as Partial<{ manualStrengthOverride: number | null; strengthNotes: string; enabled: boolean; gradeOverride: string; ladderUrlOverride: string }>
+
+    const current = await prisma.league.findUnique({ where: { id: req.params.id } })
+    if (!current) { res.status(404).json({ error: 'League not found' }); return }
 
     const data: Record<string, unknown> = {}
-    if (strengthScore       !== undefined) { data.strengthScore = strengthScore; data.needsStrengthReview = false }
-    if (strengthTier        !== undefined) data.strengthTier = strengthTier
-    if (strengthNotes       !== undefined) data.strengthNotes = strengthNotes
-    if (enabled             !== undefined) data.enabled = enabled
-    if (gradeOverride       !== undefined) data.gradeOverride = gradeOverride || null
-    if (ladderUrlOverride   !== undefined) data.ladderUrlOverride = ladderUrlOverride || null
-    if (needsStrengthReview !== undefined) data.needsStrengthReview = needsStrengthReview
+    if ('manualStrengthOverride' in body) {
+      const override = body.manualStrengthOverride
+      const final = override != null ? override : current.automaticStrengthRating
+      data.manualStrengthOverride = override
+      data.finalStrengthRating    = final
+      data.strengthScore          = Math.max(0, Math.min(100, final * 20))
+      data.strengthTier           = Math.max(1, Math.min(5, Math.round(final)))
+      data.needsStrengthReview    = false
+    }
+    if (body.strengthNotes     !== undefined) data.strengthNotes = body.strengthNotes
+    if (body.enabled           !== undefined) data.enabled = body.enabled
+    if (body.gradeOverride     !== undefined) data.gradeOverride = body.gradeOverride || null
+    if (body.ladderUrlOverride !== undefined) data.ladderUrlOverride = body.ladderUrlOverride || null
 
     const league = await prisma.league.update({ where: { id: req.params.id }, data })
-    res.json({ message: 'League updated', league: { id: league.id, name: league.name, strengthScore: league.strengthScore, strengthTier: league.strengthTier, enabled: league.enabled } })
+    res.json({
+      message: 'League updated',
+      league: {
+        id: league.id, name: league.name, enabled: league.enabled,
+        automaticStrengthRating: league.automaticStrengthRating,
+        manualStrengthOverride:  league.manualStrengthOverride,
+        finalStrengthRating:     league.finalStrengthRating,
+        strengthConfidence:      league.strengthConfidence,
+      },
+    })
   } catch (err) {
     logger.error('AdminDashboard: league patch error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })

@@ -25,6 +25,7 @@ import { RankingEngine }              from '../engine/ranking.engine.js'
 import { getISOWeekLabel }            from '../utils/week-label.js'
 import { logger }                     from '../utils/logger.js'
 import { strengthForStars }           from '../config/league-strength.js'
+import { computeAutomaticStrength, strengthScoreFromRating } from '../config/league-strength-auto.js'
 import type { ClubRankingInput, MatchResult, AustralianState } from '../types/index.js'
 
 const SEASON = '2026'
@@ -152,18 +153,30 @@ async function scrapeLeagueData(cfg: LeagueConfig, ladderUrl: string): Promise<L
       update: {},
     })
 
-    // League (create or keep strength in sync)
-    const def = strengthForStars(cfg.stars)
-    const strengthNotes = `${def.stars}★ ${def.label} — ${def.description}`
+    // League strength: these configured leagues carry a manual override (the
+    // ★ rating you set). Automatic strength is also computed from the ladder;
+    // finalStrengthRating = override (present here) and drives strengthScore.
+    const auto = computeAutomaticStrength(scraped.entries, 1)
+    const finalRating = cfg.stars   // manual override wins for configured leagues
+    const strengthNotes = `Manual override ${cfg.stars}★ (auto ${auto.rating}★, confidence ${auto.confidence.toFixed(2)}).`
+    const strengthData = {
+      automaticStrengthRating: auto.rating,
+      manualStrengthOverride:  cfg.stars,
+      finalStrengthRating:     finalRating,
+      strengthConfidence:      auto.confidence,
+      strengthScore:           strengthScoreFromRating(finalRating),
+      strengthTier:            Math.max(1, Math.min(5, Math.round(finalRating))),
+      strengthNotes,
+    }
     let league = await prisma.league.findFirst({ where: { shortName: cfg.shortName, stateId: state.id } })
     if (!league) {
       league = await prisma.league.create({
-        data: { name: cfg.name, shortName: cfg.shortName, stateId: state.id, isActive: true, strengthScore: def.score, strengthTier: def.tier, strengthNotes },
+        data: { name: cfg.name, shortName: cfg.shortName, stateId: state.id, isActive: true, ...strengthData },
       })
     } else {
       league = await prisma.league.update({
         where: { id: league.id },
-        data:  { strengthScore: def.score, strengthTier: def.tier, strengthNotes },
+        data:  strengthData,
       })
     }
 
