@@ -223,27 +223,34 @@ export class PlayHQPlaywrightAdapter {
   // show P|Pts|%|W|L|D with no goals columns (e.g. Gippsland League).
 
   private async scrapeDom(page: import('playwright').Page): Promise<RawLadderEntry[]> {
-    // Find every table on the page and pick the one whose header looks like a ladder
-    const tables = await page.locator('table').all()
+    // Collect candidate row containers: real <table> rows AND ARIA/div grids
+    // (PlayHQ sometimes renders ladders as role="row"/"cell" grids, not tables).
+    const containers = [
+      ...(await page.locator('table').all()),
+      ...(await page.locator('[role="table"], [role="grid"]').all()),
+    ]
 
-    for (const table of tables) {
-      const headerCells = await table.locator('thead th, thead td, tr:first-child th').allTextContents()
+    const diag: string[] = []
+
+    for (const container of containers) {
+      // Header = the first row's cells (th OR td), regardless of thead presence
+      const firstRow = container.locator('tr, [role="row"]').first()
+      const headerCells = await firstRow.locator('th, td, [role="columnheader"], [role="cell"]').allTextContents()
       const headers = headerCells.map(h => h.trim().toUpperCase())
+      if (headers.length > 0) diag.push(headers.join('|'))
 
-      // A ladder header must contain a TEAM column and at least Played + Points
       const hasTeam = headers.some(h => h === 'TEAM' || h === 'CLUB' || h.includes('TEAM'))
       if (!hasTeam || headers.length < 4) continue
 
       const colIndex = this.buildColumnMap(headers)
 
-      const bodyRows = await table.locator('tbody tr').all()
-      const rows = bodyRows.length > 0 ? bodyRows : await table.locator('tr').all()
+      const allRows = await container.locator('tr, [role="row"]').all()
 
       const entries: RawLadderEntry[] = []
-      for (const row of rows) {
-        const cellsRaw = await row.locator('td, th, [role="cell"]').allTextContents()
+      for (const row of allRows) {
+        const cellsRaw = await row.locator('td, th, [role="cell"], [role="gridcell"]').allTextContents()
         const cells = cellsRaw.map(c => c.trim())
-        if (cells.length < 4) continue   // skip header / spacer rows
+        if (cells.length < 4) continue
 
         const at = (key: string): string => {
           const idx = colIndex[key]
@@ -251,7 +258,8 @@ export class PlayHQPlaywrightAdapter {
         }
 
         const teamName = at('team')
-        if (!teamName || /^\d+$/.test(teamName)) continue   // skip if empty or numeric
+        // Skip the header row and any row whose team cell is empty or purely numeric
+        if (!teamName || /^\d+$/.test(teamName) || teamName.toUpperCase() === 'TEAM') continue
 
         const num = (s: string) => { const n = parseInt(s.replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n }
         const flt = (s: string) => { const n = parseFloat(s.replace(/[^\d.-]/g, '')); return isNaN(n) ? 0 : n }
@@ -271,7 +279,7 @@ export class PlayHQPlaywrightAdapter {
       }
 
       if (entries.length > 0) {
-        logger.info('PlayHQPlaywright: parsed ladder table via header map', {
+        logger.info('PlayHQPlaywright: parsed ladder via header map', {
           entries: entries.length,
           headers: headers.join('|'),
         })
@@ -279,7 +287,11 @@ export class PlayHQPlaywrightAdapter {
       }
     }
 
-    logger.warn('PlayHQPlaywright: no ladder table matched — returning empty')
+    // Diagnostics — surface what the page actually contained so we can adapt
+    logger.warn('PlayHQPlaywright: no ladder table matched — returning empty', {
+      tableCount:      containers.length,
+      firstRowHeaders: diag.slice(0, 8),
+    })
     return []
   }
 
