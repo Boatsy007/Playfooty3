@@ -1,0 +1,390 @@
+// CNCA Rankings Engine — Prisma Schema
+// Target: Supabase (PostgreSQL)
+// Run: npx prisma migrate dev --name init
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")   // Supabase requires a direct connection for migrations
+}
+
+// ─── Reference / lookup tables ───────────────────────────────────────────────
+
+model State {
+  id        String   @id @default(uuid())
+  code      String   @unique  // NSW, VIC, QLD, etc.
+  name      String
+  leagues   League[]
+  clubs     Club[]
+  createdAt DateTime @default(now())
+
+  @@map("states")
+}
+
+model Association {
+  id           String   @id @default(uuid())
+  name         String
+  shortName    String?
+  stateId      String?
+  websiteUrl   String?
+  contactEmail String?
+  leagues      League[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("associations")
+}
+
+// ─── League / competition ─────────────────────────────────────────────────────
+
+model League {
+  id            String           @id @default(uuid())
+  name          String
+  shortName     String?
+  stateId       String
+  associationId String?
+  isActive      Boolean          @default(true)
+
+  // League strength — set by admin, influences ranking calculation
+  strengthScore Float            @default(50)  // 0–100
+  strengthTier  Int              @default(3)   // 1–5
+  strengthNotes String?
+
+  // Averages (recalculated each cycle)
+  avgGoalsPerGame  Float?
+  avgMarginPerGame Float?
+
+  // Data sources for automated collection
+  sources      LeagueSource[]
+
+  // Relationships
+  state        State            @relation(fields: [stateId], references: [id])
+  association  Association?     @relation(fields: [associationId], references: [id])
+  clubSeasons  ClubLeagueSeason[]
+  matches      Match[]
+  rankingEntries RankingEntry[]
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("leagues")
+}
+
+// URL/endpoint for each data source per league
+model LeagueSource {
+  id            String    @id @default(uuid())
+  leagueId      String
+  sourceType    String    // PLAYHQ | NETBALL_CONNECT | CSV_IMPORT | MANUAL_ENTRY
+  ladderUrl     String?
+  fixturesUrl   String?
+  resultsUrl    String?
+  apiKey        String?   // encrypted in production via Supabase Vault
+  season        String    // "2025"
+  isActive      Boolean   @default(true)
+  lastScrapedAt DateTime?
+  lastStatus    String?   // SUCCESS | PARTIAL | FAILED | PENDING_REVIEW
+  notes         String?
+
+  league     League      @relation(fields: [leagueId], references: [id])
+  scrapeLogs ScrapeLog[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("league_sources")
+}
+
+// ─── Club ─────────────────────────────────────────────────────────────────────
+
+model Club {
+  id              String           @id @default(uuid())
+  name            String           // Canonical name
+  slug            String           @unique  // "dubbo-netball-club"
+  shortName       String?
+  stateId         String
+  region          String?
+  latitude        Float?
+  longitude       Float?
+
+  // Brand
+  logoUrl         String?
+  primaryColour   String?
+  secondaryColour String?
+  websiteUrl      String?
+  facebookUrl     String?
+  instagramUrl    String?
+
+  // CNCA status
+  cncaQualified    Boolean @default(false)
+  invitationStatus String? // null | INVITED | CONFIRMED | DECLINED | WAITLIST
+
+  isActive Boolean @default(true)
+  notes    String?
+
+  // Relationships
+  state          State            @relation(fields: [stateId], references: [id])
+  nameVariants   ClubNameVariant[]
+  leagueSeasons  ClubLeagueSeason[]
+  homeMatches    Match[]          @relation("HomeClub")
+  awayMatches    Match[]          @relation("AwayClub")
+  rankingEntries RankingEntry[]
+  snapshots      RankingSnapshot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clubs")
+}
+
+// Known name variants — used by club normaliser to deduplicate scraped data
+model ClubNameVariant {
+  id         String  @id @default(uuid())
+  clubId     String
+  rawName    String  // exactly as seen in source data
+  sourceType String
+  confidence Float   @default(1.0)  // 0–1; <0.8 flagged for human review
+
+  club      Club     @relation(fields: [clubId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([rawName, sourceType])
+  @@map("club_name_variants")
+}
+
+// A club's membership of a league in a specific season
+model ClubLeagueSeason {
+  id       String  @id @default(uuid())
+  clubId   String
+  leagueId String
+  season   String
+  grade    String  @default("A Grade")
+  isActive Boolean @default(true)
+
+  // Aggregated season stats (kept in sync by ranking engine)
+  played       Int   @default(0)
+  wins         Int   @default(0)
+  losses       Int   @default(0)
+  draws        Int   @default(0)
+  goalsFor     Int   @default(0)
+  goalsAgainst Int   @default(0)
+  percentage   Float @default(0)
+  points       Int   @default(0)
+
+  // Finals
+  finalsWins   Int     @default(0)
+  finalsLosses Int     @default(0)
+  isPremier    Boolean @default(false)
+
+  club   Club   @relation(fields: [clubId], references: [id])
+  league League @relation(fields: [leagueId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clubId, leagueId, season, grade])
+  @@map("club_league_seasons")
+}
+
+// ─── Match ────────────────────────────────────────────────────────────────────
+
+model Match {
+  id         String    @id @default(uuid())
+  leagueId   String
+  homeClubId String
+  awayClubId String
+  season     String
+  round      Int?
+  matchDate  DateTime?
+  venue      String?
+  homeGoals  Int
+  awayGoals  Int
+  isFinal    Boolean   @default(false)
+  finalRound String?   // "QF" | "SF" | "PF" | "GF"
+  verified   Boolean   @default(false)
+
+  // Source tracking
+  sourceType String
+  sourceUrl  String?
+  scrapedAt  DateTime?
+
+  league   League @relation(fields: [leagueId], references: [id])
+  homeClub Club   @relation("HomeClub", fields: [homeClubId], references: [id])
+  awayClub Club   @relation("AwayClub", fields: [awayClubId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("matches")
+}
+
+// ─── Ranking engine ───────────────────────────────────────────────────────────
+
+// The weights config for a ranking calculation run.
+// Stored so historical rankings can be reproduced exactly.
+model RankingConfig {
+  id       String  @id @default(uuid())
+  label    String  @default("Default")
+  isActive Boolean @default(true)
+
+  // Stored as serialised JSON for flexibility
+  weights  String  // JSON: { winPercentage: 0.25, ... }
+
+  notes    String?
+  runs     RankingRun[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ranking_configs")
+}
+
+// One execution of the ranking engine (weekly or manual)
+model RankingRun {
+  id          String    @id @default(uuid())
+  weekLabel   String    // ISO week: "2025-W27"
+  season      String    // "2025"
+  configId    String?
+  status      String    // QUEUED | RUNNING | COMPLETED | FAILED
+  clubCount   Int       @default(0)
+  completedAt DateTime?
+  errorLog    String?   // JSON array of error messages
+  notes       String?
+
+  config    RankingConfig?  @relation(fields: [configId], references: [id])
+  entries   RankingEntry[]
+  snapshots RankingSnapshot[]
+  scrapeLogs ScrapeLog[]
+
+  createdAt DateTime @default(now())
+
+  @@index([season, weekLabel])
+  @@map("ranking_runs")
+}
+
+// The ranking entries for a single run
+model RankingEntry {
+  id           String  @id @default(uuid())
+  runId        String
+  clubId       String
+  clubName     String
+  leagueId     String
+  leagueName   String
+  state        String
+
+  rank         Int
+  previousRank Int?
+  rankMovement Int    @default(0)  // +ve = moved up
+
+  powerRating     Float
+  componentScores String  // JSON: { winPercentage: 82.3, ... }
+  recentForm      String  // JSON: ["W","W","L","W","W"]
+  calculatedAt    String
+
+  rankingRun RankingRun @relation(fields: [runId], references: [id])
+  club       Club       @relation(fields: [clubId], references: [id])
+  league     League     @relation(fields: [leagueId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([runId, clubId])
+  @@index([state, rank])
+  @@index([clubId])
+  @@map("ranking_entries")
+}
+
+// Immutable weekly snapshot — stored forever for historical graphs
+model RankingSnapshot {
+  id          String @id @default(uuid())
+  runId       String
+  clubId      String
+  weekLabel   String
+  season      String
+  rank        Int
+  powerRating Float
+  movement    Int
+
+  run  RankingRun @relation(fields: [runId], references: [id])
+  club Club       @relation(fields: [clubId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([weekLabel, clubId])
+  @@index([clubId, weekLabel])
+  @@map("ranking_snapshots")
+}
+
+// ─── Scraping infrastructure ──────────────────────────────────────────────────
+
+model ScrapeLog {
+  id             String  @id @default(uuid())
+  runId          String?
+  leagueSourceId String?
+  sourceType     String
+  sourceUrl      String?
+  status         String  // SUCCESS | PARTIAL | FAILED | PENDING_REVIEW
+  recordsFound   Int     @default(0)
+  recordsStored  Int     @default(0)
+  durationMs     Int?
+  errorMessage   String?
+  retryCount     Int     @default(0)
+  scrapedAt      DateTime @default(now())
+
+  run          RankingRun?   @relation(fields: [runId], references: [id])
+  leagueSource LeagueSource? @relation(fields: [leagueSourceId], references: [id])
+
+  @@map("scrape_logs")
+}
+
+// Human-review queue for data that couldn't be automatically resolved
+model ReviewQueue {
+  id                String    @id @default(uuid())
+  type              String    // CLUB_MATCH | MISSING_LEAGUE | NAME_CONFLICT | STAT_ANOMALY
+  severity          String    @default("WARNING")  // INFO | WARNING | ERROR
+  description       String
+  rawData           String?   // JSON
+  status            String    @default("PENDING")  // PENDING | APPROVED | REJECTED
+  resolvedCanonical String?
+  resolvedBy        String?
+  resolvedAt        DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  @@map("review_queue")
+}
+
+// ─── Admin / auth ─────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  name        String?
+  role        String    @default("VIEWER")  // VIEWER | EDITOR | ADMIN | SUPERADMIN
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  auditLogs   AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String   // e.g. "UPDATE_LEAGUE_STRENGTH", "TRIGGER_RANKING_RUN"
+  entityType String?  // e.g. "League", "Club"
+  entityId   String?
+  before     String?  // JSON
+  after      String?  // JSON
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user AdminUser @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
