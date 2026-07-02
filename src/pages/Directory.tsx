@@ -4,6 +4,7 @@
  * Live data from /api/directory.
  */
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ChevronDown, Search, MapPin, Trophy } from 'lucide-react'
 import Nav from '../components/layout/Nav'
@@ -122,10 +123,12 @@ function LeagueCard({ league }: { league: DirLeague }) {
 }
 
 export default function Directory() {
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState<DirResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [query, setQuery] = useState('')
+  // Pre-fill the search from ?league= (set when arriving from a ranking card)
+  const [query, setQuery] = useState(searchParams.get('league') ?? searchParams.get('q') ?? '')
 
   useEffect(() => {
     fetch('/api/directory')

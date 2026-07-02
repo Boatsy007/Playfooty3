@@ -257,6 +257,23 @@ function PercentageBar({ value, accent }: { value: number; accent: string }) {
   )
 }
 
+/** Clickable league name → opens that league's ladder in the Directory. */
+function LeagueLink({ league }: { league: string }) {
+  const navigate = useNavigate()
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); navigate(`/directory?league=${encodeURIComponent(league)}`) }}
+      className="transition-colors"
+      style={{ color: 'inherit', textUnderlineOffset: '2px' }}
+      onMouseEnter={e => { e.currentTarget.style.color = '#ff2c91'; e.currentTarget.style.textDecoration = 'underline' }}
+      onMouseLeave={e => { e.currentTarget.style.color = 'inherit'; e.currentTarget.style.textDecoration = 'none' }}
+      title={`View ${league} ladder`}
+    >
+      {league}
+    </button>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HERO
 // ─────────────────────────────────────────────────────────────────────────────
@@ -554,7 +571,7 @@ function FeaturedClub({ club }: { club: RankedClub }) {
                 {club.name.toUpperCase()}
               </h2>
               <p className="font-condensed font-bold text-[11px] tracking-[0.22em] uppercase mb-8" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {club.league} · {club.state} · {club.region}
+                <LeagueLink league={club.league} /> · {club.state} · {club.region}
               </p>
 
               {/* Stats grid */}
@@ -743,7 +760,7 @@ function ClubDrawer({ club, onClose }: { club: RankedClub; onClose: () => void }
                 <Movement current={club.rank} previous={club.previousRank} />
               </div>
               <h3 className="font-display text-white leading-none" style={{ fontSize: 'clamp(1.4rem, 4vw, 2.2rem)' }}>{club.name.toUpperCase()}</h3>
-              <p className="font-condensed font-bold text-[10px] tracking-[0.2em] uppercase mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{club.league} · {club.state}</p>
+              <p className="font-condensed font-bold text-[10px] tracking-[0.2em] uppercase mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}><LeagueLink league={club.league} /> · {club.state}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>✕</button>
@@ -857,7 +874,7 @@ function RankingCard({ club, index, onSelect }: { club: RankedClub; index: numbe
             )}
           </div>
           <p className="font-condensed font-bold text-[9px] tracking-[0.18em] uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            {club.league} · {club.state}
+            <LeagueLink league={club.league} /> · {club.state}
           </p>
         </div>
 
