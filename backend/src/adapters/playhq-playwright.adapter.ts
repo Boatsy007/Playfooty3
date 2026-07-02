@@ -218,7 +218,7 @@ export class PlayHQPlaywrightAdapter {
 
         entries.push({
           rank:         entries.length + 1,
-          teamRaw:      teamName,
+          teamRaw:      this.cleanTeamName(teamName),
           played:       num(at('played')),
           wins:         num(at('wins')),
           losses:       num(at('losses')),
@@ -306,7 +306,7 @@ export class PlayHQPlaywrightAdapter {
       if (!team) return
       entries.push({
         rank:         this.findNum(row, /^(rank|position|pos)$/i) ?? i + 1,
-        teamRaw:      team,
+        teamRaw:      this.cleanTeamName(team),
         played:       this.findNum(row, /^(played|games?|gamesplayed|gp|p)$/i) ?? 0,
         wins:         this.findNum(row, /^(w|won|wins)$/i) ?? 0,
         losses:       this.findNum(row, /^(l|lost|losses)$/i) ?? 0,
@@ -353,6 +353,19 @@ export class PlayHQPlaywrightAdapter {
       }
     }
     return ''
+  }
+
+  /**
+   * Strip a trailing grade/age descriptor that some PlayHQ competitions append
+   * to team names (e.g. "Bannockburn FNC A Grade" → "Bannockburn FNC", or
+   * "Leongatha 17 & Under" → "Leongatha"). Leaves normal club names untouched.
+   */
+  private cleanTeamName(name: string): string {
+    return name
+      .replace(/\s*[-–—]?\s*(?:a|b|c|d|e)\s*grade\s*$/i, '')                 // "... A Grade"
+      .replace(/\s*[-–—]?\s*(?:\d{1,2})\s*(?:&|and|\/)?\s*under\b.*$/i, '')  // "... 17 & Under"
+      .replace(/\s{2,}/g, ' ')
+      .trim() || name.trim()
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
