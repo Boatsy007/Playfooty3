@@ -25,9 +25,18 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
 
     const season = latest.season
 
+    // Only leagues with a live PlayHQ source — excludes manually-seeded leagues
+    // (e.g. the retired NGFNL pilot) so the directory matches the rankings.
+    const playhqSources = await prisma.leagueSource.findMany({
+      where:  { sourceType: 'PLAYHQ', season, isActive: true },
+      select: { leagueId: true },
+    })
+    const leagueIds = [...new Set(playhqSources.map(s => s.leagueId))]
+    if (leagueIds.length === 0) { res.json({ season, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
+
     // All club-season rows for this season, with club (+state) and league
     const rows = await prisma.clubLeagueSeason.findMany({
-      where:   { season, isActive: true },
+      where:   { season, isActive: true, leagueId: { in: leagueIds } },
       include: { club: { include: { state: true } }, league: true },
     })
 

@@ -45,7 +45,12 @@ function ClubRow({ club, index }: { club: DirClub; index: number }) {
       }}
     >
       {/* Ladder position */}
-      <span className="font-display text-white/30 text-sm w-6 text-right">{index + 1}</span>
+      <span
+        className="font-display text-right leading-none"
+        style={{ color: '#ff2c91', fontSize: 'clamp(1.4rem, 4vw, 2rem)', minWidth: '1.8rem' }}
+      >
+        {index + 1}
+      </span>
 
       {/* Name + region */}
       <div className="min-w-0">
