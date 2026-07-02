@@ -12,10 +12,12 @@ import { runDiscoveryPreview } from './playhq-discovery.js'
 
 const maxPages  = parseInt(process.argv.find(a => a.startsWith('--max-pages='))?.split('=')[1] ?? '', 10)
 const drilldown = parseInt(process.argv.find(a => a.startsWith('--drilldown='))?.split('=')[1] ?? '', 10)
+const deepSlug  = process.argv.find(a => a.startsWith('--assoc-slug='))?.split('=')[1]
 
 runDiscoveryPreview({
   maxPages:       Number.isFinite(maxPages)  ? maxPages  : undefined,
   drilldownLimit: Number.isFinite(drilldown) ? drilldown : undefined,
+  deepSlug:       deepSlug || undefined,
 })
   .then(p => {
     console.log('\n=== DISCOVERY PREVIEW ===')

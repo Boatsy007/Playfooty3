@@ -56,6 +56,7 @@ export async function runDiscoveryPreview(opts: {
   maxPages?:      number
   drilldownLimit?: number
   outPath?:       string
+  deepSlug?:      string   // if set, deep-dump this association's GraphQL schema
 } = {}): Promise<DiscoveryPreview> {
   const maxPages       = opts.maxPages       ?? 40
   const drilldownLimit = opts.drilldownLimit ?? 3
@@ -76,6 +77,13 @@ export async function runDiscoveryPreview(opts: {
     // ── Step 1: crawl the directory ──────────────────────────────────────────
     const associations = await crawlDirectory(page, maxPages)
     logger.info('Discovery: association crawl complete', { count: associations.length })
+
+    // ── Optional: deep GraphQL schema dump for one association ────────────────
+    if (opts.deepSlug) {
+      const target = associations.find(a => a.slug === opts.deepSlug)
+        ?? { name: opts.deepSlug, url: `${DIRECTORY_BASE}/org/${opts.deepSlug}`, slug: opts.deepSlug, logo: null, state: null, region: null }
+      await deepDumpSchema(page, target)
+    }
 
     // ── Step 2: instrumented drilldown on a sample ───────────────────────────
     const drilldowns: AssociationDrilldown[] = []
@@ -151,8 +159,7 @@ async function extractAssociationsFromPage(page: import('playwright').Page): Pro
       const slug = m[1]
 
       const text = (await a.textContent())?.replace(/\s+/g, ' ').trim() ?? ''
-      // Name: first meaningful text line of the card
-      const name = text.split('·')[0].trim() || slug.replace(/-/g, ' ')
+      const name = cleanAssociationName(text, slug)
 
       let logo: string | null = null
       try { logo = await a.locator('img').first().getAttribute('src', { timeout: 300 }) } catch { /* none */ }
@@ -174,6 +181,20 @@ async function extractAssociationsFromPage(page: import('playwright').Page): Pro
   // Dedup within page by slug
   const seen = new Set<string>()
   return out.filter(a => (seen.has(a.slug) ? false : (seen.add(a.slug), true)))
+}
+
+/**
+ * Clean the concatenated card text into the real association name.
+ * PlayHQ cards render as "[breadcrumb]Netball Australia[name]…[type badge]Association",
+ * so we strip the leading parent and the trailing type badge.
+ */
+function cleanAssociationName(raw: string, slug: string): string {
+  let n = raw.trim()
+  n = n.replace(/^Netball Australia\s*/i, '')       // parent breadcrumb
+  n = n.replace(/\s*(Association|Club|League|Team)\s*$/i, '')  // trailing type badge
+  n = n.replace(/\s+/g, ' ').trim()
+  // Fallback to a title-cased slug if stripping emptied it
+  return n || slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 // ─── Step 2: instrumented drilldown ───────────────────────────────────────────
@@ -233,6 +254,89 @@ async function drilldownAssociation(page: import('playwright').Page, assoc: Disc
   } finally {
     page.off('response', onResponse)
   }
+}
+
+// ─── Deep schema dump (for building precise season/grade/ladder parsing) ──────
+
+async function deepDumpSchema(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<void> {
+  console.log(`\n========== DEEP SCHEMA DUMP: ${assoc.name} ==========`)
+  console.log(`URL: ${assoc.url}`)
+
+  const captured: { url: string; json: unknown }[] = []
+  const onResponse = async (response: import('playwright').Response) => {
+    const ct = response.headers()['content-type'] ?? ''
+    if (!ct.includes('json')) return
+    const url = response.url()
+    if (/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|sentry/.test(url)) return
+    try { captured.push({ url, json: await response.json() }) } catch { /* ignore */ }
+  }
+  page.on('response', onResponse)
+
+  try {
+    // 1) Association landing
+    try { await page.goto(assoc.url.replace(/\/$/, ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* continue */ }
+    await page.waitForTimeout(SETTLE_MS)
+
+    // 2) Try to reach Fixtures & Ladders and open a season, to trigger the
+    //    competition/grade GraphQL calls.
+    await tryClickText(page, ['Fixtures & Ladders', 'Fixtures and Ladders', 'Ladders', 'Fixtures'])
+    await page.waitForTimeout(3000)
+    // Prefer the newest active winter season if a selector is present
+    await tryClickText(page, ['Winter 2028', 'Winter 2027', 'Winter 2026'])
+    await page.waitForTimeout(3000)
+
+    console.log(`\nCaptured ${captured.length} JSON responses. Structural summaries:`)
+    for (const { url, json } of captured) {
+      const lines: string[] = []
+      summariseStructure(json, '', lines, 0)
+      const interesting = lines.filter(l => /season|grade|competition|ladder|winter|summer|standing|team|name|status|tenant|organisation/i.test(l))
+      if (interesting.length === 0) continue
+      console.log(`\n--- ${url.slice(0, 120)}`)
+      console.log(interesting.slice(0, 40).join('\n'))
+    }
+
+    // 3) Also list any grade/season option text visible in the DOM now
+    const opts = await page.locator('a, button, option, [role="option"], li').allTextContents()
+    const gradeish = [...new Set(opts.map(t => t.replace(/\s+/g, ' ').trim()).filter(t => t.length > 1 && t.length < 60 && /grade|premier|division|open|women|winter|summer 20/i.test(t)))]
+    console.log(`\nDOM option texts (grade/season-ish):\n${gradeish.slice(0, 40).join(' | ')}`)
+    console.log(`\n========== END DUMP ==========\n`)
+  } finally {
+    page.off('response', onResponse)
+  }
+}
+
+/** Compact recursive structure summary: array paths + element keys + notable scalars. */
+function summariseStructure(node: unknown, path: string, out: string[], depth: number): void {
+  if (depth > 7 || out.length > 400) return
+  if (Array.isArray(node)) {
+    out.push(`${path} [array len=${node.length}]`)
+    if (node[0] && typeof node[0] === 'object') {
+      out.push(`${path}[0] keys: ${Object.keys(node[0] as object).join(', ')}`)
+      summariseStructure(node[0], `${path}[0]`, out, depth + 1)
+    }
+  } else if (node && typeof node === 'object') {
+    for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+      const p = path ? `${path}.${k}` : k
+      if (v && typeof v === 'object') summariseStructure(v, p, out, depth + 1)
+      else if (typeof v === 'string' && v.length < 80 && /season|grade|competition|ladder|winter|summer|status|name|slug|id|tenant/i.test(k)) {
+        out.push(`${p} = ${v}`)
+      }
+    }
+  }
+}
+
+/** Click the first element whose text matches one of the candidates (best-effort). */
+async function tryClickText(page: import('playwright').Page, candidates: string[]): Promise<boolean> {
+  for (const c of candidates) {
+    try {
+      const el = page.getByText(c, { exact: false }).first()
+      if (await el.count() > 0) {
+        await el.click({ timeout: 2500 })
+        return true
+      }
+    } catch { /* try next */ }
+  }
+  return false
 }
 
 /** Recursively collect plausible grade/competition names from captured JSON. */
