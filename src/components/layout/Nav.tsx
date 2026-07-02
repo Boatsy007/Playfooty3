@@ -6,12 +6,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 const NAV_H = 96 // px — tall enough for the full logo
 
 const links = [
-  { label: 'The Event',      href: '#the-weekend',  route: '/' },
-  { label: 'Gold Coast',     href: '#gold-coast',   route: '/' },
-  { label: 'Who Attends',    href: '#who-attends',  route: '/' },
-  { label: 'Club Packages',  href: '/club-packages', route: '/club-packages' },
-  { label: 'Partners',       href: '#partners',     route: '/' },
-  { label: 'FAQ',            href: '#faq',          route: '/' },
+  { label: 'The Event',      href: '#the-weekend',    route: '/'                },
+  { label: 'Gold Coast',     href: '#gold-coast',     route: '/'                },
+  { label: 'Rankings',       href: '/power-rankings', route: '/power-rankings'  },
+  { label: 'Club Packages',  href: '/club-packages',  route: '/club-packages'   },
+  { label: 'Partners',       href: '#partners',       route: '/'                },
+  { label: 'FAQ',            href: '#faq',            route: '/'                },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
