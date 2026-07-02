@@ -65,6 +65,48 @@ export function isRejected(name: string): boolean {
   })
 }
 
+/** A structured grade from PlayHQ's discoverSeason.grades[]. */
+export interface StructuredGrade {
+  id:     string
+  name:   string
+  gender: string | null   // "Women" | "Girls" | "Mixed" | "Men" …
+  age:    string | null   // "Senior" | "U19" …
+}
+
+/**
+ * Filter PlayHQ's structured grades to the Senior Women's A Grade(s).
+ * A season can contain several (e.g. Bellarine FNL A Grade + Geelong FNL A
+ * Grade), so this returns ALL qualifying grades, best-first.
+ * Uses the structured gender/age fields plus name rules.
+ */
+export function filterSeniorWomensAGrade(grades: StructuredGrade[]): (StructuredGrade & { matchedRule: string })[] {
+  const out: (StructuredGrade & { matchedRule: string; priority: number })[] = []
+
+  for (const g of grades) {
+    if (!g.name) continue
+    // Structured guards: must be Women + Senior when those fields are present.
+    if (g.gender && !/^women$/i.test(g.gender.trim())) continue
+    if (g.age    && !/^senior$/i.test(g.age.trim()))    continue
+    if (isRejected(g.name)) continue
+
+    const n = norm(g.name)
+    // Must look like a top senior grade.
+    const pIdx = PREFERRED.findIndex(p => n.includes(p))
+    const sIdx = STRENGTH_KEYWORDS.findIndex(k => n.includes(k))
+    if (pIdx === -1 && sIdx === -1) continue
+
+    out.push({
+      ...g,
+      matchedRule: pIdx >= 0 ? `preferred:${PREFERRED[pIdx]}` : `strength:${STRENGTH_KEYWORDS[sIdx]}`,
+      priority:    pIdx >= 0 ? pIdx : 100 + sIdx,
+    })
+  }
+
+  return out
+    .sort((a, b) => a.priority - b.priority)
+    .map(({ priority, ...rest }) => (void priority, rest))
+}
+
 /**
  * Pick the best Senior Women's A Grade from the candidates.
  * Returns undefined if nothing qualifies.

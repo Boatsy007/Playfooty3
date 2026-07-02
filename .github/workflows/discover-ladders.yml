@@ -21,6 +21,11 @@ on:
         required: false
         default: ''
         type: string
+      agrade_slug:
+        description: 'Phase 3 — extract Senior Women A Grade ladders for this association slug'
+        required: false
+        default: ''
+        type: string
 
 jobs:
   discover:
@@ -49,7 +54,7 @@ jobs:
 
       - name: Run discovery preview
         working-directory: backend
-        run: npx tsx src/discovery/discovery-trigger.ts --max-pages=${{ inputs.max_pages }} --drilldown=${{ inputs.drilldown }} --assoc-slug=${{ inputs.assoc_slug }}
+        run: npx tsx src/discovery/discovery-trigger.ts --max-pages=${{ inputs.max_pages }} --drilldown=${{ inputs.drilldown }} --assoc-slug=${{ inputs.assoc_slug }} --agrade-slug=${{ inputs.agrade_slug }}
 
       - name: Upload preview artifact
         if: always()
