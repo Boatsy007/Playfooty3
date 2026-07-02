@@ -295,18 +295,78 @@ async function extractAGradeLadders(page: import('playwright').Page, assoc: Disc
     console.log(`Senior Women's A Grade matches: ${matches.length}`)
     for (const m of matches) console.log(`   ✓ ${m.name}  [${m.gender}/${m.age}]  id=${m.id}  (${m.matchedRule})`)
 
-    // 3) For the first couple of matches, drive to the ladder and capture the
-    //    real URL + team count (this reveals the ladder URL pattern).
+    // 3) Resolve the ladder URL from the grade id + season/competition slug,
+    //    then validate by navigating to it and counting teams.
+    const meta = findSeasonMeta(captured)
+    console.log(`Season meta: name=${meta.seasonName ?? '?'} competitionSlug=${meta.competitionSlug ?? '?'} orgSlug=${assoc.slug}`)
+
     for (const m of matches.slice(0, 2)) {
-      captured.length = 0
-      const result = await openGradeLadder(page, m.name)
-      console.log(`   → ${m.name}: ladderUrl=${result.url || '(not captured)'}  teams=${result.teams}`)
+      const gradeSlug = m.name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      const candidates = buildLadderUrlCandidates(assoc.slug, meta.competitionSlug, gradeSlug, m.id)
+      let done = false
+      for (const url of candidates) {
+        captured.length = 0
+        try { await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* continue */ }
+        await page.waitForTimeout(5000)
+        const teams = countLadderTeams(captured)
+        if (teams >= 4) {
+          console.log(`   → ${m.name}: teams=${teams}  ✓ ${url}`)
+          done = true
+          break
+        }
+      }
+      if (!done) console.log(`   → ${m.name}: could not resolve ladder (tried ${candidates.length} URL patterns)`)
     }
 
     console.log(`========== END A-GRADE EXTRACT ==========\n`)
   } finally {
     page.off('response', onResponse)
   }
+}
+
+interface SeasonMeta { seasonName?: string; seasonSlug?: string; competitionSlug?: string; competitionName?: string }
+
+/** Find the discoverSeason node (has grades + competition) and pull slug info. */
+function findSeasonMeta(jsonBlobs: unknown[]): SeasonMeta {
+  let meta: SeasonMeta = {}
+  const slugFrom = (o: Record<string, unknown> | undefined): string | undefined => {
+    if (!o) return undefined
+    if (typeof o.slug === 'string') return o.slug
+    if (typeof o.url === 'string') { const m = o.url.match(/([a-z0-9-]+)(?:\/[a-f0-9]+)?\/?$/i); return m ? m[1] : undefined }
+    return undefined
+  }
+  const visit = (node: unknown): void => {
+    if (Array.isArray(node)) { node.forEach(visit); return }
+    if (node && typeof node === 'object') {
+      const o = node as Record<string, unknown>
+      if (Array.isArray(o.grades) && o.competition && typeof o.competition === 'object') {
+        const comp = o.competition as Record<string, unknown>
+        meta = {
+          seasonName:      typeof o.name === 'string' ? o.name : undefined,
+          seasonSlug:      slugFrom(o),
+          competitionName: typeof comp.name === 'string' ? comp.name : undefined,
+          competitionSlug: slugFrom(comp),
+        }
+      }
+      for (const v of Object.values(o)) visit(v)
+    }
+  }
+  jsonBlobs.forEach(visit)
+  return meta
+}
+
+/** Candidate grade-ladder URLs (PlayHQ patterns vary slightly by tenant). */
+function buildLadderUrlCandidates(orgSlug: string, competitionSlug: string | undefined, gradeSlug: string, gradeId: string): string[] {
+  const base = 'https://www.playhq.com/netball-australia/org'
+  const urls: string[] = []
+  if (competitionSlug) {
+    urls.push(`${base}/${orgSlug}/${competitionSlug}/${gradeSlug}/${gradeId}/ladder`)
+  }
+  // Fallbacks: common season-slug shapes when the competition slug wasn't captured
+  for (const season of [competitionSlug, `${orgSlug}-winter-2026`, `${orgSlug}-2026`].filter(Boolean) as string[]) {
+    urls.push(`${base}/${orgSlug}/${season}/${gradeSlug}/${gradeId}/ladder`)
+  }
+  return [...new Set(urls)]
 }
 
 /** Find PlayHQ discoverSeason.grades[] anywhere in captured JSON. */
@@ -342,30 +402,6 @@ function toStructuredGrade(o: Record<string, unknown>): StructuredGrade | null {
   const age    = nested('age')
   if (gender == null && age == null) return null
   return { id, name, gender, age }
-}
-
-/** Click through to a grade's ladder by its name; return final URL + team count. */
-async function openGradeLadder(page: import('playwright').Page, gradeName: string): Promise<{ url: string; teams: number }> {
-  const captured: unknown[] = []
-  const onResp = async (r: import('playwright').Response) => {
-    const ct = r.headers()['content-type'] ?? ''
-    if (ct.includes('json') && /playhq/.test(r.url())) { try { captured.push(await r.json()) } catch { /* */ } }
-  }
-  page.on('response', onResp)
-  try {
-    // Click the grade (or its Select control) then the Ladder tab
-    const clickedGrade = await tryClickText(page, [gradeName])
-    await page.waitForTimeout(2500)
-    if (!clickedGrade) return { url: '', teams: 0 }
-    await tryClickText(page, ['Ladder'])
-    await page.waitForTimeout(4000)
-    const teams = countLadderTeams(captured)
-    return { url: page.url(), teams }
-  } catch {
-    return { url: page.url(), teams: 0 }
-  } finally {
-    page.off('response', onResp)
-  }
 }
 
 /** Count ladder rows in captured JSON (largest array of team-stat objects). */
