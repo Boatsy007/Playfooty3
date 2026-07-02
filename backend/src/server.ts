@@ -25,9 +25,20 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }))
 
 // ── API routes ───────────────────────────────────────────────────────────────
-app.use('/api/rankings',  rankingsRouter)
-app.use('/api/clubs',     clubsRouter)
-app.use('/api/leagues',   leaguesRouter)
+app.use('/api/rankings',  rankingsRouter)   // /api/rankings, /api/rankings/top10, /api/rankings/top25 …
+app.use('/api/clubs',     clubsRouter)      // /api/clubs, /api/clubs/:id, /api/clubs/history/:clubId
+app.use('/api/leagues',   leaguesRouter)    // /api/leagues, /api/leagues/:id
+
+// ── Shortcut aliases (public API surface expected by consumers) ───────────────
+// Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
+// /api/rankings all resolve without the /rankings prefix.
+app.use('/api', rankingsRouter)
+
+// /api/history/:clubId → delegate to clubsRouter's /history/:clubId handler
+app.use('/api/history', (req, res, next) => {
+  req.url = `/history${req.url}`   // rewrite /api/history/abc → /history/abc for clubsRouter
+  clubsRouter(req, res, next)
+})
 
 // ── Admin routes (key-protected) ─────────────────────────────────────────────
 app.use('/admin',          adminDashboardRouter)
