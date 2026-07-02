@@ -356,9 +356,14 @@ async function extractAGradeLadders(page: import('playwright').Page, assoc: Disc
  * Crawl the whole directory and resolve every association's Senior Women's A
  * Grade league(s). Preview-safe: returns data, writes nothing to the DB.
  */
-export async function discoverAllAGradeLeagues(opts: { maxPages?: number; maxAssociations?: number } = {}): Promise<DiscoveredLeague[]> {
+export async function discoverAllAGradeLeagues(opts: { maxPages?: number; maxAssociations?: number; assocFilter?: string[] } = {}): Promise<DiscoveredLeague[]> {
   const maxPages        = opts.maxPages        ?? 40
   const maxAssociations = opts.maxAssociations ?? Infinity
+  // Optional targeted run: only associations whose name/slug contains one of
+  // these (case-insensitive) substrings. Used for the safe validation import.
+  const filter = (opts.assocFilter ?? []).map(s => s.toLowerCase()).filter(Boolean)
+  const matchesFilter = (a: DiscoveredAssociation) =>
+    filter.length === 0 || filter.some(f => a.name.toLowerCase().includes(f) || a.slug.toLowerCase().includes(f))
 
   const { chromium } = await import('playwright')
   const browser = await chromium.launch({
@@ -369,8 +374,9 @@ export async function discoverAllAGradeLeagues(opts: { maxPages?: number; maxAss
     const ctx  = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' })
     const page = await ctx.newPage()
 
-    const associations = await crawlDirectory(page, maxPages)
-    logger.info('Discovery: crawl complete, resolving A-Grade leagues', { associations: associations.length })
+    const crawled = await crawlDirectory(page, maxPages)
+    const associations = crawled.filter(matchesFilter)
+    logger.info('Discovery: crawl complete, resolving A-Grade leagues', { crawled: crawled.length, afterFilter: associations.length, filter })
 
     const all: DiscoveredLeague[] = []
     let done = 0

@@ -39,7 +39,7 @@ export interface DiscoveryImportResult {
   imported:         { league: string; teams: number; isNew: boolean }[]
 }
 
-export async function runDiscoveryImport(opts: { maxAssociations?: number; weekLabel?: string } = {}): Promise<DiscoveryImportResult> {
+export async function runDiscoveryImport(opts: { maxAssociations?: number; weekLabel?: string; assocFilter?: string[] } = {}): Promise<DiscoveryImportResult> {
   const label  = opts.weekLabel ?? getISOWeekLabel()
   const season = '2026'   // ranking cohort season (year); League.currentSeason keeps "Winter 2026"
   const imported: { league: string; teams: number; isNew: boolean }[] = []
@@ -48,7 +48,7 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
 
   try {
     // 1) Discover every Senior Women's A Grade league (crawler)
-    const discovered = await discoverAllAGradeLeagues({ maxAssociations: opts.maxAssociations })
+    const discovered = await discoverAllAGradeLeagues({ maxAssociations: opts.maxAssociations, assocFilter: opts.assocFilter })
     logger.info('DiscoveryImport: discovered leagues', { count: discovered.length })
     if (discovered.length === 0) {
       return { runId: '', weekLabel: label, season, leaguesDiscovered: 0, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'Discovery returned no leagues' }
