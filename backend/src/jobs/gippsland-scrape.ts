@@ -216,6 +216,20 @@ export async function runGippslandScrape(options: {
     }
     logger.info('GippslandScrape: club-league-seasons upserted')
 
+    // ── 6b. Remove stale season rows no longer on the ladder ──────────────────
+    // Clears out clubs from earlier (buggy) scrapes or teams that have left the
+    // competition, so the ranking reflects exactly the current live ladder.
+    const currentClubIds = dbClubs.map(c => c.id)
+    const removed = await prisma.clubLeagueSeason.deleteMany({
+      where: {
+        leagueId: league.id,
+        season:   SEASON,
+        grade:    LEAGUE_GRADE,
+        clubId:   { notIn: currentClubIds },
+      },
+    })
+    if (removed.count > 0) logger.info('GippslandScrape: removed stale season rows', { count: removed.count })
+
     // ── 7. Build ranking inputs from ALL PlayHQ-sourced leagues ────────────────
     // Only leagues with a live PlayHQ source are ranked — manually-seeded
     // leagues (e.g. the old NGFNL pilot) are intentionally excluded.
