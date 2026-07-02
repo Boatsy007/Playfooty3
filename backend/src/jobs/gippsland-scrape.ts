@@ -216,9 +216,11 @@ export async function runGippslandScrape(options: {
     }
     logger.info('GippslandScrape: club-league-seasons upserted')
 
-    // ── 7. Load NGFNL clubs for combined ranking ──────────────────────────────
-    const allInputs = await buildCombinedRankingInputs(league.id, dbClubs, scraped.entries, SEASON)
-    logger.info('GippslandScrape: combined ranking inputs', { count: allInputs.length })
+    // ── 7. Build ranking inputs from ALL PlayHQ-sourced leagues ────────────────
+    // Only leagues with a live PlayHQ source are ranked — manually-seeded
+    // leagues (e.g. the old NGFNL pilot) are intentionally excluded.
+    const allInputs = await buildPlayHQRankingInputs(SEASON)
+    logger.info('GippslandScrape: PlayHQ ranking inputs', { count: allInputs.length })
 
     // ── 8. Run ranking engine ─────────────────────────────────────────────────
     const engine   = new RankingEngine()
@@ -232,7 +234,7 @@ export async function runGippslandScrape(options: {
         status:      'COMPLETED',
         clubCount:   rankings.length,
         completedAt: new Date(),
-        notes:       `Live PlayHQ scrape (${scraped.method}). Gippsland League + NGFNL combined. URL: ${ladderUrl}`,
+        notes:       `Live PlayHQ scrape (${scraped.method}). PlayHQ-sourced leagues only. URL: ${ladderUrl}`,
         entries: {
           create: rankings.map(r => ({
             clubId:          r.clubId,
@@ -278,84 +280,46 @@ export async function runGippslandScrape(options: {
   }
 }
 
-// ─── Combine Gippsland + existing NGFNL data for cross-league ranking ─────────
+// ─── Build ranking inputs from every league with a live PlayHQ source ─────────
+// Reads directly from the DB (the just-scraped data is already upserted), so as
+// more PlayHQ leagues are added they are all ranked together. Manually-seeded
+// leagues without a PLAYHQ source are excluded.
 
-async function buildCombinedRankingInputs(
-  gflLeagueId: string,
-  gflClubs: { id: string; slug: string; name: string }[],
-  gflEntries: import('../types/index.js').RawLadderEntry[],
-  season: string,
-): Promise<ClubRankingInput[]> {
+async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInput[]> {
+  // Leagues that have an active PlayHQ source for this season
+  const playhqSources = await prisma.leagueSource.findMany({
+    where:   { sourceType: 'PLAYHQ', season, isActive: true },
+    select:  { leagueId: true },
+  })
+  const leagueIds = [...new Set(playhqSources.map(s => s.leagueId))]
 
-  const inputs: ClubRankingInput[] = []
+  if (leagueIds.length === 0) return []
 
-  // GFL clubs from scrape
-  for (let i = 0; i < gflEntries.length; i++) {
-    const entry = gflEntries[i]
-    const club  = gflClubs[i]
-
-    // Derive recent form from ladder position (heuristic: top half = more wins)
-    const recentForm = deriveForm(entry.wins, entry.played)
-
-    inputs.push({
-      clubId:              club.id,
-      clubName:            club.name,
-      leagueId:            gflLeagueId,
-      leagueName:          LEAGUE_NAME,
-      state:               STATE,
-      season,
-      played:              entry.played,
-      wins:                entry.wins,
-      losses:              entry.losses,
-      draws:               entry.draws,
-      goalsFor:            entry.goalsFor,
-      goalsAgainst:        entry.goalsAgainst,
-      percentage:          entry.percentage,
-      recentForm,
-      leagueStrengthScore: LEAGUE_STRENGTH,
-      finalsWins:          0,
-      finalsLosses:        0,
-      oppositionRatings:   [],
-    })
-  }
-
-  // Load existing NGFNL clubs from DB
-  const ngfnlLeague = await prisma.league.findFirst({
-    where: { shortName: 'NGFNL A Grade' },
+  const seasons = await prisma.clubLeagueSeason.findMany({
+    where:   { leagueId: { in: leagueIds }, season },
+    include: { club: true, league: true },
   })
 
-  if (ngfnlLeague) {
-    const ngfnlSeasons = await prisma.clubLeagueSeason.findMany({
-      where:   { leagueId: ngfnlLeague.id, season },
-      include: { club: true },
-    })
-
-    for (const cls of ngfnlSeasons) {
-      const recentForm = deriveForm(cls.wins, cls.played)
-      inputs.push({
-        clubId:              cls.clubId,
-        clubName:            cls.club.name,
-        leagueId:            ngfnlLeague.id,
-        leagueName:          'North Gippsland FNL - A Grade Netball',
-        state:               STATE,
-        season,
-        played:              cls.played,
-        wins:                cls.wins,
-        losses:              cls.losses,
-        draws:               cls.draws,
-        goalsFor:            cls.goalsFor,
-        goalsAgainst:        cls.goalsAgainst,
-        percentage:          cls.percentage,
-        recentForm,
-        leagueStrengthScore: 58,
-        finalsWins:          cls.finalsWins,
-        finalsLosses:        cls.finalsLosses,
-        oppositionRatings:   [],
-      })
-    }
-  }
-
-  return inputs
+  return seasons.map(cls => ({
+    clubId:              cls.clubId,
+    clubName:            cls.club.name,
+    leagueId:            cls.leagueId,
+    leagueName:          cls.league.name,
+    state:               STATE,
+    season,
+    played:              cls.played,
+    wins:                cls.wins,
+    losses:              cls.losses,
+    draws:               cls.draws,
+    goalsFor:            cls.goalsFor,
+    goalsAgainst:        cls.goalsAgainst,
+    percentage:          cls.percentage,
+    recentForm:          deriveForm(cls.wins, cls.played),
+    leagueStrengthScore: cls.league.strengthScore ?? LEAGUE_STRENGTH,
+    finalsWins:          cls.finalsWins,
+    finalsLosses:        cls.finalsLosses,
+    oppositionRatings:   [],
+  }))
 }
 
 /** Derive a plausible last-5 form string from season stats */
