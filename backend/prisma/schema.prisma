@@ -35,6 +35,15 @@ model Association {
   websiteUrl   String?
   contactEmail String?
   leagues      League[]
+
+  // PlayHQ discovery metadata (automated crawl of the association directory)
+  playhqOrgSlug    String?   @unique
+  playhqUrl        String?
+  logoUrl          String?
+  stateCode        String?   // "VIC" | "NSW" … as shown in the directory
+  active           Boolean   @default(true)
+  lastDiscoveredAt DateTime?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -51,10 +60,24 @@ model League {
   associationId String?
   isActive      Boolean          @default(true)
 
-  // League strength — set by admin, influences ranking calculation
+  // League strength — set by admin, influences ranking calculation (UNCHANGED)
   strengthScore Float            @default(50)  // 0–100
   strengthTier  Int              @default(3)   // 1–5
   strengthNotes String?
+
+  // PlayHQ discovery metadata (automated). Does NOT affect the ranking formula.
+  playhqOrgSlug       String?
+  playhqGradeId       String?
+  playhqGradeName     String?
+  ladderUrl           String?
+  currentSeason       String?
+  enabled             Boolean   @default(true)   // admin can disable a league
+  autoDiscovered      Boolean   @default(false)  // created by the crawler
+  needsStrengthReview Boolean   @default(false)  // true until admin sets strength
+  gradeOverride       String?   // admin can force a specific grade
+  ladderUrlOverride   String?   // admin can pin the ladder URL
+  lastSyncedAt        DateTime?
+  syncError           String?
 
   // Averages (recalculated each cycle)
   avgGoalsPerGame  Float?
@@ -175,6 +198,15 @@ model ClubLeagueSeason {
   goalsAgainst Int   @default(0)
   percentage   Float @default(0)
   points       Int   @default(0)
+
+  // Advanced-ladder fields (from PlayHQ "Show advanced ladder")
+  position          Int?
+  byes              Int     @default(0)
+  forfeits          Int     @default(0)
+  disqualifications Int     @default(0)
+  adjustments       Int     @default(0)
+  playhqTeamUrl     String?
+  playhqTeamId      String?
 
   // Finals
   finalsWins   Int     @default(0)

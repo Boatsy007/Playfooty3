@@ -20,6 +20,7 @@ import { checkAdapterHealth } from '../scrapers/scraper.engine.js'
 import { runWeeklyUpdate }    from '../jobs/weekly-update.job.js'
 import { runNGFNLPilot }      from '../jobs/pilot.js'
 import { runAllPlayHQScrapes } from '../jobs/playhq-scrape.js'
+import { runDiscoveryImport }  from '../jobs/discovery-import.js'
 import { logger }             from '../utils/logger.js'
 
 const router = Router()
@@ -185,6 +186,78 @@ router.post('/scrape', async (req, res) => {
 
   } catch (err) {
     logger.error('AdminDashboard: scrape endpoint error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// ─── Discovery admin (Phase 4) ────────────────────────────────────────────────
+
+// POST /admin/discover — crawl PlayHQ, import A-Grade leagues, re-rank.
+router.post('/discover', async (req, res) => {
+  try {
+    const { maxAssociations } = req.body as { maxAssociations?: number }
+    logger.info('AdminDashboard: discovery import triggered', { maxAssociations })
+    res.status(202).json({ message: 'Discovery import started', startedAt: new Date().toISOString(), note: 'Check /admin/leagues for results once complete.' })
+    runDiscoveryImport({ maxAssociations }).catch(err => logger.error('AdminDashboard: discovery import failed', { error: String(err) }))
+  } catch (err) {
+    logger.error('AdminDashboard: discover endpoint error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// GET /admin/associations — discovered associations
+router.get('/associations', async (_req, res) => {
+  try {
+    const associations = await prisma.association.findMany({
+      orderBy: { name: 'asc' },
+      select:  { id: true, name: true, playhqOrgSlug: true, playhqUrl: true, stateCode: true, active: true, lastDiscoveredAt: true, _count: { select: { leagues: true } } },
+    })
+    res.json({ data: associations, meta: { total: associations.length } })
+  } catch (err) {
+    logger.error('AdminDashboard: associations error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// GET /admin/leagues — leagues with discovery metadata + strength
+router.get('/leagues', async (_req, res) => {
+  try {
+    const leagues = await prisma.league.findMany({
+      orderBy: [{ needsStrengthReview: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true, name: true, shortName: true, strengthScore: true, strengthTier: true,
+        enabled: true, autoDiscovered: true, needsStrengthReview: true, currentSeason: true,
+        playhqGradeName: true, ladderUrl: true, ladderUrlOverride: true, gradeOverride: true,
+        lastSyncedAt: true, syncError: true, association: { select: { name: true } },
+        _count: { select: { clubSeasons: true } },
+      },
+    })
+    res.json({ data: leagues, meta: { total: leagues.length } })
+  } catch (err) {
+    logger.error('AdminDashboard: leagues error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// PATCH /admin/leagues/:id — edit strength / enable / overrides
+router.patch('/leagues/:id', async (req, res) => {
+  try {
+    const { strengthScore, strengthTier, strengthNotes, enabled, gradeOverride, ladderUrlOverride, needsStrengthReview } =
+      req.body as Partial<{ strengthScore: number; strengthTier: number; strengthNotes: string; enabled: boolean; gradeOverride: string; ladderUrlOverride: string; needsStrengthReview: boolean }>
+
+    const data: Record<string, unknown> = {}
+    if (strengthScore       !== undefined) { data.strengthScore = strengthScore; data.needsStrengthReview = false }
+    if (strengthTier        !== undefined) data.strengthTier = strengthTier
+    if (strengthNotes       !== undefined) data.strengthNotes = strengthNotes
+    if (enabled             !== undefined) data.enabled = enabled
+    if (gradeOverride       !== undefined) data.gradeOverride = gradeOverride || null
+    if (ladderUrlOverride   !== undefined) data.ladderUrlOverride = ladderUrlOverride || null
+    if (needsStrengthReview !== undefined) data.needsStrengthReview = needsStrengthReview
+
+    const league = await prisma.league.update({ where: { id: req.params.id }, data })
+    res.json({ message: 'League updated', league: { id: league.id, name: league.name, strengthScore: league.strengthScore, strengthTier: league.strengthTier, enabled: league.enabled } })
+  } catch (err) {
+    logger.error('AdminDashboard: league patch error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })

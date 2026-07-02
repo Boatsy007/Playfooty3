@@ -264,11 +264,32 @@ async function drilldownAssociation(page: import('playwright').Page, assoc: Disc
   }
 }
 
-// ─── Phase 3: Senior Women's A Grade extraction (proves the full chain) ──────
+// ─── Senior Women's A Grade extraction — returns structured leagues ──────────
 
-async function extractAGradeLadders(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<void> {
-  console.log(`\n========== A-GRADE EXTRACT: ${assoc.name} ==========`)
+export interface DiscoveredLeague {
+  associationName: string
+  associationSlug: string
+  state:           string | null
+  leagueName:      string   // derived, e.g. "Bellarine FNL"
+  gradeName:       string   // full grade, e.g. "Bellarine FNL A Grade Dow Cup"
+  gradeId:         string
+  season:          string   // e.g. "Winter 2026"
+  ladderUrl:       string
+  teams:           number
+}
 
+/** Derive a clean league name from a grade name (strip the "A Grade …" suffix). */
+function leagueNameFromGrade(gradeName: string, fallback: string): string {
+  const stripped = gradeName.replace(/\s*[-–]?\s*A Grade\b.*$/i, '').trim()
+  return stripped.length >= 3 ? stripped : fallback
+}
+
+/**
+ * For one association: find the active season's Senior Women's A Grade
+ * league(s), resolve each ladder URL, and validate by counting teams.
+ * Returns only leagues whose ladder resolved with a real team count.
+ */
+export async function resolveAGradeLeagues(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<DiscoveredLeague[]> {
   const captured: unknown[] = []
   const onResponse = async (r: import('playwright').Response) => {
     const ct = r.headers()['content-type'] ?? ''
@@ -278,6 +299,7 @@ async function extractAGradeLadders(page: import('playwright').Page, assoc: Disc
   }
   page.on('response', onResponse)
 
+  const out: DiscoveredLeague[] = []
   try {
     try { await page.goto(assoc.url.replace(/\/$/, ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* continue */ }
     await page.waitForTimeout(SETTLE_MS)
@@ -286,41 +308,86 @@ async function extractAGradeLadders(page: import('playwright').Page, assoc: Disc
     await tryClickText(page, ['Winter 2028', 'Winter 2027', 'Winter 2026'])
     await page.waitForTimeout(3500)
 
-    // 1) Pull the season's structured grades from discoverSeason GraphQL
-    const grades = findStructuredGrades(captured)
-    console.log(`Structured grades found: ${grades.length}`)
-
-    // 2) Filter to Senior Women's A Grade (can be several per season)
+    const grades  = findStructuredGrades(captured)
     const matches = filterSeniorWomensAGrade(grades)
-    console.log(`Senior Women's A Grade matches: ${matches.length}`)
-    for (const m of matches) console.log(`   ✓ ${m.name}  [${m.gender}/${m.age}]  id=${m.id}  (${m.matchedRule})`)
+    const meta    = findSeasonMeta(captured)
+    const season  = meta.seasonName ?? 'Winter 2026'
 
-    // 3) Resolve the ladder URL from the grade id + season/competition slug,
-    //    then validate by navigating to it and counting teams.
-    const meta = findSeasonMeta(captured)
-    console.log(`Season meta: name=${meta.seasonName ?? '?'} competitionSlug=${meta.competitionSlug ?? '?'} orgSlug=${assoc.slug}`)
-
-    for (const m of matches.slice(0, 2)) {
+    for (const m of matches) {
       const gradeSlug = m.name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
       const candidates = buildLadderUrlCandidates(assoc.slug, meta.competitionSlug, gradeSlug, m.id)
-      let done = false
       for (const url of candidates) {
         captured.length = 0
         try { await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* continue */ }
         await page.waitForTimeout(5000)
         const teams = countLadderTeams(captured)
         if (teams >= 4) {
-          console.log(`   → ${m.name}: teams=${teams}  ✓ ${url}`)
-          done = true
+          out.push({
+            associationName: assoc.name,
+            associationSlug: assoc.slug,
+            state:           assoc.state,
+            leagueName:      leagueNameFromGrade(m.name, assoc.name),
+            gradeName:       m.name,
+            gradeId:         m.id,
+            season,
+            ladderUrl:       url,
+            teams,
+          })
           break
         }
       }
-      if (!done) console.log(`   → ${m.name}: could not resolve ladder (tried ${candidates.length} URL patterns)`)
     }
-
-    console.log(`========== END A-GRADE EXTRACT ==========\n`)
   } finally {
     page.off('response', onResponse)
+  }
+  return out
+}
+
+/** Logging wrapper used by the preview workflow. */
+async function extractAGradeLadders(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<void> {
+  console.log(`\n========== A-GRADE EXTRACT: ${assoc.name} ==========`)
+  const leagues = await resolveAGradeLeagues(page, assoc)
+  console.log(`Resolved ${leagues.length} A-Grade league(s):`)
+  for (const l of leagues) console.log(`   ✓ ${l.leagueName} — ${l.gradeName} — teams=${l.teams} — ${l.ladderUrl}`)
+  console.log(`========== END A-GRADE EXTRACT ==========\n`)
+}
+
+/**
+ * Crawl the whole directory and resolve every association's Senior Women's A
+ * Grade league(s). Preview-safe: returns data, writes nothing to the DB.
+ */
+export async function discoverAllAGradeLeagues(opts: { maxPages?: number; maxAssociations?: number } = {}): Promise<DiscoveredLeague[]> {
+  const maxPages        = opts.maxPages        ?? 40
+  const maxAssociations = opts.maxAssociations ?? Infinity
+
+  const { chromium } = await import('playwright')
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'],
+  })
+  try {
+    const ctx  = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' })
+    const page = await ctx.newPage()
+
+    const associations = await crawlDirectory(page, maxPages)
+    logger.info('Discovery: crawl complete, resolving A-Grade leagues', { associations: associations.length })
+
+    const all: DiscoveredLeague[] = []
+    let done = 0
+    for (const assoc of associations) {
+      if (done >= maxAssociations) break
+      try {
+        const leagues = await resolveAGradeLeagues(page, assoc)
+        all.push(...leagues)
+        logger.info('Discovery: association resolved', { assoc: assoc.name, leagues: leagues.length })
+      } catch (err) {
+        logger.warn('Discovery: association failed', { assoc: assoc.name, detail: String(err) })
+      }
+      done++
+    }
+    return all
+  } finally {
+    await browser.close()
   }
 }
 

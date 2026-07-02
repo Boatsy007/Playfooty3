@@ -19,6 +19,7 @@
     "playhq:scrape": "tsx src/jobs/playhq-trigger.ts",
     "playhq:install-browser": "playwright install chromium",
     "discover:preview": "tsx src/discovery/discovery-trigger.ts",
+    "discover:import": "tsx src/jobs/discovery-import-trigger.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

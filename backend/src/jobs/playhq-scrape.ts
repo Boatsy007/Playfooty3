@@ -226,7 +226,7 @@ async function scrapeLeagueData(cfg: LeagueConfig, ladderUrl: string): Promise<L
 
 // ─── Ranking across all PlayHQ leagues ────────────────────────────────────────
 
-async function rankAndStore(label: string): Promise<{ runId: string; clubsRanked: number }> {
+export async function rankAndStore(label: string): Promise<{ runId: string; clubsRanked: number }> {
   const inputs = await buildPlayHQRankingInputs(SEASON)
   logger.info('PlayHQScrape: ranking inputs', { count: inputs.length })
 
