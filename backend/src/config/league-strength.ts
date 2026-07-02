@@ -65,14 +65,15 @@ export function strengthForStars(stars: number): StrengthTierDef {
 // Add new leagues here as they are onboarded.
 
 export const LEAGUE_STARS: { name: string; stars: number }[] = [
-  { name: 'Geelong Football Netball League',            stars: 5.0 },
-  { name: 'Goulburn Valley Football Netball League',    stars: 4.5 },
-  { name: 'Ballarat Football Netball League',           stars: 4.5 },
-  { name: 'Gippsland League',                           stars: 4.0 },
-  { name: 'Ovens & Murray Football Netball League',     stars: 4.0 },
-  { name: 'Bendigo Football Netball League',            stars: 4.0 },
-  { name: 'North Gippsland Football-Netball League',    stars: 3.5 },
-  { name: 'Mid Gippsland Football-Netball League',      stars: 3.0 },
+  { name: 'Geelong Football Netball League',              stars: 5.0 },
+  { name: 'Goulburn Valley Football Netball League',      stars: 4.5 },
+  { name: 'Ballarat Football Netball League',             stars: 4.5 },
+  { name: 'Gippsland League',                             stars: 4.0 },
+  { name: 'Geelong & District Football Netball League',   stars: 4.0 },
+  { name: 'Ovens & Murray Football Netball League',       stars: 4.0 },
+  { name: 'Bendigo Football Netball League',              stars: 4.0 },
+  { name: 'North Gippsland Football-Netball League',      stars: 3.5 },
+  { name: 'Mid Gippsland Football-Netball League',        stars: 3.0 },
 ]
 
 /** Normalise a league name for tolerant matching. */

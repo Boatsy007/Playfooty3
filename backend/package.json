@@ -16,8 +16,8 @@
     "job:dev": "tsx src/jobs/trigger.ts",
     "pilot:run": "node dist/jobs/pilot-trigger.js",
     "pilot:dev": "tsx src/jobs/pilot-trigger.ts",
-    "gippsland:scrape": "tsx src/jobs/gippsland-trigger.ts",
-    "gippsland:install-browser": "playwright install chromium",
+    "playhq:scrape": "tsx src/jobs/playhq-trigger.ts",
+    "playhq:install-browser": "playwright install chromium",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
