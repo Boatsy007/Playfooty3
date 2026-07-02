@@ -11,6 +11,7 @@ import { Router }        from 'express'
 import { prisma }        from '../../db/client.js'
 import { cachePublic }   from '../middleware/cache-middleware.js'
 import { publicRateLimit } from '../middleware/rate-limit.js'
+import { logger }        from '../../utils/logger.js'
 
 const router = Router()
 
@@ -67,7 +68,8 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, generatedAt: run.completedAt },
     })
   } catch (err) {
-    res.status(500).json({ error: 'Internal server error' })
+    logger.error('GET /rankings error', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -85,8 +87,9 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
       data: entries.map(formatEntry),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length },
     })
-  } catch {
-    res.status(500).json({ error: 'Internal server error' })
+  } catch (err) {
+    logger.error('Rankings route error', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -99,8 +102,9 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const entries = await getEntries(run.id, 10, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
-  } catch {
-    res.status(500).json({ error: 'Internal server error' })
+  } catch (err) {
+    logger.error('Rankings route error', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -113,8 +117,9 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const entries = await getEntries(run.id, 25, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
-  } catch {
-    res.status(500).json({ error: 'Internal server error' })
+  } catch (err) {
+    logger.error('Rankings route error', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -127,8 +132,9 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const entries = await getEntries(run.id, 100, state)
     res.json({ data: entries.map(formatEntry), meta: { weekLabel: run.weekLabel, season: run.season } })
-  } catch {
-    res.status(500).json({ error: 'Internal server error' })
+  } catch (err) {
+    logger.error('Rankings route error', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 

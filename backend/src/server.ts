@@ -49,6 +49,24 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', version: process.env.npm_package_version ?? '1.0.0' })
 })
 
+// ── Debug endpoint — shows env/DB status (remove once confirmed working) ─────
+app.get('/api/debug', async (_req, res) => {
+  const hasDbUrl    = !!process.env.DATABASE_URL
+  const hasDirectUrl = !!process.env.DIRECT_URL
+  const hasAdminKey = !!process.env.ADMIN_API_KEY
+  let dbPing: string
+  try {
+    const { PrismaClient } = await import('@prisma/client')
+    const pc = new PrismaClient()
+    await pc.$queryRaw`SELECT 1`
+    await pc.$disconnect()
+    dbPing = 'ok'
+  } catch (e) {
+    dbPing = String(e)
+  }
+  res.json({ hasDbUrl, hasDirectUrl, hasAdminKey, dbPing })
+})
+
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' })

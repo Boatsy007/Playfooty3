@@ -28,7 +28,24 @@ function createClient(): PrismaClient {
   return client
 }
 
-export const prisma: PrismaClient =
-  process.env.NODE_ENV === 'production'
-    ? createClient()
-    : (globalThis.__prisma ??= createClient())
+// Lazy singleton — not instantiated at import time so missing DATABASE_URL
+// doesn't crash the whole serverless function before the request even starts.
+let _prisma: PrismaClient | undefined
+
+function getPrisma(): PrismaClient {
+  if (!_prisma) {
+    if (process.env.NODE_ENV === 'production') {
+      _prisma = createClient()
+    } else {
+      globalThis.__prisma ??= createClient()
+      _prisma = globalThis.__prisma
+    }
+  }
+  return _prisma
+}
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    return (getPrisma() as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
