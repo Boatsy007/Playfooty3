@@ -39,6 +39,7 @@ import { PlayHQPlaywrightAdapter }    from '../adapters/playhq-playwright.adapte
 import { RankingEngine }              from '../engine/ranking.engine.js'
 import { getISOWeekLabel }            from '../utils/week-label.js'
 import { logger }                     from '../utils/logger.js'
+import { strengthForLeague, strengthForStars } from '../config/league-strength.js'
 import type { ClubRankingInput, MatchResult } from '../types/index.js'
 
 // ─── League config ───────────────────────────────────────────────────────────
@@ -46,10 +47,14 @@ import type { ClubRankingInput, MatchResult } from '../types/index.js'
 const SEASON              = '2026'
 const LEAGUE_NAME         = 'Gippsland League - A Grade Netball'
 const LEAGUE_SHORT        = 'Gippsland League A Grade'
-const LEAGUE_STRENGTH     = 65
-const LEAGUE_STRENGTH_TIER = 3
 const LEAGUE_GRADE        = 'A Grade'
 const STATE               = 'VIC' as const
+
+// League strength from the editorial scale (Gippsland League = ★★★★, score 79).
+// Falls back to ★★★ (average) if the league isn't in the registry.
+const LEAGUE_STRENGTH_DEF  = strengthForLeague('Gippsland League') ?? strengthForStars(3.0)
+const LEAGUE_STRENGTH      = LEAGUE_STRENGTH_DEF.score
+const LEAGUE_STRENGTH_TIER = LEAGUE_STRENGTH_DEF.tier
 
 // ─── Result types ─────────────────────────────────────────────────────────────
 
@@ -100,6 +105,7 @@ export async function runGippslandScrape(options: {
     })
 
     // ── 3. Upsert Gippsland League ───────────────────────────────────────────
+    const strengthNotes = `${LEAGUE_STRENGTH_DEF.stars}★ ${LEAGUE_STRENGTH_DEF.label} — ${LEAGUE_STRENGTH_DEF.description}`
     let league = await prisma.league.findFirst({
       where: { shortName: LEAGUE_SHORT, stateId: vicState.id },
     })
@@ -112,11 +118,17 @@ export async function runGippslandScrape(options: {
           isActive:      true,
           strengthScore: LEAGUE_STRENGTH,
           strengthTier:  LEAGUE_STRENGTH_TIER,
-          strengthNotes: 'Gippsland League A Grade Netball — strong regional VIC competition, tier 3.',
+          strengthNotes,
         },
       })
+    } else {
+      // Keep the stored strength in sync with the editorial scale
+      league = await prisma.league.update({
+        where: { id: league.id },
+        data:  { strengthScore: LEAGUE_STRENGTH, strengthTier: LEAGUE_STRENGTH_TIER, strengthNotes },
+      })
     }
-    logger.info('GippslandScrape: league ready', { id: league.id })
+    logger.info('GippslandScrape: league ready', { id: league.id, strength: LEAGUE_STRENGTH, tier: LEAGUE_STRENGTH_TIER })
 
     // ── 4. Upsert league source ──────────────────────────────────────────────
     const existingSource = await prisma.leagueSource.findFirst({
