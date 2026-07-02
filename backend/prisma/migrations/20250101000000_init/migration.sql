@@ -280,63 +280,63 @@ CREATE TABLE IF NOT EXISTS "audit_logs" (
 
 -- ─── Foreign Keys ─────────────────────────────────────────────────────────────
 ALTER TABLE "leagues"
-  ADD CONSTRAINT IF NOT EXISTS "leagues_stateId_fkey"
+  ADD CONSTRAINT "leagues_stateId_fkey"
     FOREIGN KEY ("stateId") REFERENCES "states"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "leagues_associationId_fkey"
+  ADD CONSTRAINT "leagues_associationId_fkey"
     FOREIGN KEY ("associationId") REFERENCES "associations"("id");
 
 ALTER TABLE "league_sources"
-  ADD CONSTRAINT IF NOT EXISTS "league_sources_leagueId_fkey"
+  ADD CONSTRAINT "league_sources_leagueId_fkey"
     FOREIGN KEY ("leagueId") REFERENCES "leagues"("id");
 
 ALTER TABLE "clubs"
-  ADD CONSTRAINT IF NOT EXISTS "clubs_stateId_fkey"
+  ADD CONSTRAINT "clubs_stateId_fkey"
     FOREIGN KEY ("stateId") REFERENCES "states"("id");
 
 ALTER TABLE "club_name_variants"
-  ADD CONSTRAINT IF NOT EXISTS "club_name_variants_clubId_fkey"
+  ADD CONSTRAINT "club_name_variants_clubId_fkey"
     FOREIGN KEY ("clubId") REFERENCES "clubs"("id");
 
 ALTER TABLE "club_league_seasons"
-  ADD CONSTRAINT IF NOT EXISTS "club_league_seasons_clubId_fkey"
+  ADD CONSTRAINT "club_league_seasons_clubId_fkey"
     FOREIGN KEY ("clubId") REFERENCES "clubs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "club_league_seasons_leagueId_fkey"
+  ADD CONSTRAINT "club_league_seasons_leagueId_fkey"
     FOREIGN KEY ("leagueId") REFERENCES "leagues"("id");
 
 ALTER TABLE "matches"
-  ADD CONSTRAINT IF NOT EXISTS "matches_leagueId_fkey"
+  ADD CONSTRAINT "matches_leagueId_fkey"
     FOREIGN KEY ("leagueId") REFERENCES "leagues"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "matches_homeClubId_fkey"
+  ADD CONSTRAINT "matches_homeClubId_fkey"
     FOREIGN KEY ("homeClubId") REFERENCES "clubs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "matches_awayClubId_fkey"
+  ADD CONSTRAINT "matches_awayClubId_fkey"
     FOREIGN KEY ("awayClubId") REFERENCES "clubs"("id");
 
 ALTER TABLE "ranking_runs"
-  ADD CONSTRAINT IF NOT EXISTS "ranking_runs_configId_fkey"
+  ADD CONSTRAINT "ranking_runs_configId_fkey"
     FOREIGN KEY ("configId") REFERENCES "ranking_configs"("id");
 
 ALTER TABLE "ranking_entries"
-  ADD CONSTRAINT IF NOT EXISTS "ranking_entries_runId_fkey"
+  ADD CONSTRAINT "ranking_entries_runId_fkey"
     FOREIGN KEY ("runId") REFERENCES "ranking_runs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "ranking_entries_clubId_fkey"
+  ADD CONSTRAINT "ranking_entries_clubId_fkey"
     FOREIGN KEY ("clubId") REFERENCES "clubs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "ranking_entries_leagueId_fkey"
+  ADD CONSTRAINT "ranking_entries_leagueId_fkey"
     FOREIGN KEY ("leagueId") REFERENCES "leagues"("id");
 
 ALTER TABLE "ranking_snapshots"
-  ADD CONSTRAINT IF NOT EXISTS "ranking_snapshots_runId_fkey"
+  ADD CONSTRAINT "ranking_snapshots_runId_fkey"
     FOREIGN KEY ("runId") REFERENCES "ranking_runs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "ranking_snapshots_clubId_fkey"
+  ADD CONSTRAINT "ranking_snapshots_clubId_fkey"
     FOREIGN KEY ("clubId") REFERENCES "clubs"("id");
 
 ALTER TABLE "scrape_logs"
-  ADD CONSTRAINT IF NOT EXISTS "scrape_logs_runId_fkey"
+  ADD CONSTRAINT "scrape_logs_runId_fkey"
     FOREIGN KEY ("runId") REFERENCES "ranking_runs"("id"),
-  ADD CONSTRAINT IF NOT EXISTS "scrape_logs_leagueSourceId_fkey"
+  ADD CONSTRAINT "scrape_logs_leagueSourceId_fkey"
     FOREIGN KEY ("leagueSourceId") REFERENCES "league_sources"("id");
 
 ALTER TABLE "audit_logs"
-  ADD CONSTRAINT IF NOT EXISTS "audit_logs_userId_fkey"
+  ADD CONSTRAINT "audit_logs_userId_fkey"
     FOREIGN KEY ("userId") REFERENCES "admin_users"("id");
 
 -- ─── Prisma migration tracking table ─────────────────────────────────────────
