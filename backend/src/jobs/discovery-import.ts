@@ -48,12 +48,17 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
   logger.info('DiscoveryImport: starting', { maxAssociations: opts.maxAssociations ?? 'all' })
 
   try {
-    // 1) Discover every Senior Women's A Grade league (crawler)
-    const discovered = await discoverAllAGradeLeagues({ maxAssociations: opts.maxAssociations, assocFilter: opts.assocFilter })
-    logger.info('DiscoveryImport: discovered leagues', { count: discovered.length })
-    if (discovered.length === 0) {
-      return { runId: '', weekLabel: label, season, leaguesDiscovered: 0, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'Discovery returned no leagues' }
+    // 1) Discover every Senior Women's A Grade league (crawler). PlayHQ can be
+    // flaky and intermittently resolve 0 leagues; that must NOT abort the run,
+    // because the cleanup + re-rank below is DB hygiene that has to happen either
+    // way (it operates on data already imported in earlier runs).
+    let discovered: DiscoveredLeague[] = []
+    try {
+      discovered = await discoverAllAGradeLeagues({ maxAssociations: opts.maxAssociations, assocFilter: opts.assocFilter })
+    } catch (err) {
+      logger.warn('DiscoveryImport: discovery crawl failed, continuing with cleanup', { detail: String(err) })
     }
+    logger.info('DiscoveryImport: discovered leagues', { count: discovered.length })
 
     // Preload a normalised-name → clubId index so imports reuse existing clubs
     // (including manual-scrape clubs) instead of creating parallel duplicates.
@@ -62,13 +67,15 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     for (const c of existingClubs) clubIndex.set(normaliseName(c.name), c.id)
 
     // 2) Import each league (scrape ladder + upsert), skipping admin-disabled ones
-    const adapter = new PlayHQPlaywrightAdapter()
-    for (const dl of discovered) {
-      try {
-        const outcome = await importLeague(adapter, dl, season, clubIndex)
-        if (outcome) imported.push(outcome)
-      } catch (err) {
-        logger.warn('DiscoveryImport: league import failed', { league: dl.leagueName, detail: String(err) })
+    if (discovered.length > 0) {
+      const adapter = new PlayHQPlaywrightAdapter()
+      for (const dl of discovered) {
+        try {
+          const outcome = await importLeague(adapter, dl, season, clubIndex)
+          if (outcome) imported.push(outcome)
+        } catch (err) {
+          logger.warn('DiscoveryImport: league import failed', { league: dl.leagueName, detail: String(err) })
+        }
       }
     }
 
@@ -76,7 +83,7 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     // row that a discovered league now supersedes). We keep the discovery-owned
     // one and neutralise the others — clear their season stats + deactivate their
     // PlayHQ source so ranking excludes them — without hard-deleting records that
-    // ranking history references.
+    // ranking history references. Always runs, even on a 0-discovery run.
     const deduped = await dedupeLeaguesByName(season)
     if (deduped.length) logger.info('DiscoveryImport: deduped leagues', { count: deduped.length, names: deduped })
 
@@ -86,13 +93,15 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     const mergedClubs = await mergeOrphanDuplicateClubs()
     if (mergedClubs) logger.info('DiscoveryImport: removed orphan duplicate clubs', { count: mergedClubs })
 
-    if (imported.length === 0) {
-      return { runId: '', weekLabel: label, season, leaguesDiscovered: discovered.length, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'No leagues imported (all failed or disabled)' }
+    // 3) Re-run the EXISTING ranking engine across all PlayHQ-sourced leagues.
+    // We rank whenever there is any PlayHQ-sourced data (not only when this run
+    // imported something), so cleanup-only runs still refresh the standings.
+    const rankableSources = await prisma.leagueSource.count({ where: { sourceType: 'PLAYHQ', season, isActive: true } })
+    if (rankableSources === 0) {
+      return { runId: '', weekLabel: label, season, leaguesDiscovered: discovered.length, leaguesImported: imported.length, clubsRanked: 0, status: 'NO_DATA', imported, error: 'No active PlayHQ leagues to rank' }
     }
-
-    // 3) Re-run the EXISTING ranking engine across all PlayHQ-sourced leagues
     const { runId, clubsRanked } = await rankAndStore(label)
-    logger.info('DiscoveryImport: complete', { runId, clubsRanked, leaguesImported: imported.length })
+    logger.info('DiscoveryImport: complete', { runId, clubsRanked, leaguesImported: imported.length, discovered: discovered.length })
 
     return { runId, weekLabel: label, season, leaguesDiscovered: discovered.length, leaguesImported: imported.length, clubsRanked, status: 'SUCCESS', imported }
   } catch (err) {
