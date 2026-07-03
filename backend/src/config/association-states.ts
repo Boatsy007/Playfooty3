@@ -48,6 +48,16 @@ const RAW: Record<string, StateCode> = {
   'Narrabri Netball Association': 'NSW',
   'Southern Districts Netball Association': 'NSW',
   'Tamworth Netball Association': 'NSW',
+  'Blue Mountains Netball Association': 'NSW',
+  'Casino Netball Association': 'NSW',
+  'Griffith Netball Association': 'NSW',
+  'Mudgee District Netball Association': 'NSW',
+  'Northern Riverina Netball Association': 'NSW',
+  // ── WA (cont.) ──
+  'Central Midlands Coastal Netball Association': 'WA',
+  'Collie Netball Association': 'WA',
+  // ── SA (cont.) ──
+  'Westlakes District Netball Association': 'SA',
   // ── TAS ──
   'South Midlands Netball Association': 'TAS',
 }
@@ -78,6 +88,7 @@ const METRO = new Set<string>([
   'Southern Districts Netball Association',
   'Tamworth Netball Association',
   'Wollondilly Netball Association',
+  'Westlakes District Netball Association', // Adelaide (West Lakes) metro; ladder is mixed/mens
 ].map(norm))
 
 /** True if the association is metropolitan and must be excluded from rankings. */
