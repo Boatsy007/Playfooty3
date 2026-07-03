@@ -20,6 +20,10 @@ async function main() {
   console.log(`${r.deactivatedIneligible.length} deactivated`)
   for (const x of r.deactivatedIneligible.slice(0, 80)) console.log(`  ✗ ${x.league} — ${x.reason}`)
 
+  h('EXCLUDED — METROPOLITAN ASSOCIATIONS')
+  console.log(`${r.deactivatedMetro.length} excluded`)
+  for (const x of r.deactivatedMetro) console.log(`  ✗ ${x}`)
+
   h('DEACTIVATED — DUPLICATE PER ASSOCIATION')
   console.log(`${r.deactivatedDuplicate.length} associations deduped`)
   for (const x of r.deactivatedDuplicate) console.log(`  • ${x.association}: kept "${x.kept}", dropped ${x.dropped.map(d => `"${d}"`).join(', ')}`)

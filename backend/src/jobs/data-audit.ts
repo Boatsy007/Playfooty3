@@ -23,7 +23,7 @@ import { prisma }        from '../db/client.js'
 import { rankAndStore }  from './playhq-scrape.js'
 import { isRejected }    from '../discovery/grade-matcher.js'
 import { computeAutomaticStrength, finalStrength, strengthScoreFromRating } from '../config/league-strength-auto.js'
-import { stateForAssociation, STATE_NAMES } from '../config/association-states.js'
+import { stateForAssociation, STATE_NAMES, isMetroAssociation } from '../config/association-states.js'
 import { getISOWeekLabel } from '../utils/week-label.js'
 import { logger }        from '../utils/logger.js'
 
@@ -43,6 +43,7 @@ const stripGrade = (s: string) => s.replace(/\s*[-–]\s*a grade netball$/i, '')
 export interface AuditReport {
   renamed: { from: string; to: string }[]
   deactivatedIneligible: { league: string; competition: string | null; reason: string }[]
+  deactivatedMetro: string[]
   deactivatedDuplicate: { association: string; kept: string; dropped: string[] }[]
   strengthRecomputed: number
   statesFixed: number
@@ -56,7 +57,7 @@ export interface AuditReport {
 export async function runDataAudit(): Promise<AuditReport> {
   const label = getISOWeekLabel()
   const report: AuditReport = {
-    renamed: [], deactivatedIneligible: [], deactivatedDuplicate: [],
+    renamed: [], deactivatedIneligible: [], deactivatedMetro: [], deactivatedDuplicate: [],
     strengthRecomputed: 0, statesFixed: 0, orphanClubsRemoved: 0, activeLeagues: 0, clubsRanked: 0,
     validation: { passed: false, problems: [] }, registry: [],
   }
@@ -94,6 +95,20 @@ export async function runDataAudit(): Promise<AuditReport> {
       await deactivate(l.id, bad)
       report.deactivatedIneligible.push({ league: l.association?.name ?? l.name, competition: comp, reason: bad })
     }
+  }
+
+  // 2b) EXCLUDE metropolitan associations (CNCA = Country Netball) ─────────────
+  const metroAssocs = await prisma.association.findMany({
+    where:   { name: { not: '' } },
+    include: { leagues: { select: { id: true, name: true, isActive: true, enabled: true } } },
+  })
+  for (const a of metroAssocs) {
+    if (!isMetroAssociation(a.name)) continue
+    for (const l of a.leagues) {
+      if (l.isActive || l.enabled) await deactivate(l.id, 'Excluded — metropolitan association (country championship only)')
+    }
+    await prisma.association.update({ where: { id: a.id }, data: { active: false } }).catch(() => {})
+    report.deactivatedMetro.push(a.name)
   }
 
   // 3) ONE eligible league PER ASSOCIATION (keep strongest) ────────────────────
@@ -149,7 +164,8 @@ export async function runDataAudit(): Promise<AuditReport> {
   const assocs = await prisma.association.findMany({ include: { leagues: { select: { name: true, isActive: true, enabled: true, playhqGradeName: true, syncError: true } } } })
   for (const a of assocs) {
     const activeLeague = a.leagues.find(l => l.isActive && l.enabled)
-    const status = activeLeague ? 'Imported'
+    const status = isMetroAssociation(a.name) ? 'Excluded — Metropolitan'
+      : activeLeague ? 'Imported'
       : a.leagues.some(l => l.syncError?.startsWith('Ineligible')) ? 'No Eligible A Grade Competition'
       : a.leagues.length ? 'Requires Manual Review' : 'No Leagues'
     report.registry.push({ association: a.name, state: a.stateCode ?? null, status, league: activeLeague?.name ?? null, competition: activeLeague?.playhqGradeName ?? null })
@@ -161,6 +177,7 @@ export async function runDataAudit(): Promise<AuditReport> {
   for (const l of activeFinal) {
     if (l.playhqGradeName && isRejected(l.playhqGradeName)) problems.push(`Active ineligible competition: ${l.name} (${l.playhqGradeName})`)
     if (GENERIC.has(norm(l.name))) problems.push(`Active league titled as a competition, not an association: "${l.name}"`)
+    if (isMetroAssociation(l.association?.name)) problems.push(`Active metropolitan association (should be excluded): "${l.name}"`)
   }
   report.validation = { passed: problems.length === 0, problems }
 

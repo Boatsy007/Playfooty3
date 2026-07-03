@@ -64,3 +64,23 @@ export function stateForAssociation(name: string | null | undefined): StateCode 
   if (!name) return null
   return MAP.get(norm(name)) ?? null
 }
+
+/**
+ * Metropolitan associations — excluded from the rankings entirely. CNCA is the
+ * Country Netball Championships, so metro competitions (which also tend to enter
+ * team-style names like "Club # 1 - Coach" rather than real clubs) do not belong.
+ * Keyed by normalised association name.
+ */
+const METRO = new Set<string>([
+  'Adelaide Metropolitan Netball Division',
+  'Liverpool City Netball Association',
+  'Mount Druitt Netball Association',
+  'Southern Districts Netball Association',
+  'Tamworth Netball Association',
+  'Wollondilly Netball Association',
+].map(norm))
+
+/** True if the association is metropolitan and must be excluded from rankings. */
+export function isMetroAssociation(name: string | null | undefined): boolean {
+  return !!name && METRO.has(norm(name))
+}

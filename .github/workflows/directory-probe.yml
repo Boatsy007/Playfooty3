@@ -1,0 +1,25 @@
+name: Directory Probe (diagnose PlayHQ association listing)
+
+# Diagnostic only — dumps the live directory page structure so we can fix the
+# crawler selector. Writes nothing to the database.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    name: Probe PlayHQ directory
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+      - name: Probe directory
+        working-directory: backend
+        run: npx tsx src/discovery/directory-probe.ts
