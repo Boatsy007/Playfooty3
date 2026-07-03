@@ -5,7 +5,8 @@
  */
 import { Link } from 'react-router-dom'
 import { Trophy, Star, MapPin, ListOrdered, Ticket, RefreshCw } from 'lucide-react'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, DARK, Eyebrow } from '../components/rankings/bits'
@@ -27,7 +28,7 @@ export default function Championship() {
 
   return (
     <div style={{ background: PAGE, minHeight: '100vh' }}>
-      <RankingsNav />
+      <Nav /><ProductSearch />
 
       {/* Hero */}
       <section style={{ position: 'relative', overflow: 'hidden', background: PAGE_ALT, borderBottom: `1px solid ${LINE}` }}>

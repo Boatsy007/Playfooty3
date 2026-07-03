@@ -33,13 +33,14 @@ export interface RankingsResponse {
 export interface ClubProfile {
   clubId: string
   clubName: string
-  leagueId: string
-  leagueName: string
-  state: string
-  rank: number
+  leagueId: string | null
+  leagueName: string | null
+  state: string | null
+  rank: number | null
   previousRank: number | null
   rankMovement: number
-  powerRating: number
+  powerRating: number | null
+  ranked: boolean
   qualified: boolean
   qualifyCutoff: number
   record: { wins: number; losses: number; draws: number; played: number }

@@ -6,7 +6,8 @@
  */
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trophy, ChevronRight } from 'lucide-react'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { fetchClub, useAsync, leaguePath, strengthStars, strengthLabel, ordinal, type ClubProfile } from '../lib/rankings'
@@ -20,7 +21,9 @@ export default function TeamProfile() {
   useSeo({
     title: data ? `${data.clubName} Netball National Ranking | CNCA` : 'Team Profile | CNCA',
     description: data
-      ? `${data.clubName} is ranked #${data.rank} in Australia's country netball A Grade rankings — power rating ${data.powerRating.toFixed(1)}, playing in ${data.leagueName}. ${data.qualified ? 'Currently qualified' : 'Currently outside the cut-off'} for the CNCA Championship.`
+      ? (data.rank != null
+          ? `${data.clubName} is ranked #${data.rank} in Australia's country netball A Grade rankings — power rating ${data.powerRating?.toFixed(1) ?? '—'}, playing in ${data.leagueName ?? 'its league'}. ${data.qualified ? 'Currently qualified' : 'Currently outside the cut-off'} for the CNCA Championship.`
+          : `${data.clubName} — country netball club profile${data.leagueName ? ` in ${data.leagueName}` : ''}. Record, form and national ranking on CNCA.`)
       : 'Country netball team profile and national ranking.',
     path: `/team/${clubId}`,
     jsonLd: data ? {
@@ -48,24 +51,26 @@ export default function TeamProfile() {
 
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
             <div className="font-display" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {data.rank <= 3 && <Trophy size={30} color={GOLD_DK} />}
-              <span style={{ fontSize: 'clamp(3.4rem,12vw,7rem)', lineHeight: 0.8, color: data.rank <= 3 ? GOLD_DK : TEXT }}>#{data.rank}</span>
+              {data.rank != null && data.rank <= 3 && <Trophy size={30} color={GOLD_DK} />}
+              <span style={{ fontSize: data.rank != null ? 'clamp(3.4rem,12vw,7rem)' : 'clamp(2.4rem,8vw,4.4rem)', lineHeight: 0.8, color: data.rank != null && data.rank <= 3 ? GOLD_DK : TEXT }}>{data.rank != null ? `#${data.rank}` : 'NR'}</span>
             </div>
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                <QualBadge qualified={data.qualified} />
-                <Movement current={data.rank} previous={data.previousRank} />
-                <span className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>National Rank</span>
+                {data.ranked ? <QualBadge qualified={data.qualified} /> : <span className="font-condensed" style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 999, color: MUTE, background: 'rgba(17,17,17,0.05)', border: `1px solid ${LINE}` }}>Not Nationally Ranked</span>}
+                {data.rank != null && <Movement current={data.rank} previous={data.previousRank} />}
+                <span className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{data.rank != null ? 'National Rank' : 'Country Netball'}</span>
               </div>
               <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,8vw,5.4rem)', color: TEXT, lineHeight: 0.86, margin: 0 }}>{data.clubName.toUpperCase()}</h1>
               <div className="font-condensed" style={{ marginTop: 8, color: MUTE, fontSize: 15, letterSpacing: '0.02em' }}>
-                <Link to={leaguePath(data.leagueId)} style={{ color: PINK, textDecoration: 'none', fontWeight: 700 }}>{data.leagueName}</Link>
-                {' · '}{data.state}
+                {data.leagueId
+                  ? <Link to={leaguePath(data.leagueId)} style={{ color: PINK, textDecoration: 'none', fontWeight: 700 }}>{data.leagueName}</Link>
+                  : <span style={{ fontWeight: 700 }}>{data.leagueName ?? '—'}</span>}
+                {data.state ? ` · ${data.state}` : ''}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Power Rating</div>
-              <div className="font-display" style={{ fontSize: 'clamp(3rem,9vw,5rem)', color: PINK, lineHeight: 0.85 }}>{data.powerRating.toFixed(1)}</div>
+              <div className="font-display" style={{ fontSize: 'clamp(3rem,9vw,5rem)', color: PINK, lineHeight: 0.85 }}>{data.powerRating != null ? data.powerRating.toFixed(1) : '—'}</div>
             </div>
           </div>
         </div>
@@ -90,7 +95,7 @@ export default function TeamProfile() {
               <StarStrength stars={stars} size={20} />
               <span className="font-condensed" style={{ color: TEXT, fontWeight: 700, letterSpacing: '0.04em' }}>{strengthLabel(stars)}</span>
             </div>
-            <Link to={leaguePath(data.leagueId)} className="font-condensed" style={linkStyle}>View {data.leagueName} <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>
+            {data.leagueId && <Link to={leaguePath(data.leagueId)} className="font-condensed" style={linkStyle}>View {data.leagueName} <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>}
           </Block>
           <Block title="Recent Form">
             <FormPips form={data.recentForm} />
@@ -139,7 +144,7 @@ export default function TeamProfile() {
 const linkStyle: React.CSSProperties = { color: PINK, fontSize: 12, textDecoration: 'none', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 14, display: 'inline-block' }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: PAGE, minHeight: '100vh' }}><RankingsNav /><main>{children}</main><Footer /></div>
+  return <div style={{ background: PAGE, minHeight: '100vh' }}><Nav /><ProductSearch /><main>{children}</main><Footer /></div>
 }
 function StatCell({ label, value, sub, accent, first }: { label: string; value: string; sub?: string; accent?: string; first?: boolean }) {
   return (

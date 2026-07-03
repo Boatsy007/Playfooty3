@@ -5,7 +5,8 @@
  */
 import { useNavigate, Link } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import {
@@ -34,7 +35,7 @@ export default function FullRankings() {
 
   return (
     <div style={{ background: PAGE, minHeight: '100vh' }}>
-      <RankingsNav />
+      <Nav /><ProductSearch />
 
       {/* Hero */}
       <header style={{ position: 'relative', overflow: 'hidden', background: PAGE_ALT, borderBottom: `1px solid ${LINE}` }}>

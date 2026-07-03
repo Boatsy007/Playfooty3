@@ -60,28 +60,31 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const clubId = req.params.id
 
-    // Get current ranking (latest run)
+    // Get current ranking (latest run), if this club is ranked.
     const currentEntry = await prisma.rankingEntry.findFirst({
       where:   { clubId },
       orderBy: { rankingRun: { completedAt: 'desc' } },
       include: { rankingRun: { select: { id: true, weekLabel: true, season: true, completedAt: true } } },
     })
 
-    if (!currentEntry) return res.status(404).json({ error: 'Club not found' })
+    // Fallback base: the club itself + its most recent season row, so EVERY club
+    // in the directory has a working profile even when it isn't currently ranked.
+    const club = await prisma.club.findUnique({
+      where:  { id: clubId },
+      include: { state: { select: { code: true } } },
+    })
+    if (!currentEntry && !club) return res.status(404).json({ error: 'Club not found' })
 
-    const season = currentEntry.rankingRun.season
-
-    // Season stats for this club in the ranked league (record / goals / ladder)
+    const season = currentEntry?.rankingRun.season
     const cls = await prisma.clubLeagueSeason.findFirst({
-      where:   { clubId, season, leagueId: currentEntry.leagueId },
+      where:   { clubId, ...(currentEntry ? { season, leagueId: currentEntry.leagueId } : {}) },
+      orderBy: { season: 'desc' },
       include: { league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } } },
     })
 
-    // League strength — prefer the joined league, fall back to any league record
     const league = cls?.league
-      ?? (await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }))
+      ?? (currentEntry ? await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }) : null)
 
-    // Ranking history (last 12 runs)
     const history = await prisma.rankingEntry.findMany({
       where:   { clubId },
       orderBy: { rankingRun: { completedAt: 'desc' } },
@@ -89,18 +92,21 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
       include: { rankingRun: { select: { weekLabel: true, completedAt: true } } },
     })
 
+    const rank = currentEntry?.rank ?? null
+
     res.json({
       data: {
-        clubId:      currentEntry.clubId,
-        clubName:    currentEntry.clubName,
-        leagueId:    currentEntry.leagueId,
-        leagueName:  currentEntry.leagueName,
-        state:       currentEntry.state,
-        rank:        currentEntry.rank,
-        previousRank: currentEntry.previousRank,
-        rankMovement: currentEntry.rankMovement,
-        powerRating: currentEntry.powerRating,
-        qualified:   currentEntry.rank <= QUALIFY_CUTOFF,
+        clubId,
+        clubName:    currentEntry?.clubName ?? club?.name ?? 'Unknown Club',
+        leagueId:    currentEntry?.leagueId ?? league?.id ?? cls?.leagueId ?? null,
+        leagueName:  currentEntry?.leagueName ?? league?.name ?? null,
+        state:       currentEntry?.state ?? club?.state?.code ?? null,
+        rank,
+        previousRank: currentEntry?.previousRank ?? null,
+        rankMovement: currentEntry?.rankMovement ?? 0,
+        powerRating: currentEntry?.powerRating ?? null,
+        ranked:      !!currentEntry,
+        qualified:   rank != null && rank <= QUALIFY_CUTOFF,
         qualifyCutoff: QUALIFY_CUTOFF,
         record:      { wins: cls?.wins ?? 0, losses: cls?.losses ?? 0, draws: cls?.draws ?? 0, played: cls?.played ?? 0 },
         goalsFor:    cls?.goalsFor ?? 0,
@@ -109,16 +115,11 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         ladderPosition: cls?.position ?? null,
         leagueStrengthScore: league?.strengthScore ?? null,
         leagueStrengthTier:  league?.strengthTier ?? null,
-        recentForm:  JSON.parse(currentEntry.recentForm as string ?? '[]'),
-        componentScores: JSON.parse(currentEntry.componentScores as string ?? '{}'),
-        weekLabel:   currentEntry.rankingRun.weekLabel,
-        season,
-        history:     history.map(h => ({
-          weekLabel:   h.rankingRun.weekLabel,
-          rank:        h.rank,
-          powerRating: h.powerRating,
-          date:        h.rankingRun.completedAt,
-        })),
+        recentForm:  currentEntry ? JSON.parse(currentEntry.recentForm as string ?? '[]') : [],
+        componentScores: currentEntry ? JSON.parse(currentEntry.componentScores as string ?? '{}') : {},
+        weekLabel:   currentEntry?.rankingRun.weekLabel ?? null,
+        season:      season ?? cls?.season ?? null,
+        history:     history.map(h => ({ weekLabel: h.rankingRun.weekLabel, rank: h.rank, powerRating: h.powerRating, date: h.rankingRun.completedAt })),
       },
     })
   } catch {

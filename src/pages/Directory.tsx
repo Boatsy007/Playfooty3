@@ -6,7 +6,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { teamPath } from '../lib/rankings'
@@ -83,7 +84,7 @@ export default function Directory() {
 
   return (
     <div style={{ background: PAGE, minHeight: '100vh' }}>
-      <RankingsNav />
+      <Nav /><ProductSearch />
 
       {/* Hero + controls */}
       <header style={{ background: PAGE_ALT, borderBottom: `1px solid ${LINE}`, position: 'relative', overflow: 'hidden' }}>
@@ -143,21 +144,17 @@ export default function Directory() {
             </div>
             {results.length === 0 && <Centered>No clubs match your search.</Centered>}
             <div style={{ borderTop: results.length ? `2px solid ${TEXT}` : 'none' }}>
-              {results.map(c => {
-                const clickable = c.rank != null
-                return (
-                  <button key={c.clubId} disabled={!clickable} onClick={() => clickable && navigate(teamPath(c.clubId))}
-                    className={clickable ? 'rank-row-lt' : undefined}
-                    style={{ width: '100%', textAlign: 'left', cursor: clickable ? 'pointer' : 'default', border: 'none', font: 'inherit', color: TEXT, display: 'grid', gridTemplateColumns: '52px 1fr auto', gap: 12, alignItems: 'center', padding: '14px 10px', borderBottom: `1px solid ${LINE}`, background: PAGE, opacity: clickable ? 1 : 0.65 }}>
-                    <span className="font-display" style={{ fontSize: 22, color: c.rank != null ? (c.rank <= 3 ? GOLD_DK : PINK) : FAINT }}>{c.rank != null ? `#${c.rank}` : '—'}</span>
-                    <span style={{ minWidth: 0 }}>
-                      <span className="font-display" style={{ display: 'block', fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name.toUpperCase()}</span>
-                      <span className="font-condensed" style={{ display: 'block', fontSize: 12, color: MUTE, letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.leagueName} · {c.stateCode}</span>
-                    </span>
-                    <span className="font-condensed" style={{ fontSize: 12, color: FAINT, textAlign: 'right', whiteSpace: 'nowrap' }}>{c.wins}-{c.losses}{c.draws ? `-${c.draws}` : ''}</span>
-                  </button>
-                )
-              })}
+              {results.map(c => (
+                <button key={c.clubId} onClick={() => navigate(teamPath(c.clubId))} className="rank-row-lt"
+                  style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT, display: 'grid', gridTemplateColumns: '52px 1fr auto', gap: 12, alignItems: 'center', padding: '14px 10px', borderBottom: `1px solid ${LINE}`, background: PAGE }}>
+                  <span className="font-display" style={{ fontSize: 22, color: c.rank != null ? (c.rank <= 3 ? GOLD_DK : PINK) : FAINT }}>{c.rank != null ? `#${c.rank}` : '·'}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span className="font-display" style={{ display: 'block', fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name.toUpperCase()}</span>
+                    <span className="font-condensed" style={{ display: 'block', fontSize: 12, color: MUTE, letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.leagueName} · {c.stateCode}</span>
+                  </span>
+                  <span className="font-condensed" style={{ fontSize: 12, color: FAINT, textAlign: 'right', whiteSpace: 'nowrap' }}>{c.wins}-{c.losses}{c.draws ? `-${c.draws}` : ''}</span>
+                </button>
+              ))}
             </div>
           </>
         )}

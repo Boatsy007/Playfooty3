@@ -5,7 +5,8 @@
  */
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { fetchLeague, useAsync, teamPath, strengthStars, strengthLabel, type LeagueDetail } from '../lib/rankings'
@@ -98,7 +99,7 @@ export default function LeagueProfile() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: PAGE, minHeight: '100vh' }}><RankingsNav /><main>{children}</main><Footer /></div>
+  return <div style={{ background: PAGE, minHeight: '100vh' }}><Nav /><ProductSearch /><main>{children}</main><Footer /></div>
 }
 function SectionHead({ children }: { children: React.ReactNode }) {
   return <h2 className="font-display" style={{ color: TEXT, fontSize: 'clamp(1.4rem,4vw,2rem)', margin: '0 0 12px' }}>{children}</h2>

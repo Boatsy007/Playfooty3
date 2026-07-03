@@ -4,7 +4,8 @@
  */
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import RankingsNav from '../components/rankings/RankingsNav'
+import Nav from '../components/layout/Nav'
+import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { useAsync, leaguePath, strengthStars } from '../lib/rankings'
@@ -37,7 +38,7 @@ export default function Leagues() {
 
   return (
     <div style={{ background: PAGE, minHeight: '100vh' }}>
-      <RankingsNav />
+      <Nav /><ProductSearch />
       <header style={{ background: PAGE_ALT, borderBottom: `1px solid ${LINE}`, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(680px 320px at 12% -20%, rgba(244,193,77,0.16), transparent 62%)' }} />
         <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto', padding: '40px 20px 30px' }}>
