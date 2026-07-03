@@ -23,6 +23,7 @@ import { prisma }        from '../db/client.js'
 import { rankAndStore }  from './playhq-scrape.js'
 import { isRejected }    from '../discovery/grade-matcher.js'
 import { computeAutomaticStrength, finalStrength, strengthScoreFromRating } from '../config/league-strength-auto.js'
+import { stateForAssociation, STATE_NAMES } from '../config/association-states.js'
 import { getISOWeekLabel } from '../utils/week-label.js'
 import { logger }        from '../utils/logger.js'
 
@@ -44,6 +45,7 @@ export interface AuditReport {
   deactivatedIneligible: { league: string; competition: string | null; reason: string }[]
   deactivatedDuplicate: { association: string; kept: string; dropped: string[] }[]
   strengthRecomputed: number
+  statesFixed: number
   orphanClubsRemoved: number
   activeLeagues: number
   clubsRanked: number
@@ -55,7 +57,7 @@ export async function runDataAudit(): Promise<AuditReport> {
   const label = getISOWeekLabel()
   const report: AuditReport = {
     renamed: [], deactivatedIneligible: [], deactivatedDuplicate: [],
-    strengthRecomputed: 0, orphanClubsRemoved: 0, activeLeagues: 0, clubsRanked: 0,
+    strengthRecomputed: 0, statesFixed: 0, orphanClubsRemoved: 0, activeLeagues: 0, clubsRanked: 0,
     validation: { passed: false, problems: [] }, registry: [],
   }
   logger.info('DataAudit: starting')
@@ -135,6 +137,9 @@ export async function runDataAudit(): Promise<AuditReport> {
     report.strengthRecomputed++
   }
 
+  // 4b) BACKFILL STATE from the association (fixes the "everything is VIC" bug) ─
+  report.statesFixed = await backfillStates()
+
   // 5) Orphan cleanup + re-rank ────────────────────────────────────────────────
   report.orphanClubsRemoved = await deleteOrphanClubs()
   const { clubsRanked } = await rankAndStore(label)
@@ -161,6 +166,50 @@ export async function runDataAudit(): Promise<AuditReport> {
 
   logger.info('DataAudit: complete', { renamed: report.renamed.length, deactivated: report.deactivatedIneligible.length, dupes: report.deactivatedDuplicate.length, active: report.activeLeagues, ranked: clubsRanked, valid: report.validation.passed })
   return report
+}
+
+/**
+ * Assign the correct State to every association (and its clubs) using the curated
+ * association→state map. Ranking-entry state derives from club.state, so this is
+ * what removes the blanket "VIC". Only clubs reachable from a mapped association
+ * (via any league season) are touched; unknown associations are left as-is.
+ */
+async function backfillStates(): Promise<number> {
+  const stateIdByCode = new Map<string, string>()
+  const ensureState = async (code: string): Promise<string> => {
+    const hit = stateIdByCode.get(code)
+    if (hit) return hit
+    const s = await prisma.state.upsert({
+      where:  { code },
+      update: {},
+      create: { code, name: STATE_NAMES[code as keyof typeof STATE_NAMES] ?? code },
+    })
+    stateIdByCode.set(code, s.id)
+    return s.id
+  }
+
+  let clubsFixed = 0
+  const assocs = await prisma.association.findMany({ select: { id: true, name: true } })
+  for (const a of assocs) {
+    const code = stateForAssociation(a.name)
+    if (!code) continue
+    const stateId = await ensureState(code)
+    await prisma.association.update({ where: { id: a.id }, data: { stateCode: code } })
+
+    // Every club that plays in one of this association's leagues.
+    const clubs = await prisma.club.findMany({
+      where:  { leagueSeasons: { some: { league: { associationId: a.id } } }, stateId: { not: stateId } },
+      select: { id: true },
+    })
+    if (clubs.length) {
+      await prisma.club.updateMany({ where: { id: { in: clubs.map(c => c.id) } }, data: { stateId } })
+      clubsFixed += clubs.length
+    }
+
+    // Keep the association's leagues on the same state for consistency.
+    await prisma.league.updateMany({ where: { associationId: a.id }, data: { stateId } })
+  }
+  return clubsFixed
 }
 
 async function deleteOrphanClubs(): Promise<number> {

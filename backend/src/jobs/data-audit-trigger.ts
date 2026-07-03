@@ -58,6 +58,10 @@ async function main() {
   console.log(`  Clubs ranked          : ${r.clubsRanked}`)
   console.log(`  Orphan clubs removed  : ${r.orphanClubsRemoved}`)
   console.log(`  Strength recomputed   : ${r.strengthRecomputed}`)
+  console.log(`  Club states corrected : ${r.statesFixed}`)
+  const byState = new Map<string, number>()
+  for (const x of r.registry) byState.set(x.state ?? '?', (byState.get(x.state ?? '?') ?? 0) + 1)
+  console.log(`  Associations by state : ${[...byState.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => `${s}:${n}`).join('  ')}`)
 
   h('TOP 100 NATIONAL RANKINGS')
   const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
