@@ -90,6 +90,29 @@ export async function probeCountryFooty(): Promise<void> {
     const bodyText = (await page.locator('body').innerText().catch(() => '')) || ''
     console.log(`\nBody text sample (first 1200 chars):\n${bodyText.slice(0, 1200)}`)
 
+    // ── Drill into a few league pages to learn the ladder format ──────────────
+    const sampleLeagues = ['/hampden-netball.html', '/north-gippsland-netball.html', '/ballarat-fl-netball.html']
+    for (const path of sampleLeagues) {
+      const u = `https://www.countryfootyscores.com${path}`
+      console.log(`\n---------- LEAGUE PAGE: ${path} ----------`)
+      try { await page.goto(u, { waitUntil: 'networkidle', timeout: 45_000 }) }
+      catch (e) { console.log(`  goto note: ${String(e)}`); continue }
+      await page.waitForTimeout(3500)
+
+      // Headings tell us grade/section names (A Grade, Senior, etc.)
+      const heads = await page.$$eval('h1,h2,h3,h4,strong', els => els.map(h => (h.textContent || '').replace(/\s+/g, ' ').trim()).filter(t => t.length > 1 && t.length < 60))
+      console.log(`  headings: ${[...new Set(heads)].slice(0, 25).join(' | ')}`)
+
+      const lts = await page.$$('table')
+      console.log(`  tables: ${lts.length}`)
+      const dump = await page.$$eval('table', els => els.slice(0, 8).map(t => {
+        const caption = (t.querySelector('caption')?.textContent || t.previousElementSibling?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 50)
+        const rows = Array.from(t.querySelectorAll('tr')).slice(0, 12)
+        return { caption, rows: rows.map(r => Array.from(r.querySelectorAll('th,td')).map(c => (c.textContent || '').trim().slice(0, 20)).join(' | ')) }
+      }))
+      dump.forEach((t, i) => { console.log(`  — table ${i} — caption="${t.caption}"`); t.rows.forEach(r => console.log(`      ${r}`)) })
+    }
+
     console.log(`\n========== END PROBE ==========\n`)
     logger.info('CountryFootyProbe: complete', { tables: tables.length, selects: selects.length, xhr: xhr.length })
   } finally {
