@@ -1,0 +1,22 @@
+name: Squadi API Probe (NetballConnect data contract)
+
+# Diagnostic only — hits api-netball.squadi.com directly for one org to lock the
+# competition/division/ladder contract before building the adapter. No DB writes.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    name: Probe Squadi API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Probe Squadi API
+        working-directory: backend
+        run: npx tsx src/scrapers/squadi-probe.ts
