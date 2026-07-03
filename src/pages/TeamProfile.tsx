@@ -1,19 +1,16 @@
 /**
- * Team profile — every ranked team gets a page: national rank, rating, league,
- * league strength, record, goals, %, form, ladder position, qualification, plus
- * placeholder sections (history, contact, honours, photos, sponsors).
+ * Team profile — a premium national sports page in the bright homepage style
+ * (white, black display headings, pink highlights, gold championship accents).
+ * Editorial hero, stat strip, league strength / form / qualification, editorial
+ * placeholder sections, and a "Claim this club profile" CTA.
  */
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trophy, Star } from 'lucide-react'
-import Nav from '../components/layout/Nav'
+import { ArrowLeft, Trophy, ChevronRight } from 'lucide-react'
+import RankingsNav from '../components/rankings/RankingsNav'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
-import {
-  fetchClub, useAsync, leaguePath, strengthStars, strengthLabel, ordinal,
-  type ClubProfile,
-} from '../lib/rankings'
-import { INK, PANEL, PANEL_2, LINE, GOLD, PINK, CYAN, MUTE, FormPips, StarStrength, Movement, QualBadge, Label } from '../components/rankings/bits'
-import GlobalSearch from '../components/rankings/GlobalSearch'
+import { fetchClub, useAsync, leaguePath, strengthStars, strengthLabel, ordinal, type ClubProfile } from '../lib/rankings'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge } from '../components/rankings/bits'
 
 export default function TeamProfile() {
   const { clubId = '' } = useParams()
@@ -27,9 +24,8 @@ export default function TeamProfile() {
       : 'Country netball team profile and national ranking.',
     path: `/team/${clubId}`,
     jsonLd: data ? {
-      '@context': 'https://schema.org', '@type': 'SportsTeam', sport: 'Netball',
-      name: data.clubName, memberOf: { '@type': 'SportsOrganization', name: data.leagueName },
-      url: `https://cnca.com.au/team/${clubId}`,
+      '@context': 'https://schema.org', '@type': 'SportsTeam', sport: 'Netball', name: data.clubName,
+      memberOf: { '@type': 'SportsOrganization', name: data.leagueName }, url: `https://cnca.com.au/team/${clubId}`,
     } : undefined,
   })
 
@@ -37,115 +33,131 @@ export default function TeamProfile() {
   if (error || !data) return <Shell><Center tone="error">Team not found.</Center></Shell>
 
   const stars = strengthStars(data.leagueStrengthScore)
-  const gf = data.goalsFor, ga = data.goalsAgainst
-  const diff = gf - ga
+  const diff = data.goalsFor - data.goalsAgainst
 
   return (
     <Shell>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '110px 20px 90px' }}>
-        <button onClick={() => navigate('/rankings')} className="font-condensed"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTE, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 24 }}>
-          <ArrowLeft size={14} /> National Rankings
-        </button>
+      {/* Hero */}
+      <header style={{ position: 'relative', overflow: 'hidden', background: PAGE_ALT, borderBottom: `1px solid ${LINE}` }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(640px 340px at 10% -20%, rgba(255,44,145,0.12), transparent 60%), radial-gradient(560px 300px at 100% 0%, rgba(244,193,77,0.14), transparent 60%)' }} />
+        <div style={{ position: 'relative', maxWidth: 1040, margin: '0 auto', padding: '28px 20px 36px' }}>
+          <button onClick={() => navigate('/rankings')} className="font-condensed"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTE, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 20 }}>
+            <ArrowLeft size={14} /> National Rankings
+          </button>
 
-        {/* Hero */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 28, alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-          <div style={{ minWidth: 260 }}>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-              <QualBadge qualified={data.qualified} />
-              <Movement current={data.rank} previous={data.previousRank} />
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
+            <div className="font-display" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {data.rank <= 3 && <Trophy size={30} color={GOLD_DK} />}
+              <span style={{ fontSize: 'clamp(3.4rem,12vw,7rem)', lineHeight: 0.8, color: data.rank <= 3 ? GOLD_DK : TEXT }}>#{data.rank}</span>
             </div>
-            <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,7vw,5rem)', color: '#fff', lineHeight: 0.9, margin: 0 }}>{data.clubName}</h1>
-            <div className="font-condensed" style={{ marginTop: 10, color: MUTE, fontSize: 15, letterSpacing: '0.04em' }}>
-              <Link to={leaguePath(data.leagueId)} style={{ color: CYAN, textDecoration: 'none', fontWeight: 700 }}>{data.leagueName}</Link>
-              {' · '}{data.state}
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                <QualBadge qualified={data.qualified} />
+                <Movement current={data.rank} previous={data.previousRank} />
+                <span className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>National Rank</span>
+              </div>
+              <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,8vw,5.4rem)', color: TEXT, lineHeight: 0.86, margin: 0 }}>{data.clubName.toUpperCase()}</h1>
+              <div className="font-condensed" style={{ marginTop: 8, color: MUTE, fontSize: 15, letterSpacing: '0.02em' }}>
+                <Link to={leaguePath(data.leagueId)} style={{ color: PINK, textDecoration: 'none', fontWeight: 700 }}>{data.leagueName}</Link>
+                {' · '}{data.state}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Power Rating</div>
+              <div className="font-display" style={{ fontSize: 'clamp(3rem,9vw,5rem)', color: PINK, lineHeight: 0.85 }}>{data.powerRating.toFixed(1)}</div>
             </div>
           </div>
-          {/* Rank medallion */}
-          <div style={{ textAlign: 'center', padding: '18px 30px', borderRadius: 20, background: PANEL, border: `1px solid ${LINE}` }}>
-            <Label>National Rank</Label>
-            <div className="font-display" style={{ fontSize: 84, lineHeight: 0.9, color: data.rank <= 3 ? GOLD : '#fff', margin: '4px 0' }}>#{data.rank}</div>
-            <div className="font-display" style={{ fontSize: 22, color: PINK }}>{data.powerRating.toFixed(1)} <span style={{ fontSize: 12, color: MUTE }} className="font-condensed">RATING</span></div>
-          </div>
         </div>
+      </header>
 
-        {/* Stat grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
-          <Stat label="Record" value={`${data.record.wins}-${data.record.losses}${data.record.draws ? `-${data.record.draws}` : ''}`} sub={`${data.record.played} games`} />
-          <Stat label="Goals For" value={String(gf)} sub={`${ga} against`} />
-          <Stat label="Goal Diff" value={`${diff > 0 ? '+' : ''}${diff}`} accent={diff >= 0 ? '#37d67a' : '#ff6b6b'} />
-          <Stat label="Percentage" value={`${data.percentage ? data.percentage.toFixed(1) : '—'}%`} />
-          <Stat label="Ladder Position" value={data.ladderPosition ? ordinal(data.ladderPosition) : '—'} sub="in league" />
+      {/* Stat strip */}
+      <section style={{ borderBottom: `1px solid ${LINE}`, background: PAGE }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', padding: '0 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))' }}>
+          <StatCell label="Record" value={`${data.record.wins}-${data.record.losses}${data.record.draws ? `-${data.record.draws}` : ''}`} sub={`${data.record.played} games`} first />
+          <StatCell label="Goals For" value={String(data.goalsFor)} />
+          <StatCell label="Goals Against" value={String(data.goalsAgainst)} />
+          <StatCell label="Goal Diff" value={`${diff > 0 ? '+' : ''}${diff}`} accent={diff >= 0 ? '#16a34a' : '#dc2626'} />
+          <StatCell label="Percentage" value={data.percentage ? `${data.percentage.toFixed(0)}%` : '—'} />
+          <StatCell label="Ladder" value={data.ladderPosition ? ordinal(data.ladderPosition) : '—'} sub="in league" />
         </div>
+      </section>
 
-        {/* League strength + form */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 12, marginBottom: 28 }}>
-          <Panel>
-            <Label>League Strength</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+      <main style={{ maxWidth: 1040, margin: '0 auto', padding: '36px 20px 80px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 30, marginBottom: 40 }}>
+          <Block title="League Strength">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <StarStrength stars={stars} size={20} />
-              <span className="font-condensed" style={{ color: '#fff', fontWeight: 700, letterSpacing: '0.06em' }}>{strengthLabel(stars)}</span>
+              <span className="font-condensed" style={{ color: TEXT, fontWeight: 700, letterSpacing: '0.04em' }}>{strengthLabel(stars)}</span>
             </div>
-            <Link to={leaguePath(data.leagueId)} className="font-condensed" style={{ color: CYAN, fontSize: 12, textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 12, display: 'inline-block' }}>
-              View {data.leagueName} →
-            </Link>
-          </Panel>
-          <Panel>
-            <Label>Recent Form</Label>
-            <div style={{ marginTop: 12 }}><FormPips form={data.recentForm} /></div>
-            <div className="font-condensed" style={{ color: MUTE, fontSize: 12, marginTop: 10, letterSpacing: '0.04em' }}>Last 5 results (most recent right)</div>
-          </Panel>
-          <Panel>
-            <Label>Championship Status</Label>
-            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-              {data.qualified
-                ? <><Trophy size={20} color={GOLD} /><span style={{ color: '#fff', fontWeight: 700 }}>Qualified — Top {data.qualifyCutoff}</span></>
-                : <span style={{ color: MUTE }}>Currently outside the Top {data.qualifyCutoff}</span>}
-            </div>
-            <Link to="/championship" className="font-condensed" style={{ color: GOLD, fontSize: 12, textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 12, display: 'inline-block' }}>
-              About the Championship →
-            </Link>
-          </Panel>
+            <Link to={leaguePath(data.leagueId)} className="font-condensed" style={linkStyle}>View {data.leagueName} <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>
+          </Block>
+          <Block title="Recent Form">
+            <FormPips form={data.recentForm} />
+            <div className="font-condensed" style={{ color: MUTE, fontSize: 12, marginTop: 10, letterSpacing: '0.03em' }}>Last 5 · most recent right</div>
+          </Block>
+          <Block title="Championship Status">
+            {data.qualified
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Trophy size={20} color={GOLD_DK} /><span style={{ color: TEXT, fontWeight: 700 }}>Qualified — Top {data.qualifyCutoff}</span></div>
+              : <span style={{ color: MUTE }}>Currently outside the Top {data.qualifyCutoff}</span>}
+            <Link to="/championship" className="font-condensed" style={linkStyle}>About the Championship <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>
+          </Block>
         </div>
 
-        {/* Placeholder sections */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 12 }}>
-          <Placeholder title="Club History" icon={<Star size={16} color={GOLD} />}>
-            A record of {data.clubName}’s honours, premierships and notable seasons will appear here.
-          </Placeholder>
-          <Placeholder title="Contact & Details">Club contact details, home venue and committee information — coming soon.</Placeholder>
-          <Placeholder title="Honours">Premierships, best & fairest and championship appearances.</Placeholder>
-          <Placeholder title="Photos">Team and match-day gallery.</Placeholder>
-          <Placeholder title="Sponsors">Club partners and supporters.</Placeholder>
+        {[
+          ['Club History', `A record of ${data.clubName}’s premierships, notable seasons and rivalries will live here.`],
+          ['Honours', 'Premierships, best & fairest awards and national championship appearances.'],
+          ['Contact & Details', 'Home venue, committee and contact information — coming soon.'],
+          ['Photos', 'Team and match-day gallery.'],
+          ['Sponsors', 'Club partners and supporters.'],
+        ].map(([t, body]) => (
+          <section key={t} style={{ borderTop: `1px solid ${LINE}`, padding: '22px 0' }}>
+            <div className="font-condensed" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ width: 20, height: 3, background: GOLD }} />
+              <h2 className="font-display" style={{ color: TEXT, fontSize: 26, margin: 0 }}>{t}</h2>
+            </div>
+            <p style={{ color: MUTE, fontSize: 15, lineHeight: 1.6, margin: '10px 0 0', maxWidth: 620 }}>{body}</p>
+          </section>
+        ))}
+
+        {/* Claim CTA */}
+        <div style={{ marginTop: 34, padding: '32px 28px', borderRadius: 22, background: TEXT, display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div className="font-condensed" style={{ color: GOLD, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', fontSize: 11, marginBottom: 8 }}>Club Owners</div>
+            <h3 className="font-display" style={{ color: '#fff', fontSize: 'clamp(1.8rem,5vw,2.6rem)', margin: '0 0 8px', lineHeight: 0.95 }}>IS THIS YOUR CLUB?</h3>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, margin: 0, maxWidth: 520 }}>Claim {data.clubName} to add your crest, history, honours, photos, contacts and sponsors — and keep your national profile current.</p>
+          </div>
+          <a href={`mailto:hello@cnca.com.au?subject=${encodeURIComponent(`Claim club profile — ${data.clubName}`)}`} className="btn-pink" style={{ padding: '15px 28px', fontSize: 14, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+            Claim This Club Profile
+          </a>
         </div>
-      </div>
+      </main>
     </Shell>
   )
 }
 
+const linkStyle: React.CSSProperties = { color: PINK, fontSize: 12, textDecoration: 'none', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 14, display: 'inline-block' }
+
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: INK, minHeight: '100vh' }}><Nav /><GlobalSearch /><main>{children}</main><Footer /></div>
+  return <div style={{ background: PAGE, minHeight: '100vh' }}><RankingsNav /><main>{children}</main><Footer /></div>
 }
-function Panel({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: PANEL, border: `1px solid ${LINE}`, borderRadius: 16, padding: 20 }}>{children}</div>
-}
-function Stat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function StatCell({ label, value, sub, accent, first }: { label: string; value: string; sub?: string; accent?: string; first?: boolean }) {
   return (
-    <div style={{ background: PANEL, border: `1px solid ${LINE}`, borderRadius: 14, padding: '16px 18px' }}>
-      <Label>{label}</Label>
-      <div className="font-display" style={{ fontSize: 34, color: accent ?? '#fff', lineHeight: 1, marginTop: 6 }}>{value}</div>
-      {sub && <div className="font-condensed" style={{ color: MUTE, fontSize: 12, marginTop: 2 }}>{sub}</div>}
+    <div style={{ padding: '20px 8px', borderRight: `1px solid ${LINE}`, borderLeft: first ? `1px solid ${LINE}` : undefined, textAlign: 'center' }}>
+      <div className="font-condensed" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT }}>{label}</div>
+      <div className="font-display" style={{ fontSize: 34, color: accent ?? TEXT, lineHeight: 1, marginTop: 6 }}>{value}</div>
+      {sub && <div className="font-condensed" style={{ color: FAINT, fontSize: 11, marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
-function Placeholder({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: PANEL_2, border: `1px dashed ${LINE}`, borderRadius: 16, padding: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>{icon}<Label>{title}</Label></div>
-      <p style={{ color: MUTE, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{children}</p>
+    <div>
+      <div className="font-condensed" style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD_DK, marginBottom: 12 }}>{title}</div>
+      {children}
     </div>
   )
 }
 function Center({ children, tone }: { children: React.ReactNode; tone?: 'error' }) {
-  return <div className="font-condensed" style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', color: tone === 'error' ? '#ff6b6b' : MUTE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, fontSize: 13 }}>{children}</div>
+  return <div className="font-condensed" style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', color: tone === 'error' ? '#dc2626' : MUTE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, fontSize: 13 }}>{children}</div>
 }

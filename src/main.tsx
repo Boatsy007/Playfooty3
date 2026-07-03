@@ -10,6 +10,7 @@ import Directory from './pages/Directory.tsx'
 import FullRankings from './pages/FullRankings.tsx'
 import TeamProfile from './pages/TeamProfile.tsx'
 import LeagueProfile from './pages/LeagueProfile.tsx'
+import Leagues from './pages/Leagues.tsx'
 import Championship from './pages/Championship.tsx'
 
 function ScrollToTop() {
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/rankings" element={<FullRankings />} />
         <Route path="/team/:clubId" element={<TeamProfile />} />
         <Route path="/league/:leagueId" element={<LeagueProfile />} />
+        <Route path="/leagues" element={<Leagues />} />
         <Route path="/championship" element={<Championship />} />
         <Route path="/directory" element={<Directory />} />
       </Routes>
