@@ -164,7 +164,12 @@ async function mergeOrphanDuplicateClubs(): Promise<number> {
     if (!hasStats) continue   // ambiguous — leave alone rather than guess
     for (const orphan of group) {
       if (orphan._count.clubSeasons > 0) continue
+      // Clear every child row that references this club, then delete it.
+      await prisma.clubLeagueSeason.deleteMany({ where: { clubId: orphan.id } })
       await prisma.rankingEntry.deleteMany({ where: { clubId: orphan.id } })
+      await prisma.rankingSnapshot.deleteMany({ where: { clubId: orphan.id } })
+      await prisma.clubNameVariant.deleteMany({ where: { clubId: orphan.id } })
+      await prisma.match.deleteMany({ where: { OR: [{ homeClubId: orphan.id }, { awayClubId: orphan.id }] } })
       await prisma.club.delete({ where: { id: orphan.id } })
       removed++
     }
