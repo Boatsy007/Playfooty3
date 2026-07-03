@@ -44,8 +44,8 @@ async function main() {
   // Winners (sanity check the matcher is picking sensible grades)
   const wins = diags.filter(d => d.outcome === 'IMPORTED')
   if (wins.length) {
-    console.log(`\n── IMPORTED (${wins.length}) ──`)
-    for (const d of wins.slice(0, 40)) console.log(`  ✓ ${d.association} — ${d.seasonPicked} — ${d.ladderTeams} teams — picked from [${d.gradeSample.slice(0, 4).join(' | ')}]`)
+    console.log(`\n── IMPORTED (${wins.length}) — SELECTED GRADE (audit) ──`)
+    for (const d of wins.slice(0, 60)) console.log(`  ✓ ${d.association.padEnd(38)} → "${d.selectedGrade}"  [${d.matchedRule}]  ${d.ladderTeams} teams  (${d.seasonPicked})`)
   }
   console.log('\n═══ END DIAGNOSTIC ═══')
   process.exit(0)

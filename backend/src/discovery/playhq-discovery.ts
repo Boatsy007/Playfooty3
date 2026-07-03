@@ -384,6 +384,8 @@ export interface AssocDiag {
   gradeSample:    string[]
   womensSenior:   number     // grades that are structurally Women+Senior (pre-keyword)
   aGradeMatches:  number     // grades passing filterSeniorWomensAGrade
+  selectedGrade:  string | null  // the grade actually chosen (for audit)
+  matchedRule:    string | null
   ladderTeams:    number
   outcome:        string     // IMPORTED | NO_SEASON | NO_GRADES | NO_WOMENS_SENIOR | NO_AGRADE_MATCH | LADDER_UNRESOLVED
 }
@@ -409,7 +411,7 @@ export async function diagnoseAssociation(page: import('playwright').Page, assoc
 
   const diag: AssocDiag = {
     association: assoc.name, slug: assoc.slug, seasonOptions: [], seasonPicked: null,
-    gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, ladderTeams: 0, outcome: 'NO_SEASON',
+    gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, selectedGrade: null, matchedRule: null, ladderTeams: 0, outcome: 'NO_SEASON',
   }
   try {
     try { await page.goto(assoc.url.replace(/\/$/, ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* */ }
@@ -438,6 +440,8 @@ export async function diagnoseAssociation(page: import('playwright').Page, assoc
     else {
       diag.outcome = 'LADDER_UNRESOLVED'
       const m = matches[0]
+      diag.selectedGrade = m.name
+      diag.matchedRule = (m as { matchedRule?: string }).matchedRule ?? null
       const gradeSlug = m.name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
       for (const url of buildLadderUrlCandidates(assoc.slug, meta.competitionSlug, gradeSlug, m.id)) {
         captured.length = 0
@@ -467,7 +471,7 @@ export async function diagnoseAssociations(opts: { maxPages?: number; maxAssocia
     const out: AssocDiag[] = []
     for (const a of crawled.slice(0, cap)) {
       try { out.push(await diagnoseAssociation(page, a)) }
-      catch (err) { logger.warn('Diagnose: association failed', { assoc: a.name, detail: String(err) }); out.push({ association: a.name, slug: a.slug, seasonOptions: [], seasonPicked: null, gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, ladderTeams: 0, outcome: 'ERROR' }) }
+      catch (err) { logger.warn('Diagnose: association failed', { assoc: a.name, detail: String(err) }); out.push({ association: a.name, slug: a.slug, seasonOptions: [], seasonPicked: null, gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, selectedGrade: null, matchedRule: null, ladderTeams: 0, outcome: 'ERROR' }) }
     }
     return out
   } finally {
