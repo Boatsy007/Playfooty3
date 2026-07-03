@@ -121,16 +121,18 @@ export async function runDiscoveryPreview(opts: {
 
 const ORG_ANCHOR = 'a[href*="/netball-australia/org/"]'
 
+const MAX_PAGE_RETRIES = 2       // attempts per directory page before giving up
+const SELECTOR_WAIT    = 12_000  // per-attempt wait for the client-rendered anchors
+
 async function crawlDirectory(page: import('playwright').Page, maxPages: number): Promise<DiscoveredAssociation[]> {
   const bySlug = new Map<string, DiscoveredAssociation>()
 
   // The directory listing is client-rendered from search.playhq.com/graphql
   // (behind an AWS WAF token challenge), so the org anchors are NOT present at
-  // domcontentloaded — we must wait for them to appear, and a slow page must not
-  // be mistaken for the end of the directory. Two consecutive genuinely-empty
-  // pages (after retry) end pagination.
-  let emptyStreak = 0
-
+  // domcontentloaded — we wait for them and retry a page a bounded number of
+  // times. A page that is still empty after its retries means we've paged past
+  // the final directory page: that is END_OF_DIRECTORY, so we stop (bounded, no
+  // indefinite retry loop) and move on to processing the associations we have.
   for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
     const url = `${DIRECTORY_BASE}?page=${pageNum}&types=ASSOCIATION`
     logger.info('Discovery: crawling directory page', { pageNum, url })
@@ -142,29 +144,31 @@ async function crawlDirectory(page: import('playwright').Page, maxPages: number)
     }
     logger.info('Discovery: directory page parsed', { pageNum, foundOnPage: found.length, newOnPage, total: bySlug.size })
 
+    // Empty page (after retries) = past the last page → end of directory.
     if (found.length === 0) {
-      emptyStreak++
-      if (emptyStreak >= 2) { logger.info('Discovery: two empty pages — end of directory', { pageNum }); break }
-      continue
+      logger.info('Discovery: END_OF_DIRECTORY reached', { pageNum, totalAssociations: bySlug.size })
+      break
     }
-    emptyStreak = 0
-    // A full page that adds nothing new means we have looped back to seen orgs.
-    if (newOnPage === 0) { logger.info('Discovery: no new associations — stopping pagination', { pageNum }); break }
+    // A full page that adds nothing new means we've looped back to seen orgs.
+    if (newOnPage === 0) {
+      logger.info('Discovery: END_OF_DIRECTORY reached (no new associations)', { pageNum, totalAssociations: bySlug.size })
+      break
+    }
   }
 
   return [...bySlug.values()]
 }
 
-/** Load one directory page, waiting for the client-rendered org anchors; retry once. */
+/** Load one directory page, waiting for the client-rendered org anchors; bounded retries. */
 async function loadDirectoryPage(page: import('playwright').Page, url: string): Promise<DiscoveredAssociation[]> {
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (let attempt = 1; attempt <= MAX_PAGE_RETRIES; attempt++) {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT })
     } catch (err) {
       logger.warn('Discovery: directory goto did not settle', { url, attempt, detail: String(err) })
     }
     // Wait for the association anchors to be injected by the GraphQL fetch.
-    await page.waitForSelector(ORG_ANCHOR, { timeout: 20_000 }).catch(() => {})
+    await page.waitForSelector(ORG_ANCHOR, { timeout: SELECTOR_WAIT }).catch(() => {})
     await page.waitForTimeout(SETTLE_MS)
     const found = await extractAssociationsFromPage(page)
     if (found.length > 0) return found
