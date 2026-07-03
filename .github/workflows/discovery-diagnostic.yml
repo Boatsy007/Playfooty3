@@ -1,0 +1,39 @@
+name: PlayHQ Coverage Diagnostic (read-only funnel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Number of associations to diagnose (sample size).'
+        required: false
+        default: '40'
+      filter:
+        description: 'Comma-separated association name/slug filter (blank = crawl order).'
+        required: false
+        default: ''
+
+jobs:
+  diagnose:
+    name: Diagnose resolve funnel
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MAX:    ${{ inputs.max }}
+      FILTER: ${{ inputs.filter }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+      - name: Run diagnostic
+        working-directory: backend
+        run: |
+          args=()
+          [ -n "$MAX" ] && args+=("--max=$MAX")
+          [ -n "$FILTER" ] && args+=("--filter=$FILTER")
+          npx tsx src/discovery/discovery-diagnostic.ts "${args[@]}"

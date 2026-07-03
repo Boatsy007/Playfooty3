@@ -371,6 +371,110 @@ export async function resolveAGradeLeagues(page: import('playwright').Page, asso
   return out
 }
 
+// ─── Coverage diagnostic ──────────────────────────────────────────────────────
+// Instruments the resolve funnel per association so we can see WHERE coverage is
+// lost (season / grades / A-grade match / ladder), read-only.
+
+export interface AssocDiag {
+  association:    string
+  slug:           string
+  seasonOptions:  string[]   // season labels visible on the page
+  seasonPicked:   string | null
+  gradeCount:     number
+  gradeSample:    string[]
+  womensSenior:   number     // grades that are structurally Women+Senior (pre-keyword)
+  aGradeMatches:  number     // grades passing filterSeniorWomensAGrade
+  ladderTeams:    number
+  outcome:        string     // IMPORTED | NO_SEASON | NO_GRADES | NO_WOMENS_SENIOR | NO_AGRADE_MATCH | LADDER_UNRESOLVED
+}
+
+/** True if a structured grade is (or is very likely) senior women's, ignoring name keywords. */
+function isWomensSenior(g: StructuredGrade): boolean {
+  if (isRejected(g.name)) return false
+  const genderOk = g.gender ? /^women$/i.test(g.gender.trim()) : !/\b(men|boys|mixed)\b/i.test(g.name)
+  const ageOk    = g.age    ? /^senior$/i.test(g.age.trim())   : !/\bu\/?\d|\bunder\b|\bjunior\b/i.test(g.name)
+  return genderOk && ageOk
+}
+
+/** Instrumented single-association resolve — records the funnel, imports nothing. */
+export async function diagnoseAssociation(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<AssocDiag> {
+  const captured: unknown[] = []
+  const onResponse = async (r: import('playwright').Response) => {
+    const ct = r.headers()['content-type'] ?? ''
+    if (!ct.includes('json')) return
+    if (/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|pbstck|adtrafficquality/.test(r.url())) return
+    try { captured.push(await r.json()) } catch { /* ignore */ }
+  }
+  page.on('response', onResponse)
+
+  const diag: AssocDiag = {
+    association: assoc.name, slug: assoc.slug, seasonOptions: [], seasonPicked: null,
+    gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, ladderTeams: 0, outcome: 'NO_SEASON',
+  }
+  try {
+    try { await page.goto(assoc.url.replace(/\/$/, ''), { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* */ }
+    await page.waitForTimeout(SETTLE_MS)
+    await tryClickText(page, ['Fixtures & Ladders', 'Fixtures and Ladders', 'Ladders', 'Fixtures'])
+    await page.waitForTimeout(2500)
+
+    // What season labels does the page actually offer?
+    const bodyText = (await page.locator('body').innerText().catch(() => '')) || ''
+    diag.seasonOptions = [...new Set((bodyText.match(/\b(?:Winter|Summer|Autumn|Spring|Netball)\s+20\d{2}\b/gi) ?? []).map(s => s.trim()))]
+    // Pick the newest available season generically (any season word + newest year).
+    const newest = [...diag.seasonOptions].sort((a, b) => (b.match(/20\d{2}/)?.[0] ?? '').localeCompare(a.match(/20\d{2}/)?.[0] ?? ''))[0]
+    if (newest) { await tryClickText(page, [newest]); diag.seasonPicked = newest; await page.waitForTimeout(3500) }
+
+    const grades = findStructuredGrades(captured)
+    diag.gradeCount = grades.length
+    diag.gradeSample = grades.slice(0, 12).map(g => g.name)
+    diag.womensSenior = grades.filter(isWomensSenior).length
+    const matches = filterSeniorWomensAGrade(grades)
+    diag.aGradeMatches = matches.length
+    const meta = findSeasonMeta(captured)
+
+    if (grades.length === 0) diag.outcome = diag.seasonPicked ? 'NO_GRADES' : 'NO_SEASON'
+    else if (diag.womensSenior === 0) diag.outcome = 'NO_WOMENS_SENIOR'
+    else if (matches.length === 0) diag.outcome = 'NO_AGRADE_MATCH'
+    else {
+      diag.outcome = 'LADDER_UNRESOLVED'
+      const m = matches[0]
+      const gradeSlug = m.name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      for (const url of buildLadderUrlCandidates(assoc.slug, meta.competitionSlug, gradeSlug, m.id)) {
+        captured.length = 0
+        try { await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT }) } catch { /* */ }
+        await page.waitForTimeout(4000)
+        const teams = countLadderTeams(captured)
+        if (teams >= 4) { diag.ladderTeams = teams; diag.outcome = 'IMPORTED'; break }
+      }
+    }
+  } finally {
+    page.off('response', onResponse)
+  }
+  return diag
+}
+
+/** Crawl the directory and diagnose the resolve funnel for a sample of associations. */
+export async function diagnoseAssociations(opts: { maxPages?: number; maxAssociations?: number; assocFilter?: string[] } = {}): Promise<AssocDiag[]> {
+  const filter = (opts.assocFilter ?? []).map(s => s.toLowerCase()).filter(Boolean)
+  const match = (a: DiscoveredAssociation) => filter.length === 0 || filter.some(f => a.name.toLowerCase().includes(f) || a.slug.toLowerCase().includes(f))
+  const { chromium } = await import('playwright')
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
+  try {
+    const ctx = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' })
+    const page = await ctx.newPage()
+    const crawled = (await crawlDirectory(page, opts.maxPages ?? 40)).filter(match)
+    const cap = opts.maxAssociations ?? crawled.length
+    const out: AssocDiag[] = []
+    for (const a of crawled.slice(0, cap)) {
+      try { out.push(await diagnoseAssociation(page, a)) }
+      catch (err) { logger.warn('Diagnose: association failed', { assoc: a.name, detail: String(err) }); out.push({ association: a.name, slug: a.slug, seasonOptions: [], seasonPicked: null, gradeCount: 0, gradeSample: [], womensSenior: 0, aGradeMatches: 0, ladderTeams: 0, outcome: 'ERROR' }) }
+    }
+    return out
+  } finally {
+    await browser.close()
+  }
+}
+
 /** Logging wrapper used by the preview workflow. */
 async function extractAGradeLadders(page: import('playwright').Page, assoc: DiscoveredAssociation): Promise<void> {
   console.log(`\n========== A-GRADE EXTRACT: ${assoc.name} ==========`)
