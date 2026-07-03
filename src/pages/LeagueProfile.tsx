@@ -10,7 +10,7 @@ import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { fetchLeague, useAsync, teamPath, strengthStars, strengthLabel, type LeagueDetail } from '../lib/rankings'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, StarStrength, QualBadge, Eyebrow } from '../components/rankings/bits'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, StarStrength, QualBadge, Eyebrow, TeamLogo } from '../components/rankings/bits'
 
 export default function LeagueProfile() {
   const { leagueId = '' } = useParams()
@@ -57,9 +57,9 @@ export default function LeagueProfile() {
             {data.rankedTeams.length === 0 && <Empty>No teams from this league are nationally ranked yet.</Empty>}
             {data.rankedTeams.map(t => (
               <button key={t.clubId} onClick={() => navigate(teamPath(t.clubId))} className="rank-row-lt"
-                style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT, display: 'grid', gridTemplateColumns: '58px 1fr auto auto', gap: 12, alignItems: 'center', padding: '14px 10px', borderBottom: `1px solid ${LINE}`, background: PAGE }}>
+                style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT, display: 'grid', gridTemplateColumns: '52px 1fr auto auto', gap: 12, alignItems: 'center', padding: '14px 10px', borderBottom: `1px solid ${LINE}`, background: PAGE }}>
                 <span className="font-display" style={{ fontSize: 24, color: t.rank <= 3 ? GOLD_DK : TEXT }}>#{t.rank}</span>
-                <span className="font-display" style={{ fontSize: 17 }}>{t.clubName.toUpperCase()}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}><TeamLogo name={t.clubName} size={32} /><span className="font-display" style={{ fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.clubName.toUpperCase()}</span></span>
                 <span className="font-display" style={{ fontSize: 18, color: PINK }}>{t.powerRating.toFixed(1)}</span>
                 <QualBadge qualified={t.qualified} small />
               </button>

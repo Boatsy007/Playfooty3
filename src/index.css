@@ -92,3 +92,10 @@ body {
 .rank-row-lt { transition: background 0.15s ease; }
 .rank-row-lt:hover { background: rgba(255,44,145,0.05) !important; }
 .rank-row-lt:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+
+/* Rankings leaderboard grid — responsive so hidden desktop columns don't
+   reserve width and collapse the team-name column on mobile. */
+.rr-grid { display: grid; grid-template-columns: 54px minmax(0,1fr) 88px 118px 92px 54px 98px 96px; }
+@media (max-width: 820px) {
+  .rr-grid { grid-template-columns: 46px minmax(0,1fr) auto; }
+}

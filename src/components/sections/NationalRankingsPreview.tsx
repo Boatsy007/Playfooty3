@@ -5,7 +5,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Trophy } from 'lucide-react'
 import { fetchTop, useAsync, teamPath, type RankingsResponse } from '../../lib/rankings'
-import { PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, FormPips, Movement, Eyebrow } from '../rankings/bits'
+import { PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, FormPips, Movement, Eyebrow, TeamLogo } from '../rankings/bits'
 
 export default function NationalRankingsPreview() {
   const { data, loading } = useAsync<RankingsResponse>(() => fetchTop(10), [])
@@ -36,9 +36,12 @@ export default function NationalRankingsPreview() {
               <span className="font-display" style={{ fontSize: 26, color: e.rank <= 3 ? GOLD_DK : TEXT, display: 'flex', alignItems: 'center', gap: 4 }}>
                 {e.rank === 1 && <Trophy size={16} color={GOLD_DK} />}{e.rank}
               </span>
-              <span style={{ minWidth: 0 }}>
-                <span className="font-display" style={{ display: 'block', fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.05 }}>{e.clubName.toUpperCase()}</span>
-                <span className="font-condensed" style={{ display: 'block', color: MUTE, fontSize: 12, letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.leagueName} · {e.state}</span>
+              <span style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 11 }}>
+                <TeamLogo name={e.clubName} size={36} />
+                <span style={{ minWidth: 0 }}>
+                  <span className="font-display" style={{ display: 'block', fontSize: 18, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.05 }}>{e.clubName.toUpperCase()}</span>
+                  <span className="font-condensed" style={{ display: 'block', color: MUTE, fontSize: 12, letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.leagueName} · {e.state}</span>
+                </span>
               </span>
               <span className="hide-sm"><FormPips form={e.recentForm} /></span>
               <span style={{ textAlign: 'right', minWidth: 64 }}>

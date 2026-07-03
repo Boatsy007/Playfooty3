@@ -11,7 +11,7 @@ import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { teamPath } from '../lib/rankings'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, Eyebrow } from '../components/rankings/bits'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, FAINT, Eyebrow, TeamLogo } from '../components/rankings/bits'
 
 const STATES = ['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT']
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -148,9 +148,12 @@ export default function Directory() {
                 <button key={c.clubId} onClick={() => navigate(teamPath(c.clubId))} className="rank-row-lt"
                   style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT, display: 'grid', gridTemplateColumns: '52px 1fr auto', gap: 12, alignItems: 'center', padding: '14px 10px', borderBottom: `1px solid ${LINE}`, background: PAGE }}>
                   <span className="font-display" style={{ fontSize: 22, color: c.rank != null ? (c.rank <= 3 ? GOLD_DK : PINK) : FAINT }}>{c.rank != null ? `#${c.rank}` : '·'}</span>
-                  <span style={{ minWidth: 0 }}>
+                  <span style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 11 }}>
+                    <TeamLogo name={c.name} size={34} />
+                    <span style={{ minWidth: 0 }}>
                     <span className="font-display" style={{ display: 'block', fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name.toUpperCase()}</span>
                     <span className="font-condensed" style={{ display: 'block', fontSize: 12, color: MUTE, letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.leagueName} · {c.stateCode}</span>
+                    </span>
                   </span>
                   <span className="font-condensed" style={{ fontSize: 12, color: FAINT, textAlign: 'right', whiteSpace: 'nowrap' }}>{c.wins}-{c.losses}{c.draws ? `-${c.draws}` : ''}</span>
                 </button>

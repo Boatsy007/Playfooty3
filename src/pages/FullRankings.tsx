@@ -13,9 +13,7 @@ import {
   fetchRankings, useAsync, teamPath, strengthStars, QUALIFY_CUTOFF,
   type RankingsResponse, type RankingEntry,
 } from '../lib/rankings'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge, Eyebrow } from '../components/rankings/bits'
-
-const COLS = '54px minmax(0,1fr) 88px 118px 92px 54px 98px 96px'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge, Eyebrow, TeamLogo } from '../components/rankings/bits'
 
 export default function FullRankings() {
   const { data, loading, error } = useAsync<RankingsResponse>(fetchRankings, [])
@@ -85,7 +83,7 @@ export default function FullRankings() {
 function HeaderRow() {
   const c = { fontSize: 10, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: FAINT }
   return (
-    <div className="font-condensed hide-sm" style={{ display: 'grid', gridTemplateColumns: COLS, gap: 12, alignItems: 'center', padding: '14px 12px', borderBottom: `2px solid ${TEXT}` }}>
+    <div className="font-condensed hide-sm rr-grid" style={{ gap: 12, alignItems: 'center', padding: '14px 12px', borderBottom: `2px solid ${TEXT}` }}>
       <div style={c}>#</div><div style={c}>Team</div>
       <div style={{ ...c, textAlign: 'center' }}>Record</div>
       <div style={{ ...c, textAlign: 'center' }}>Form</div>
@@ -103,10 +101,10 @@ function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void 
   const stars = strengthStars(entry.componentScores?.leagueStrength)
   const rec = entry.record
   return (
-    <button onClick={onClick} className="rank-row-lt"
+    <button onClick={onClick} className="rank-row-lt rr-grid"
       style={{
         width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT,
-        display: 'grid', gridTemplateColumns: COLS, gap: 12, alignItems: 'center', padding: '15px 12px',
+        gap: 12, alignItems: 'center', padding: '15px 12px',
         borderBottom: `1px solid ${LINE}`, borderLeft: `3px solid ${qualified ? GOLD : 'transparent'}`,
         background: podium ? 'linear-gradient(90deg, rgba(244,193,77,0.12), transparent 42%)' : PAGE,
       }}>
@@ -114,13 +112,16 @@ function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void 
         {entry.rank === 1 && <Trophy size={15} color={GOLD_DK} />}
         <span className="font-display" style={{ fontSize: 28, lineHeight: 1, color: podium ? GOLD_DK : TEXT }}>{entry.rank}</span>
       </div>
-      <div style={{ minWidth: 0 }}>
-        <div className="font-display" style={{ fontSize: 19, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.05 }}>{entry.clubName.toUpperCase()}</div>
-        <div className="font-condensed" style={{ fontSize: 12, color: MUTE, letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.leagueName} · {entry.state}</div>
-        <div className="show-sm" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
-          <span className="font-condensed" style={{ fontSize: 12, color: TEXT, fontWeight: 700 }}>{rec.wins}-{rec.losses}{rec.draws ? `-${rec.draws}` : ''}</span>
-          <FormPips form={entry.recentForm} />
-          {qualified && <QualBadge qualified small />}
+      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 11 }}>
+        <TeamLogo name={entry.clubName} size={38} />
+        <div style={{ minWidth: 0 }}>
+          <div className="font-display" style={{ fontSize: 19, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.05 }}>{entry.clubName.toUpperCase()}</div>
+          <div className="font-condensed" style={{ fontSize: 12, color: MUTE, letterSpacing: '0.03em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.leagueName} · {entry.state}</div>
+          <div className="show-sm" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
+            <span className="font-condensed" style={{ fontSize: 12, color: TEXT, fontWeight: 700 }}>{rec.wins}-{rec.losses}{rec.draws ? `-${rec.draws}` : ''}</span>
+            <FormPips form={entry.recentForm} />
+            {qualified && <QualBadge qualified small />}
+          </div>
         </div>
       </div>
       <div className="hide-sm" style={{ textAlign: 'center' }}>

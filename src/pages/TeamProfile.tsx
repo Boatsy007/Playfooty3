@@ -11,7 +11,7 @@ import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { fetchClub, useAsync, leaguePath, strengthStars, strengthLabel, ordinal, type ClubProfile } from '../lib/rankings'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge } from '../components/rankings/bits'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge, TeamLogo } from '../components/rankings/bits'
 
 export default function TeamProfile() {
   const { clubId = '' } = useParams()
@@ -60,7 +60,10 @@ export default function TeamProfile() {
                 {data.rank != null && <Movement current={data.rank} previous={data.previousRank} />}
                 <span className="font-condensed" style={{ color: FAINT, fontSize: 11, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{data.rank != null ? 'National Rank' : 'Country Netball'}</span>
               </div>
-              <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,8vw,5.4rem)', color: TEXT, lineHeight: 0.86, margin: 0 }}>{data.clubName.toUpperCase()}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <TeamLogo name={data.clubName} size={56} />
+                <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,8vw,5.4rem)', color: TEXT, lineHeight: 0.86, margin: 0, minWidth: 0 }}>{data.clubName.toUpperCase()}</h1>
+              </div>
               <div className="font-condensed" style={{ marginTop: 8, color: MUTE, fontSize: 15, letterSpacing: '0.02em' }}>
                 {data.leagueId
                   ? <Link to={leaguePath(data.leagueId)} style={{ color: PINK, textDecoration: 'none', fontWeight: 700 }}>{data.leagueName}</Link>

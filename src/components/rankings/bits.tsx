@@ -86,3 +86,27 @@ export function Eyebrow({ children, accent = PINK }: { children: React.ReactNode
 export function Label({ children }: { children: React.ReactNode }) {
   return <div className="font-condensed" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', color: FAINT }}>{children}</div>
 }
+
+// Team crest slot — shows a real logo when `src` is provided (future-ready),
+// otherwise a deterministic initials badge. Used across rankings, profiles,
+// league pages, directory and search so a club reads consistently everywhere.
+const CREST_DUOS: [string, string][] = [
+  ['#ff2c91', '#7a0f43'], ['#f4c14d', '#8a5a10'], ['#4dd9f4', '#0f5f70'],
+  ['#111111', '#3a2140'], ['#ff6bb5', '#7a0f43'], ['#0b0e17', '#26305a'],
+]
+function crestHash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }
+export function TeamLogo({ name, size = 34, src }: { name: string; size?: number; src?: string }) {
+  const initials = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'
+  const [a, b] = CREST_DUOS[crestHash(name || '') % CREST_DUOS.length]
+  return (
+    <span aria-hidden style={{
+      width: size, height: size, flexShrink: 0, borderRadius: '50%', display: 'inline-grid', placeItems: 'center',
+      overflow: 'hidden', background: src ? '#fff' : `linear-gradient(135deg, ${a}, ${b})`,
+      border: '1px solid rgba(17,17,17,0.1)', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.25)',
+    }}>
+      {src
+        ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        : <span className="font-display" style={{ color: '#fff', fontSize: size * 0.42, lineHeight: 1, letterSpacing: '0.02em' }}>{initials}</span>}
+    </span>
+  )
+}
