@@ -265,8 +265,11 @@ export async function rankAndStore(label: string): Promise<{ runId: string; club
 
 /** Build ranking inputs from every league with a live PlayHQ source. */
 async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInput[]> {
+  // Rank across every live ladder source. PlayHQ is the primary source; Country
+  // Footy imports its A-Grade ladders as NETBALL_CONNECT sources (gap-fill only,
+  // so they never overlap a PlayHQ league).
   const playhqSources = await prisma.leagueSource.findMany({
-    where:  { sourceType: 'PLAYHQ', season, isActive: true },
+    where:  { sourceType: { in: ['PLAYHQ', 'NETBALL_CONNECT'] }, season, isActive: true },
     select: { leagueId: true },
   })
   const leagueIds = [...new Set(playhqSources.map(s => s.leagueId))]
@@ -287,7 +290,19 @@ async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInpu
     if (!cur || (cls.league.strengthScore ?? 0) > (cur.league.strengthScore ?? 0)) bestByClub.set(cls.clubId, cls)
   }
 
-  return [...bestByClub.values()].map(cls => ({
+  // Cross-source safety net: even though Country Footy is gap-fill, dedupe by
+  // (normalised club name + state) so the SAME real team imported from two
+  // sources can never appear twice in the standings — keep the strongest league.
+  const bestByTeam = new Map<string, (typeof seasons)[number]>()
+  const teamKey = (cls: (typeof seasons)[number]) =>
+    `${(cls.club.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')}|${cls.club.state?.code ?? 'VIC'}`
+  for (const cls of bestByClub.values()) {
+    const k = teamKey(cls)
+    const cur = bestByTeam.get(k)
+    if (!cur || (cls.league.strengthScore ?? 0) > (cur.league.strengthScore ?? 0)) bestByTeam.set(k, cls)
+  }
+
+  return [...bestByTeam.values()].map(cls => ({
     clubId:              cls.clubId,
     clubName:            cls.club.name,
     leagueId:            cls.leagueId,

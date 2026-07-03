@@ -1,0 +1,45 @@
+name: Country Footy Import (gap-fill A-Grade ladders + rank)
+
+on:
+  workflow_dispatch:
+    inputs:
+      leagues:
+        description: 'Comma-separated league filter (e.g. hampden,ballarat). Blank = all.'
+        required: false
+        default: ''
+      max:
+        description: 'Max leagues to process (blank = all).'
+        required: false
+        default: ''
+
+jobs:
+  import:
+    name: Scrape + import + rank
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+      LEAGUES: ${{ inputs.leagues }}
+      MAX:     ${{ inputs.max }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+      - name: Country Footy import
+        working-directory: backend
+        run: |
+          args=()
+          [ -n "$LEAGUES" ] && args+=("--leagues=$LEAGUES")
+          [ -n "$MAX" ] && args+=("--max=$MAX")
+          npx tsx src/jobs/countryfooty-import-trigger.ts "${args[@]}"
