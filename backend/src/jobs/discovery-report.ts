@@ -31,19 +31,23 @@ async function main() {
   const associationsWithLeagues = await prisma.association.count({ where: { leagues: { some: {} } } })
   const leagues = await prisma.league.findMany({
     select: {
-      id: true, name: true, needsStrengthReview: true, syncError: true, autoDiscovered: true,
+      id: true, name: true, enabled: true, needsStrengthReview: true, syncError: true, autoDiscovered: true,
       automaticStrengthRating: true, manualStrengthOverride: true,
       finalStrengthRating: true, strengthConfidence: true, strengthScore: true,
       _count: { select: { clubSeasons: true } },
     },
   })
+  // Superseded/disabled leagues are kept as inert records; exclude them from the
+  // active view so deduped duplicates don't read as failures.
+  const active = leagues.filter(l => l.enabled)
   const clubs = await prisma.club.count()
   const clubSeasons = await prisma.clubLeagueSeason.count({ where: { season: SEASON, grade: GRADE } })
 
   line('Associations scanned', associations)
   line('Associations imported', associationsWithLeagues)
-  line('Leagues total', leagues.length)
-  line('Leagues imported (auto)', leagues.filter(l => l.autoDiscovered).length)
+  line('Leagues active', active.length)
+  line('Leagues imported (auto)', active.filter(l => l.autoDiscovered).length)
+  line('Leagues superseded (deduped)', leagues.length - active.length)
   line('Team rows (club-seasons)', clubSeasons)
   line('Clubs total', clubs)
 
@@ -70,14 +74,14 @@ async function main() {
   const noGoals = await prisma.clubLeagueSeason.count({ where: { season: SEASON, grade: GRADE, played: { gt: 0 }, goalsFor: 0, goalsAgainst: 0 } })
   line('Club-seasons missing goals', noGoals)
 
-  // Failed ladders — auto leagues that recorded a sync error or have no teams
-  const failedLadders = leagues.filter(l => l.syncError || l._count.clubSeasons === 0)
+  // Failed ladders — active leagues that recorded a sync error or have no teams
+  const failedLadders = active.filter(l => l.syncError || l._count.clubSeasons === 0)
   line('Failed ladders', failedLadders.length)
   for (const l of failedLadders) console.log(`   ⚠ ${l.name}: ${l.syncError ?? 'no teams on ladder'}`)
   if (failedLadders.length > 0) problems.push(`${failedLadders.length} failed ladders`)
 
   // Failed strength calcs — non-finite / out-of-range final rating
-  const badStrength = leagues.filter(l =>
+  const badStrength = active.filter(l =>
     !Number.isFinite(l.finalStrengthRating) || l.finalStrengthRating < 1 || l.finalStrengthRating > 5 ||
     !Number.isFinite(l.strengthConfidence) || l.strengthConfidence < 0 || l.strengthConfidence > 1)
   line('Failed strength calcs', badStrength.length)
@@ -112,13 +116,13 @@ async function main() {
   // ── League strength ratings ─────────────────────────────────────────────────
   console.log('\n─── LEAGUE STRENGTH RATINGS ───')
   console.log('  auto  override  final  conf   score   league')
-  for (const l of [...leagues].sort((a, b) => b.finalStrengthRating - a.finalStrengthRating)) {
+  for (const l of [...active].sort((a, b) => b.finalStrengthRating - a.finalStrengthRating)) {
     const ov = l.manualStrengthOverride == null ? '  -  ' : l.manualStrengthOverride.toFixed(1)
     console.log(`  ${l.automaticStrengthRating.toFixed(1)}   ${ov}    ${l.finalStrengthRating.toFixed(1)}   ${l.strengthConfidence.toFixed(2)}  ${l.strengthScore.toFixed(0).padStart(3)}    ${l.name}`)
   }
 
   // ── Needs review ─────────────────────────────────────────────────────────────
-  const review = leagues.filter(l => l.needsStrengthReview || l.strengthConfidence < 0.4)
+  const review = active.filter(l => l.needsStrengthReview || l.strengthConfidence < 0.4)
   console.log('\n─── LEAGUES NEEDING REVIEW ───')
   if (review.length === 0) console.log('  (none)')
   for (const l of review) console.log(`  • ${l.name} — conf ${l.strengthConfidence.toFixed(2)}${l.needsStrengthReview ? ' [flagged]' : ' [low confidence]'}`)

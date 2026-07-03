@@ -80,6 +80,12 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     const deduped = await dedupeLeaguesByName(season)
     if (deduped.length) logger.info('DiscoveryImport: deduped leagues', { count: deduped.length, names: deduped })
 
+    // 2c) Remove orphan duplicate clubs left by earlier slug schemes: a club that
+    // shares a normalised name with a club that still has season stats, but has
+    // none of its own, is a stale duplicate. Safe to delete (no live stats).
+    const mergedClubs = await mergeOrphanDuplicateClubs()
+    if (mergedClubs) logger.info('DiscoveryImport: removed orphan duplicate clubs', { count: mergedClubs })
+
     if (imported.length === 0) {
       return { runId: '', weekLabel: label, season, leaguesDiscovered: discovered.length, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'No leagues imported (all failed or disabled)' }
     }
@@ -134,6 +140,36 @@ async function dedupeLeaguesByName(season: string): Promise<string[]> {
     }
   }
   return neutralised
+}
+
+// ─── Merge orphan duplicate clubs ─────────────────────────────────────────────
+// For clubs sharing a normalised name, if at least one carries season stats,
+// delete the name-duplicates that carry none (stale rows from an older slug
+// scheme). Historical ranking entries for the orphan are dropped with it.
+async function mergeOrphanDuplicateClubs(): Promise<number> {
+  const clubs = await prisma.club.findMany({
+    select: { id: true, name: true, _count: { select: { clubSeasons: true } } },
+  })
+
+  const groups = new Map<string, typeof clubs>()
+  for (const c of clubs) {
+    const key = normaliseName(c.name)
+    groups.set(key, [...(groups.get(key) ?? []), c])
+  }
+
+  let removed = 0
+  for (const group of groups.values()) {
+    if (group.length < 2) continue
+    const hasStats = group.some(c => c._count.clubSeasons > 0)
+    if (!hasStats) continue   // ambiguous — leave alone rather than guess
+    for (const orphan of group) {
+      if (orphan._count.clubSeasons > 0) continue
+      await prisma.rankingEntry.deleteMany({ where: { clubId: orphan.id } })
+      await prisma.club.delete({ where: { id: orphan.id } })
+      removed++
+    }
+  }
+  return removed
 }
 
 // ─── Import a single discovered league ────────────────────────────────────────
