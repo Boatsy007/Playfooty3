@@ -6,12 +6,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 const NAV_H = 96 // px — tall enough for the full logo
 
 const links = [
-  { label: 'The Event',    href: '#the-weekend',  route: '/'             },
-  { label: 'Gold Coast',   href: '#gold-coast',   route: '/'             },
   { label: 'Rankings',     href: '/rankings',     route: '/rankings'     },
   { label: 'Clubs',        href: '/directory',    route: '/directory'    },
   { label: 'Leagues',      href: '/leagues',      route: '/leagues'      },
   { label: 'Championship', href: '/championship', route: '/championship' },
+  { label: 'News',         href: '/news',         route: '/news'         },
+  { label: 'Gold Coast',   href: '#gold-coast',   route: '/'             },
   { label: 'Partners',     href: '#partners',     route: '/'             },
   { label: 'FAQ',          href: '#faq',          route: '/'             },
 ]
