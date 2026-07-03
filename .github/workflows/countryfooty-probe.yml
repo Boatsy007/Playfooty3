@@ -1,0 +1,25 @@
+name: Country Footy Probe (diagnose netball scoreboard structure)
+
+# Diagnostic only — dumps the live countryfootyscores netball scoreboard page
+# structure so we can build the scraper. Writes nothing to the database.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  probe:
+    name: Probe Country Footy netball scoreboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+      - name: Probe scoreboard
+        working-directory: backend
+        run: npx tsx src/scrapers/countryfooty-probe.ts
