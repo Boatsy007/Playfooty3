@@ -277,7 +277,17 @@ async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInpu
     include: { club: { include: { state: true } }, league: true },
   })
 
-  return seasons.map(cls => ({
+  // A RankingEntry is unique per (run, club), so a club may contribute only ONE
+  // input. If the same club appears in more than one league, keep its entry in
+  // the strongest league (highest strengthScore) so ranking can't crash on a
+  // duplicate clubId.
+  const bestByClub = new Map<string, (typeof seasons)[number]>()
+  for (const cls of seasons) {
+    const cur = bestByClub.get(cls.clubId)
+    if (!cur || (cls.league.strengthScore ?? 0) > (cur.league.strengthScore ?? 0)) bestByClub.set(cls.clubId, cls)
+  }
+
+  return [...bestByClub.values()].map(cls => ({
     clubId:              cls.clubId,
     clubName:            cls.club.name,
     leagueId:            cls.leagueId,

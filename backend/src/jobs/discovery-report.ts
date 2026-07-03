@@ -54,16 +54,21 @@ async function main() {
   // ── Integrity checks ───────────────────────────────────────────────────────
   const problems: string[] = []
 
-  // Duplicate clubs — same normalised name mapping to >1 club id
-  const allClubs = await prisma.club.findMany({ select: { id: true, name: true, slug: true } })
-  const byName = new Map<string, string[]>()
+  // Duplicate clubs — club identity is association-scoped, so two active clubs
+  // with the same name in different orgs are legitimately distinct and are NOT
+  // flagged. We only flag a leftover-orphan risk: a same-name group where a
+  // member belongs to no league (a stale row that should have been cleaned up).
+  const allClubs = await prisma.club.findMany({
+    select: { name: true, slug: true, _count: { select: { leagueSeasons: true } } },
+  })
+  const byName = new Map<string, { slug: string; seasons: number }[]>()
   for (const c of allClubs) {
     const key = c.name.toLowerCase().replace(/[^a-z0-9]+/g, '')
-    byName.set(key, [...(byName.get(key) ?? []), c.slug])
+    byName.set(key, [...(byName.get(key) ?? []), { slug: c.slug, seasons: c._count.leagueSeasons }])
   }
-  const dupes = [...byName.entries()].filter(([, ids]) => ids.length > 1)
+  const dupes = [...byName.entries()].filter(([, cs]) => cs.length > 1 && cs.some(c => c.seasons === 0))
   line('Duplicate club risks', dupes.length)
-  for (const [name, slugs] of dupes.slice(0, 20)) console.log(`   ⚠ "${name}": ${slugs.join(', ')}`)
+  for (const [name, cs] of dupes.slice(0, 20)) console.log(`   ⚠ "${name}": ${cs.map(c => `${c.slug}(${c.seasons})`).join(', ')}`)
   if (dupes.length > 0) problems.push(`${dupes.length} duplicate-club risks`)
 
   // Missing ladder stats — club-seasons with no games played

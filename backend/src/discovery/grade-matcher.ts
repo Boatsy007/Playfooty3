@@ -55,10 +55,21 @@ function norm(s: string): string {
   return s.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, ' ').trim()
 }
 
-/** Is this grade name a junior/reserve/men's/social grade we must reject?
+// Sub-grade patterns: anything below the top grade. We keep only A-grade /
+// Premier / Open A / Division 1, so reject Open B/C/D…, and Division /
+// Open Division / Section / Grade numbered 2 and above ("(?!1\b)" keeps 1).
+const SUBGRADE_PATTERNS: RegExp[] = [
+  /(^|[^a-z0-9])open\s+[b-z]([^a-z0-9]|$)/,                              // Open B/C/D… (not Open A)
+  /(^|[^a-z0-9])(?:open\s+)?division\s+(?!1([^0-9]|$))\d+/,             // Division / Open Division 2+
+  /(^|[^a-z0-9])section\s+(?!1([^0-9]|$))\d+/,                          // Section 2+
+  /(^|[^a-z0-9])grade\s+(?!1([^0-9]|$))\d+/,                            // Grade 2+
+]
+
+/** Is this grade name a junior/reserve/men's/social/sub-grade we must reject?
  *  Uses alphanumeric boundaries so "men" doesn't match inside "women". */
 export function isRejected(name: string): boolean {
   const n = norm(name)
+  if (SUBGRADE_PATTERNS.some(re => re.test(n))) return true
   return REJECT.some(r => {
     const t = norm(r).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     return new RegExp(`(^|[^a-z0-9])${t}([^a-z0-9]|$)`).test(n)

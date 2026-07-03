@@ -60,18 +60,12 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     }
     logger.info('DiscoveryImport: discovered leagues', { count: discovered.length })
 
-    // Preload a normalised-name → clubId index so imports reuse existing clubs
-    // (including manual-scrape clubs) instead of creating parallel duplicates.
-    const existingClubs = await prisma.club.findMany({ select: { id: true, name: true } })
-    const clubIndex = new Map<string, string>()
-    for (const c of existingClubs) clubIndex.set(normaliseName(c.name), c.id)
-
     // 2) Import each league (scrape ladder + upsert), skipping admin-disabled ones
     if (discovered.length > 0) {
       const adapter = new PlayHQPlaywrightAdapter()
       for (const dl of discovered) {
         try {
-          const outcome = await importLeague(adapter, dl, season, clubIndex)
+          const outcome = await importLeague(adapter, dl, season)
           if (outcome) imported.push(outcome)
         } catch (err) {
           logger.warn('DiscoveryImport: league import failed', { league: dl.leagueName, detail: String(err) })
@@ -87,11 +81,12 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
     const deduped = await dedupeLeaguesByName(season)
     if (deduped.length) logger.info('DiscoveryImport: deduped leagues', { count: deduped.length, names: deduped })
 
-    // 2c) Remove orphan duplicate clubs left by earlier slug schemes: a club that
-    // shares a normalised name with a club that still has season stats, but has
-    // none of its own, is a stale duplicate. Safe to delete (no live stats).
-    const mergedClubs = await mergeOrphanDuplicateClubs()
-    if (mergedClubs) logger.info('DiscoveryImport: removed orphan duplicate clubs', { count: mergedClubs })
+    // 2c) Remove fully-orphaned clubs — rows left in no league at all (e.g. a
+    // manual-scrape club whose league discovery has now superseded). Club
+    // identity is association-scoped (slug carries the org), so we do NOT merge
+    // by name across associations — that would fuse distinct same-named clubs.
+    const removedClubs = await deleteFullyOrphanClubs()
+    if (removedClubs) logger.info('DiscoveryImport: removed orphaned clubs', { count: removedClubs })
 
     // 3) Re-run the EXISTING ranking engine across all PlayHQ-sourced leagues.
     // We rank whenever there is any PlayHQ-sourced data (not only when this run
@@ -151,37 +146,25 @@ async function dedupeLeaguesByName(season: string): Promise<string[]> {
   return neutralised
 }
 
-// ─── Merge orphan duplicate clubs ─────────────────────────────────────────────
-// For clubs sharing a normalised name, if at least one carries season stats,
-// delete the name-duplicates that carry none (stale rows from an older slug
-// scheme). Historical ranking entries for the orphan are dropped with it.
-async function mergeOrphanDuplicateClubs(): Promise<number> {
-  const clubs = await prisma.club.findMany({
-    select: { id: true, name: true, _count: { select: { leagueSeasons: true } } },
+// ─── Delete fully-orphaned clubs ──────────────────────────────────────────────
+// A club that belongs to NO league (0 clubLeagueSeason rows) is a stale leftover
+// — e.g. a manual-scrape club whose league discovery has superseded. Delete it
+// and its child rows. We do NOT merge by name across associations; distinct
+// same-named clubs in different orgs are legitimately different clubs.
+async function deleteFullyOrphanClubs(): Promise<number> {
+  const orphans = await prisma.club.findMany({
+    where:  { leagueSeasons: { none: {} } },
+    select: { id: true },
   })
 
-  const groups = new Map<string, typeof clubs>()
-  for (const c of clubs) {
-    const key = normaliseName(c.name)
-    groups.set(key, [...(groups.get(key) ?? []), c])
-  }
-
   let removed = 0
-  for (const group of groups.values()) {
-    if (group.length < 2) continue
-    const hasStats = group.some(c => c._count.leagueSeasons > 0)
-    if (!hasStats) continue   // ambiguous — leave alone rather than guess
-    for (const orphan of group) {
-      if (orphan._count.leagueSeasons > 0) continue
-      // Clear every child row that references this club, then delete it.
-      await prisma.clubLeagueSeason.deleteMany({ where: { clubId: orphan.id } })
-      await prisma.rankingEntry.deleteMany({ where: { clubId: orphan.id } })
-      await prisma.rankingSnapshot.deleteMany({ where: { clubId: orphan.id } })
-      await prisma.clubNameVariant.deleteMany({ where: { clubId: orphan.id } })
-      await prisma.match.deleteMany({ where: { OR: [{ homeClubId: orphan.id }, { awayClubId: orphan.id }] } })
-      await prisma.club.delete({ where: { id: orphan.id } })
-      removed++
-    }
+  for (const orphan of orphans) {
+    await prisma.rankingEntry.deleteMany({ where: { clubId: orphan.id } })
+    await prisma.rankingSnapshot.deleteMany({ where: { clubId: orphan.id } })
+    await prisma.clubNameVariant.deleteMany({ where: { clubId: orphan.id } })
+    await prisma.match.deleteMany({ where: { OR: [{ homeClubId: orphan.id }, { awayClubId: orphan.id }] } })
+    await prisma.club.delete({ where: { id: orphan.id } })
+    removed++
   }
   return removed
 }
@@ -192,7 +175,6 @@ async function importLeague(
   adapter: PlayHQPlaywrightAdapter,
   dl: DiscoveredLeague,
   season: string,
-  clubIndex: Map<string, string>,
 ): Promise<{ league: string; teams: number; isNew: boolean } | null> {
 
   // State
@@ -287,26 +269,18 @@ async function importLeague(
     await prisma.leagueSource.update({ where: { id: existingSource.id }, data: { ladderUrl, lastStatus: 'SUCCESS', lastScrapedAt: new Date() } })
   }
 
-  // Clubs + season stats. Reuse an existing club with the same normalised name
-  // (so we don't create a parallel row for a club the manual scrape already
-  // stored under a different slug scheme); otherwise create with a stable slug.
+  // Clubs + season stats. Club identity is association-scoped (slug carries the
+  // PlayHQ org), so two same-named clubs in different associations stay distinct.
   const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + dl.associationSlug
   const clubIds: string[] = []
   for (let i = 0; i < scraped.entries.length; i++) {
     const e = scraped.entries[i]
-    const key = normaliseName(e.teamRaw)
-    let clubId = clubIndex.get(key)
-    if (!clubId) {
-      const created = await prisma.club.upsert({
-        where:  { slug: slugify(e.teamRaw) },
-        create: { name: e.teamRaw, slug: slugify(e.teamRaw), shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, isActive: true },
-        update: {},
-        select: { id: true },
-      })
-      clubId = created.id as string
-      clubIndex.set(key, clubId)
-    }
-    const club = { id: clubId as string }
+    const club = await prisma.club.upsert({
+      where:  { slug: slugify(e.teamRaw) },
+      create: { name: e.teamRaw, slug: slugify(e.teamRaw), shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, isActive: true },
+      update: {},
+      select: { id: true },
+    })
     clubIds.push(club.id)
     await prisma.clubLeagueSeason.upsert({
       where:  { clubId_leagueId_season_grade: { clubId: club.id, leagueId: league.id, season, grade: GRADE } },
