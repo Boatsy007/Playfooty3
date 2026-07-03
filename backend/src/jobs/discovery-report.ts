@@ -30,9 +30,8 @@ async function main() {
   const associations = await prisma.association.count()
   const associationsWithLeagues = await prisma.association.count({ where: { leagues: { some: {} } } })
   const leagues = await prisma.league.findMany({
-    where: { autoDiscovered: true },
     select: {
-      id: true, name: true, needsStrengthReview: true, syncError: true,
+      id: true, name: true, needsStrengthReview: true, syncError: true, autoDiscovered: true,
       automaticStrengthRating: true, manualStrengthOverride: true,
       finalStrengthRating: true, strengthConfidence: true, strengthScore: true,
       _count: { select: { clubSeasons: true } },
@@ -43,7 +42,8 @@ async function main() {
 
   line('Associations scanned', associations)
   line('Associations imported', associationsWithLeagues)
-  line('Leagues imported (auto)', leagues.length)
+  line('Leagues total', leagues.length)
+  line('Leagues imported (auto)', leagues.filter(l => l.autoDiscovered).length)
   line('Team rows (club-seasons)', clubSeasons)
   line('Clubs total', clubs)
 

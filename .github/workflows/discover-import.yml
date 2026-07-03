@@ -67,10 +67,16 @@ jobs:
 
       - name: Run discovery import
         working-directory: backend
-        run: >
-          npx tsx src/jobs/discovery-import-trigger.ts
-          ${{ inputs.max_associations != '' && format('--max-associations={0}', inputs.max_associations) || '' }}
-          ${{ inputs.assoc_filter != '' && format('--assoc-filter={0}', inputs.assoc_filter) || '' }}
+        env:
+          MAX_ASSOC: ${{ inputs.max_associations }}
+          ASSOC_FILTER: ${{ inputs.assoc_filter }}
+        # Pass args via env + quoted expansion so the "|" in the filter is a
+        # literal argument, not a shell pipe.
+        run: |
+          args=()
+          [ -n "$MAX_ASSOC" ] && args+=("--max-associations=$MAX_ASSOC")
+          [ -n "$ASSOC_FILTER" ] && args+=("--assoc-filter=$ASSOC_FILTER")
+          npx tsx src/jobs/discovery-import-trigger.ts "${args[@]}"
 
       - name: Validation report
         if: ${{ always() }}
