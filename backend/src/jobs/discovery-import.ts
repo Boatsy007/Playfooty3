@@ -22,6 +22,7 @@ import { PlayHQPlaywrightAdapter } from '../adapters/playhq-playwright.adapter.j
 import { rankAndStore }            from './playhq-scrape.js'
 import { discoverAllAGradeLeagues, type DiscoveredLeague } from '../discovery/playhq-discovery.js'
 import { computeAutomaticStrength, finalStrength, strengthScoreFromRating } from '../config/league-strength-auto.js'
+import { overrideForLeague, normaliseName } from '../config/league-overrides.js'
 import { getISOWeekLabel }         from '../utils/week-label.js'
 import { logger }                  from '../utils/logger.js'
 
@@ -54,16 +55,30 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
       return { runId: '', weekLabel: label, season, leaguesDiscovered: 0, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'Discovery returned no leagues' }
     }
 
+    // Preload a normalised-name → clubId index so imports reuse existing clubs
+    // (including manual-scrape clubs) instead of creating parallel duplicates.
+    const existingClubs = await prisma.club.findMany({ select: { id: true, name: true } })
+    const clubIndex = new Map<string, string>()
+    for (const c of existingClubs) clubIndex.set(normaliseName(c.name), c.id)
+
     // 2) Import each league (scrape ladder + upsert), skipping admin-disabled ones
     const adapter = new PlayHQPlaywrightAdapter()
     for (const dl of discovered) {
       try {
-        const outcome = await importLeague(adapter, dl, season)
+        const outcome = await importLeague(adapter, dl, season, clubIndex)
         if (outcome) imported.push(outcome)
       } catch (err) {
         logger.warn('DiscoveryImport: league import failed', { league: dl.leagueName, detail: String(err) })
       }
     }
+
+    // 2b) Dedupe any leftover same-name league duplicates (e.g. a stale manual
+    // row that a discovered league now supersedes). We keep the discovery-owned
+    // one and neutralise the others — clear their season stats + deactivate their
+    // PlayHQ source so ranking excludes them — without hard-deleting records that
+    // ranking history references.
+    const deduped = await dedupeLeaguesByName(season)
+    if (deduped.length) logger.info('DiscoveryImport: deduped leagues', { count: deduped.length, names: deduped })
 
     if (imported.length === 0) {
       return { runId: '', weekLabel: label, season, leaguesDiscovered: discovered.length, leaguesImported: 0, clubsRanked: 0, status: 'NO_DATA', imported, error: 'No leagues imported (all failed or disabled)' }
@@ -81,12 +96,53 @@ export async function runDiscoveryImport(opts: { maxAssociations?: number; weekL
   }
 }
 
+// ─── Dedupe leagues sharing a name ────────────────────────────────────────────
+// Keeps the discovery-owned league (override first, then most-recently synced)
+// and neutralises the rest so ranking counts each competition once. No hard
+// deletes — ranking history keeps its foreign keys.
+async function dedupeLeaguesByName(season: string): Promise<string[]> {
+  const leagues = await prisma.league.findMany({
+    select: {
+      id: true, name: true, manualStrengthOverride: true, lastSyncedAt: true, enabled: true,
+      _count: { select: { clubSeasons: true } },
+    },
+  })
+
+  const groups = new Map<string, typeof leagues>()
+  for (const l of leagues) {
+    const key = normaliseName(l.name)
+    groups.set(key, [...(groups.get(key) ?? []), l])
+  }
+
+  const neutralised: string[] = []
+  for (const group of groups.values()) {
+    if (group.length < 2) continue
+    const keeper = [...group].sort((a, b) => {
+      if ((b.manualStrengthOverride != null ? 1 : 0) !== (a.manualStrengthOverride != null ? 1 : 0))
+        return (b.manualStrengthOverride != null ? 1 : 0) - (a.manualStrengthOverride != null ? 1 : 0)
+      const at = a.lastSyncedAt?.getTime() ?? 0, bt = b.lastSyncedAt?.getTime() ?? 0
+      if (bt !== at) return bt - at
+      return b._count.clubSeasons - a._count.clubSeasons
+    })[0]
+
+    for (const loser of group) {
+      if (loser.id === keeper.id) continue
+      await prisma.clubLeagueSeason.deleteMany({ where: { leagueId: loser.id, season, grade: GRADE } })
+      await prisma.leagueSource.updateMany({ where: { leagueId: loser.id }, data: { isActive: false, lastStatus: 'SUPERSEDED' } })
+      await prisma.league.update({ where: { id: loser.id }, data: { enabled: false, isActive: false, autoDiscovered: false, syncError: 'Superseded by duplicate (deduped)' } })
+      neutralised.push(loser.name)
+    }
+  }
+  return neutralised
+}
+
 // ─── Import a single discovered league ────────────────────────────────────────
 
 async function importLeague(
   adapter: PlayHQPlaywrightAdapter,
   dl: DiscoveredLeague,
   season: string,
+  clubIndex: Map<string, string>,
 ): Promise<{ league: string; teams: number; isNew: boolean } | null> {
 
   // State
@@ -104,11 +160,16 @@ async function importLeague(
     update: { name: dl.associationName, lastDiscoveredAt: new Date() },
   })
 
-  // League — find by (playhqOrgSlug + gradeName) so we don't duplicate across runs
+  // League name/shortName — these match the manual scrape's naming exactly, so
+  // reconciling by name lets discovery ADOPT a pre-existing manually-configured
+  // league instead of creating a parallel duplicate.
+  const fullName  = `${dl.leagueName} - A Grade Netball`
   const shortName = `${dl.leagueName} A Grade`
-  let league = await prisma.league.findFirst({
-    where: { playhqOrgSlug: dl.associationSlug, playhqGradeName: dl.gradeName },
-  })
+
+  // Find by PlayHQ keys first, then by name/shortName (adopts a manual league).
+  let league =
+    (await prisma.league.findFirst({ where: { playhqOrgSlug: dl.associationSlug, playhqGradeName: dl.gradeName } })) ||
+    (await prisma.league.findFirst({ where: { OR: [{ name: fullName }, { shortName }] } }))
   const isNew = !league
 
   // Respect an admin ladder-URL override if present
@@ -117,7 +178,7 @@ async function importLeague(
   if (!league) {
     league = await prisma.league.create({
       data: {
-        name: `${dl.leagueName} - A Grade Netball`, shortName, stateId: state.id, associationId: association.id,
+        name: fullName, shortName, stateId: state.id, associationId: association.id,
         isActive: true, enabled: true, autoDiscovered: true, needsStrengthReview: false,
         // Strength is computed from the ladder below; these are placeholders.
         strengthScore: 60, strengthTier: 3, automaticStrengthRating: 3.0, finalStrengthRating: 3.0, strengthConfidence: 0.3,
@@ -128,9 +189,14 @@ async function importLeague(
     })
   } else {
     if (!league.enabled) { logger.info('DiscoveryImport: league disabled, skipping', { league: league.name }); return null }
+    // Adopt it under discovery ownership (attach PlayHQ metadata, mark auto).
     league = await prisma.league.update({
       where: { id: league.id },
-      data:  { associationId: association.id, playhqGradeId: dl.gradeId, ladderUrl, currentSeason: dl.season, lastSyncedAt: new Date(), syncError: null },
+      data:  {
+        associationId: association.id, autoDiscovered: true, isActive: true,
+        playhqOrgSlug: dl.associationSlug, playhqGradeId: dl.gradeId, playhqGradeName: dl.gradeName,
+        ladderUrl, currentSeason: dl.season, lastSyncedAt: new Date(), syncError: null,
+      },
     })
   }
 
@@ -144,12 +210,17 @@ async function importLeague(
   // ── Automatic league strength from the ladder ──────────────────────────────
   // manual override (if the admin set one) wins; otherwise use the automatic
   // rating. strengthScore (0–100) is derived so the ranking engine is untouched.
-  const auto  = computeAutomaticStrength(scraped.entries, 1)
-  const final = finalStrength(auto.rating, league.manualStrengthOverride)
+  const auto = computeAutomaticStrength(scraped.entries, 1)
+  // Manual override precedence: an override already set on the league wins;
+  // otherwise seed from the configured override map (carries the operator's
+  // ratings onto discovered leagues); otherwise stay fully automatic.
+  const override = league.manualStrengthOverride ?? overrideForLeague(fullName, shortName, dl.leagueName)
+  const final = finalStrength(auto.rating, override)
   await prisma.league.update({
     where: { id: league.id },
     data: {
       automaticStrengthRating: auto.rating,
+      manualStrengthOverride:  override,
       finalStrengthRating:     final,
       strengthConfidence:      auto.confidence,
       strengthScore:           strengthScoreFromRating(final),
@@ -166,18 +237,26 @@ async function importLeague(
     await prisma.leagueSource.update({ where: { id: existingSource.id }, data: { ladderUrl, lastStatus: 'SUCCESS', lastScrapedAt: new Date() } })
   }
 
-  // Clubs + season stats
+  // Clubs + season stats. Reuse an existing club with the same normalised name
+  // (so we don't create a parallel row for a club the manual scrape already
+  // stored under a different slug scheme); otherwise create with a stable slug.
   const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + dl.associationSlug
   const clubIds: string[] = []
   for (let i = 0; i < scraped.entries.length; i++) {
     const e = scraped.entries[i]
-    const slug = slugify(e.teamRaw)
-    const club = await prisma.club.upsert({
-      where:  { slug },
-      create: { name: e.teamRaw, slug, shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, isActive: true },
-      update: {},
-      select: { id: true },
-    })
+    const key = normaliseName(e.teamRaw)
+    let clubId = clubIndex.get(key)
+    if (!clubId) {
+      const created = await prisma.club.upsert({
+        where:  { slug: slugify(e.teamRaw) },
+        create: { name: e.teamRaw, slug: slugify(e.teamRaw), shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, isActive: true },
+        update: {},
+        select: { id: true },
+      })
+      clubId = created.id as string
+      clubIndex.set(key, clubId)
+    }
+    const club = { id: clubId as string }
     clubIds.push(club.id)
     await prisma.clubLeagueSeason.upsert({
       where:  { clubId_leagueId_season_grade: { clubId: club.id, leagueId: league.id, season, grade: GRADE } },

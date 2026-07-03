@@ -1,12 +1,12 @@
 name: Weekly PlayHQ Scrape — Country Netball Leagues
 
-# Runs every Monday at 11:00 PM AEST (13:00 UTC) — after weekend rounds are finalised.
-# Also triggered manually via the Actions tab.
-# Scrapes every league configured in backend/src/jobs/playhq-scrape.ts and
-# produces one combined ranking.
+# RETIRED as the scheduled source of truth. Auto-discovery ("Discover + Import
+# A Grade Women's Ladders") now owns every league, so the weekly cron is disabled
+# to stop it recreating parallel manual league/club rows. Kept as manual-dispatch
+# only for emergencies; prefer the discovery workflow for routine updates.
 on:
-  schedule:
-    - cron: '0 13 * * 1'   # Monday 11pm AEST (UTC+10)
+  # schedule:
+  #   - cron: '0 13 * * 1'   # (disabled — discovery is now the source of truth)
   workflow_dispatch:
     inputs:
       week_label:
