@@ -18,6 +18,7 @@ const NotCompeting       = lazy(() => import('./components/sections/NotCompeting
 const Sponsors           = lazy(() => import('./components/sections/Sponsors'))
 const FAQ                = lazy(() => import('./components/sections/FAQ'))
 const Invitation         = lazy(() => import('./components/sections/Invitation'))
+const NationalRankingsPreview = lazy(() => import('./components/sections/NationalRankingsPreview'))
 
 const Blank = ({ h = 400 }: { h?: number }) => (
   <div style={{ minHeight: `${h}px`, background: 'inherit' }} aria-hidden />
@@ -35,6 +36,11 @@ export default function App() {
         {/* Countdown — dark, immediately below hero */}
         <Suspense fallback={<Blank h={320} />}>
           <Countdown />
+        </Suspense>
+
+        {/* National Rankings — Top 10 leaderboard preview (dark) */}
+        <Suspense fallback={<Blank h={700} />}>
+          <NationalRankingsPreview />
         </Suspense>
 
         {/* Numbers — light bg */}

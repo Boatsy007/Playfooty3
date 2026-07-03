@@ -74,3 +74,11 @@ body {
   animation: marquee 28s linear infinite;
 }
 .marquee-track:hover { animation-play-state: paused; }
+
+/* ── Rankings product ─────────────────────────────────────────────── */
+.rank-row { transition: background 0.15s ease; }
+.rank-row:hover { background: rgba(255,255,255,0.05) !important; }
+.rank-row:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+@media (max-width: 620px) {
+  .hide-sm { display: none !important; }
+}

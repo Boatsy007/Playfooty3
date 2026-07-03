@@ -60,13 +60,42 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
 
     if (!league) return res.status(404).json({ error: 'League not found' })
 
+    // Latest completed run → ranked teams from this league (for the league page)
+    const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
+    const rankedTeams = run
+      ? await prisma.rankingEntry.findMany({
+          where:   { runId: run.id, leagueName: league.name },
+          orderBy: { rank: 'asc' },
+          select:  { clubId: true, clubName: true, rank: true, powerRating: true, state: true },
+        })
+      : []
+
+    // League ladder from season stats (ladder position order)
+    const season = run?.season
+    const ladderRows = season
+      ? await prisma.clubLeagueSeason.findMany({
+          where:   { leagueId: league.id, season },
+          orderBy: [{ position: 'asc' }, { points: 'desc' }],
+          select:  { clubId: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true, position: true },
+        })
+      : []
+    const clubNames = new Map((await prisma.club.findMany({ where: { id: { in: ladderRows.map(r => r.clubId) } }, select: { id: true, name: true } })).map(c => [c.id, c.name]))
+
     res.json({
       data: {
         id:            league.id,
         name:          league.name,
         state:         league.state.code,
+        stateName:     league.state.name,
         association:   league.association?.name,
         strengthScore: league.strengthScore,
+        strengthTier:  league.strengthTier,
+        rankedTeams:   rankedTeams.map(t => ({ clubId: t.clubId, clubName: t.clubName, rank: t.rank, powerRating: t.powerRating, state: t.state, qualified: t.rank <= 32 })),
+        ladder:        ladderRows.map(r => ({
+          clubId: r.clubId, clubName: clubNames.get(r.clubId) ?? 'Unknown',
+          position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws,
+          goalsFor: r.goalsFor, goalsAgainst: r.goalsAgainst, percentage: r.percentage, points: r.points,
+        })),
         sources:       league.sources.map(s => ({
           sourceType:  s.sourceType,
           ladderUrl:   s.ladderUrl,
@@ -74,6 +103,40 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
           isActive:    s.isActive,
           lastScraped: s.lastScrapedAt,
         })),
+      },
+    })
+  } catch {
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// GET /api/leagues/search/global?q=…  → teams + leagues matching the query.
+router.get('/search/global', publicRateLimit, cachePublic(120), async (req, res) => {
+  try {
+    const q = String((req.query as Record<string, string>).q ?? '').trim()
+    if (q.length < 2) return res.json({ data: { teams: [], leagues: [] } })
+
+    const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
+    const teams = run
+      ? await prisma.rankingEntry.findMany({
+          where:   { runId: run.id, clubName: { contains: q, mode: 'insensitive' as const } },
+          orderBy: { rank: 'asc' },
+          take:    12,
+          select:  { clubId: true, clubName: true, leagueName: true, state: true, rank: true },
+        })
+      : []
+
+    const leagues = await prisma.league.findMany({
+      where:   { isActive: true, name: { contains: q, mode: 'insensitive' as const } },
+      orderBy: { strengthScore: 'desc' },
+      take:    12,
+      select:  { id: true, name: true, strengthScore: true, state: { select: { code: true } } },
+    })
+
+    res.json({
+      data: {
+        teams:   teams.map(t => ({ clubId: t.clubId, clubName: t.clubName, leagueName: t.leagueName, state: t.state, rank: t.rank })),
+        leagues: leagues.map(l => ({ id: l.id, name: l.name, strengthScore: l.strengthScore, state: l.state.code })),
       },
     })
   } catch {

@@ -51,20 +51,37 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 })
 
 // GET /api/clubs/:id
+// Full read-only club profile for the team profile page: current national rank,
+// power rating, league + league strength, season record / goals / percentage /
+// ladder position, recent form, championship qualification, and rank history.
+const QUALIFY_CUTOFF = 32
+
 router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const clubId = req.params.id
 
-    // Get current ranking
+    // Get current ranking (latest run)
     const currentEntry = await prisma.rankingEntry.findFirst({
       where:   { clubId },
       orderBy: { rankingRun: { completedAt: 'desc' } },
-      include: { rankingRun: { select: { weekLabel: true, season: true, completedAt: true } } },
+      include: { rankingRun: { select: { id: true, weekLabel: true, season: true, completedAt: true } } },
     })
 
     if (!currentEntry) return res.status(404).json({ error: 'Club not found' })
 
-    // Get ranking history (last 12 weeks)
+    const season = currentEntry.rankingRun.season
+
+    // Season stats for this club in the ranked league (record / goals / ladder)
+    const cls = await prisma.clubLeagueSeason.findFirst({
+      where:   { clubId, season, leagueId: currentEntry.leagueId },
+      include: { league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } } },
+    })
+
+    // League strength — prefer the joined league, fall back to any league record
+    const league = cls?.league
+      ?? (await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }))
+
+    // Ranking history (last 12 runs)
     const history = await prisma.rankingEntry.findMany({
       where:   { clubId },
       orderBy: { rankingRun: { completedAt: 'desc' } },
@@ -76,15 +93,26 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
       data: {
         clubId:      currentEntry.clubId,
         clubName:    currentEntry.clubName,
+        leagueId:    currentEntry.leagueId,
         leagueName:  currentEntry.leagueName,
         state:       currentEntry.state,
         rank:        currentEntry.rank,
         previousRank: currentEntry.previousRank,
         rankMovement: currentEntry.rankMovement,
         powerRating: currentEntry.powerRating,
+        qualified:   currentEntry.rank <= QUALIFY_CUTOFF,
+        qualifyCutoff: QUALIFY_CUTOFF,
+        record:      { wins: cls?.wins ?? 0, losses: cls?.losses ?? 0, draws: cls?.draws ?? 0, played: cls?.played ?? 0 },
+        goalsFor:    cls?.goalsFor ?? 0,
+        goalsAgainst: cls?.goalsAgainst ?? 0,
+        percentage:  cls?.percentage ?? 0,
+        ladderPosition: cls?.position ?? null,
+        leagueStrengthScore: league?.strengthScore ?? null,
+        leagueStrengthTier:  league?.strengthTier ?? null,
         recentForm:  JSON.parse(currentEntry.recentForm as string ?? '[]'),
         componentScores: JSON.parse(currentEntry.componentScores as string ?? '{}'),
         weekLabel:   currentEntry.rankingRun.weekLabel,
+        season,
         history:     history.map(h => ({
           weekLabel:   h.rankingRun.weekLabel,
           rank:        h.rank,
