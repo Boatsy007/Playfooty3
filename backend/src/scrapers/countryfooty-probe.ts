@@ -90,28 +90,40 @@ export async function probeCountryFooty(): Promise<void> {
     const bodyText = (await page.locator('body').innerText().catch(() => '')) || ''
     console.log(`\nBody text sample (first 1200 chars):\n${bodyText.slice(0, 1200)}`)
 
-    // ── Drill into a few league pages to learn the ladder format ──────────────
-    const sampleLeagues = ['/hampden-netball.html', '/north-gippsland-netball.html', '/ballarat-fl-netball.html']
-    for (const path of sampleLeagues) {
-      const u = `https://www.countryfootyscores.com${path}`
-      console.log(`\n---------- LEAGUE PAGE: ${path} ----------`)
-      try { await page.goto(u, { waitUntil: 'networkidle', timeout: 45_000 }) }
-      catch (e) { console.log(`  goto note: ${String(e)}`); continue }
-      await page.waitForTimeout(3500)
+    // ── Drill into ONE league page and fully map where the data comes from ────
+    const path = '/hampden-netball.html'
+    const u = `https://www.countryfootyscores.com${path}`
+    console.log(`\n---------- LEAGUE PAGE: ${path} ----------`)
+    xhr.length = 0
+    try { await page.goto(u, { waitUntil: 'networkidle', timeout: 45_000 }) }
+    catch (e) { console.log(`  goto note: ${String(e)}`) }
+    await page.waitForTimeout(6000)
 
-      // Headings tell us grade/section names (A Grade, Senior, etc.)
-      const heads = await page.$$eval('h1,h2,h3,h4,strong', els => els.map(h => (h.textContent || '').replace(/\s+/g, ' ').trim()).filter(t => t.length > 1 && t.length < 60))
-      console.log(`  headings: ${[...new Set(heads)].slice(0, 25).join(' | ')}`)
+    // iframes (the results widget is very likely embedded)
+    const lif = await page.$$eval('iframe', els => els.map(f => ({ src: f.getAttribute('src') || '(no src)', id: f.id || f.getAttribute('name') || '' })))
+    console.log(`  iframes: ${lif.length}`); lif.forEach(f => console.log(`      [${f.id}] ${f.src}`))
 
-      const lts = await page.$$('table')
-      console.log(`  tables: ${lts.length}`)
-      const dump = await page.$$eval('table', els => els.slice(0, 8).map(t => {
-        const caption = (t.querySelector('caption')?.textContent || t.previousElementSibling?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 50)
-        const rows = Array.from(t.querySelectorAll('tr')).slice(0, 12)
-        return { caption, rows: rows.map(r => Array.from(r.querySelectorAll('th,td')).map(c => (c.textContent || '').trim().slice(0, 20)).join(' | ')) }
-      }))
-      dump.forEach((t, i) => { console.log(`  — table ${i} — caption="${t.caption}"`); t.rows.forEach(r => console.log(`      ${r}`)) })
+    // Frames Playwright sees (including same-origin injected frames) + their tables
+    for (const fr of page.frames()) {
+      const furl = fr.url()
+      if (furl === u || furl === 'about:blank') continue
+      console.log(`  — frame: ${furl.slice(0, 140)}`)
+      const frows = await fr.$$eval('table tr', trs => trs.slice(0, 14).map(r => Array.from(r.querySelectorAll('th,td')).map(c => (c.textContent || '').trim().slice(0, 18)).join(' | '))).catch(() => [] as string[])
+      frows.forEach(r => console.log(`        ${r}`))
     }
+
+    // All captured XHR/text/json on this page — this reveals the real feed
+    console.log(`  captured requests: ${xhr.length}`)
+    for (const x of xhr.slice(0, 40)) {
+      if (/google|doubleclick|cloudflare|gstatic|beacon|rum|adservice/i.test(x.url)) continue
+      console.log(`      [${x.ct.split(';')[0]}] ${x.url.slice(0, 150)}`)
+      if (x.sample.trim()) console.log(`         ${x.sample.slice(0, 160)}`)
+    }
+
+    // HTML around the (empty) table, to spot a placeholder div/script that injects data
+    const htmlSlice = await page.content().catch(() => '')
+    const tIdx = htmlSlice.indexOf('<table')
+    if (tIdx >= 0) console.log(`  html around <table>:\n${htmlSlice.slice(Math.max(0, tIdx - 400), tIdx + 600).replace(/\s+/g, ' ')}`)
 
     console.log(`\n========== END PROBE ==========\n`)
     logger.info('CountryFootyProbe: complete', { tables: tables.length, selects: selects.length, xhr: xhr.length })
