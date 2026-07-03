@@ -1,0 +1,36 @@
+name: Manual Ladder Import (from transcribed images) + rank
+
+# Imports operator-supplied A-Grade ladders (transcribed from pasted screenshots
+# into backend/data/manual-ladders.json) and re-ranks. Gap-fill + dedup so no
+# team is ever double-counted against PlayHQ / Country Footy.
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Path to the ladders JSON (relative to backend/).'
+        required: false
+        default: 'data/manual-ladders.json'
+
+jobs:
+  import:
+    name: Import manual ladders + rank
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+      FILE: ${{ inputs.file }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Import manual ladders
+        working-directory: backend
+        run: npx tsx src/jobs/manual-ladder-import.ts "--file=${FILE:-data/manual-ladders.json}"

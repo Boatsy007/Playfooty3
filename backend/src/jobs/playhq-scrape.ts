@@ -269,7 +269,7 @@ async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInpu
   // Footy imports its A-Grade ladders as NETBALL_CONNECT sources (gap-fill only,
   // so they never overlap a PlayHQ league).
   const playhqSources = await prisma.leagueSource.findMany({
-    where:  { sourceType: { in: ['PLAYHQ', 'NETBALL_CONNECT'] }, season, isActive: true },
+    where:  { sourceType: { in: ['PLAYHQ', 'NETBALL_CONNECT', 'MANUAL_IMAGE'] }, season, isActive: true },
     select: { leagueId: true },
   })
   const leagueIds = [...new Set(playhqSources.map(s => s.leagueId))]

@@ -1,0 +1,14 @@
+[
+  {
+    "league": "Sunraysia",
+    "state": "VIC",
+    "grade": "A Grade",
+    "season": "2026",
+    "entries": [
+      { "team": "Mildura", "played": 7, "wins": 6, "losses": 1, "draws": 0, "goalsFor": 320, "goalsAgainst": 210, "points": 24 },
+      { "team": "Imperials", "played": 7, "wins": 5, "losses": 2, "draws": 0, "goalsFor": 300, "goalsAgainst": 240, "points": 20 },
+      { "team": "South Mildura", "played": 7, "wins": 3, "losses": 4, "draws": 0, "goalsFor": 250, "goalsAgainst": 260, "points": 12 },
+      { "team": "Wentworth", "played": 7, "wins": 1, "losses": 6, "draws": 0, "goalsFor": 200, "goalsAgainst": 300, "points": 4 }
+    ]
+  }
+]
