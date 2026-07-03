@@ -148,7 +148,7 @@ async function dedupeLeaguesByName(season: string): Promise<string[]> {
 // scheme). Historical ranking entries for the orphan are dropped with it.
 async function mergeOrphanDuplicateClubs(): Promise<number> {
   const clubs = await prisma.club.findMany({
-    select: { id: true, name: true, _count: { select: { clubSeasons: true } } },
+    select: { id: true, name: true, _count: { select: { leagueSeasons: true } } },
   })
 
   const groups = new Map<string, typeof clubs>()
@@ -160,10 +160,10 @@ async function mergeOrphanDuplicateClubs(): Promise<number> {
   let removed = 0
   for (const group of groups.values()) {
     if (group.length < 2) continue
-    const hasStats = group.some(c => c._count.clubSeasons > 0)
+    const hasStats = group.some(c => c._count.leagueSeasons > 0)
     if (!hasStats) continue   // ambiguous — leave alone rather than guess
     for (const orphan of group) {
-      if (orphan._count.clubSeasons > 0) continue
+      if (orphan._count.leagueSeasons > 0) continue
       // Clear every child row that references this club, then delete it.
       await prisma.clubLeagueSeason.deleteMany({ where: { clubId: orphan.id } })
       await prisma.rankingEntry.deleteMany({ where: { clubId: orphan.id } })
