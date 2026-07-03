@@ -192,16 +192,17 @@ async function importLeague(
     update: { name: dl.associationName, lastDiscoveredAt: new Date() },
   })
 
-  // League name/shortName — these match the manual scrape's naming exactly, so
-  // reconciling by name lets discovery ADOPT a pre-existing manually-configured
-  // league instead of creating a parallel duplicate.
-  const fullName  = `${dl.leagueName} - A Grade Netball`
-  const shortName = `${dl.leagueName} A Grade`
+  // Public league name is the OFFICIAL ASSOCIATION name (never a competition,
+  // division or grade name). The competition is kept in playhqGradeName.
+  const fullName  = dl.associationName
+  const shortName = dl.associationName
 
-  // Find by PlayHQ keys first, then by name/shortName (adopts a manual league).
+  // Find by PlayHQ keys first, then by association, then by legacy name — so we
+  // adopt an existing row instead of creating a parallel duplicate.
   let league =
     (await prisma.league.findFirst({ where: { playhqOrgSlug: dl.associationSlug, playhqGradeName: dl.gradeName } })) ||
-    (await prisma.league.findFirst({ where: { OR: [{ name: fullName }, { shortName }] } }))
+    (await prisma.league.findFirst({ where: { playhqOrgSlug: dl.associationSlug } })) ||
+    (await prisma.league.findFirst({ where: { OR: [{ name: fullName }, { name: `${dl.leagueName} - A Grade Netball` }] } }))
   const isNew = !league
 
   // Respect an admin ladder-URL override if present

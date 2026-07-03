@@ -1,0 +1,30 @@
+name: Data Audit & Cleanup (rename → deactivate sub-grades → dedupe → re-rank)
+
+# Enforces the CNCA data model on the existing database and re-ranks. No crawl,
+# so it runs in ~1-2 minutes. Safe: deactivates (never deletes) leagues, keeps
+# clubs + history. Fails if any ineligible/mis-named league remains active.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    name: Audit + cleanup + re-rank
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run data audit + cleanup
+        working-directory: backend
+        run: npx tsx src/jobs/data-audit-trigger.ts
