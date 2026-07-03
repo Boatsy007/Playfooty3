@@ -391,8 +391,8 @@ export interface AssocDiag {
 /** True if a structured grade is (or is very likely) senior women's, ignoring name keywords. */
 function isWomensSenior(g: StructuredGrade): boolean {
   if (isRejected(g.name)) return false
-  const genderOk = g.gender ? /^women$/i.test(g.gender.trim()) : !/\b(men|boys|mixed)\b/i.test(g.name)
-  const ageOk    = g.age    ? /^senior$/i.test(g.age.trim())   : !/\bu\/?\d|\bunder\b|\bjunior\b/i.test(g.name)
+  const genderOk = g.gender ? !/(^|[^a-z])(men|mens|boys|mixed|girls|male)([^a-z]|$)/i.test(g.gender) : true
+  const ageOk    = g.age    ? !/(junior|u\/?\s*\d|under|primary|mini|cadet|year\s*\d)/i.test(g.age)    : true
   return genderOk && ageOk
 }
 

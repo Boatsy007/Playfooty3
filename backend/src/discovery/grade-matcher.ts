@@ -9,6 +9,9 @@
  */
 
 // Preferred names, strongest → weakest (index = priority; lower is better).
+// PlayHQ associations label their top senior women's grade many ways — "A
+// Grade", "A1", "Grade A", "Division 1", "Ladies Division 1", "Senior Women",
+// "Open A", "Premier" — so we recognise all of them.
 const PREFERRED = [
   'a grade',
   'a grade women',
@@ -17,16 +20,46 @@ const PREFERRED = [
   'a grade dow cup',
   'a grade buckleys cup',
   'senior a grade',
+  'senior women a grade',
+  'grade a',
   'premier division',
   'premier league',
+  'premier',
+  'open a grade',
+  'open a1',
   'open a',
+  'a1',
+  'a 1',
+  'ladies division 1',
+  'ladies a',
   'division 1 women',
+  'senior women 1',
+  'senior women',
+  'seniors division 1',
   'open women',
+  'division 1',
 ]
 
 // If none of the preferred names match exactly, fall back to these "strength"
 // keywords (still senior women's A-grade-ish).
-const STRENGTH_KEYWORDS = ['a grade', 'premier', 'open', 'division 1']
+const STRENGTH_KEYWORDS = ['a grade', 'premier', 'open a', 'division 1', 'a1', 'senior women']
+
+/** Broad recogniser for a top senior women's grade name (used as a fallback). */
+const A_GRADE_RE = /(^|[^a-z0-9])(?:a\s*grade|grade\s*a|a\s?1|premier|open\s*a\b|ladies\s+division\s*1|division\s*1|senior\s+women(?:\s*1)?|seniors?\s+division\s*1)([^a-z0-9]|$)/
+
+// Junior / age-group patterns — reject. Covers "U15", "15 & Under", "10A",
+// "8 DIV 1", "11's", "Primary", "Year 5", "Inter(mediate)", "Cadet", NetSetGo.
+const JUNIOR_PATTERNS: RegExp[] = [
+  /(^|[^a-z0-9])u\/?\s*\d{1,2}\b/,
+  /(^|[^a-z0-9])under\s*\d{1,2}\b/,
+  /\b\d{1,2}\s*(?:&|and)?\s*under\b/,
+  /^\s*\d{1,2}\s*[a-e]?\b/,                 // leading age group: "10A", "8 DIV 1", "11 A"
+  /(^|[^a-z0-9])\d{1,2}'s\b/,               // "11's"
+  /(^|[^a-z0-9])(?:primary|junior|juniors|mini|minis|cadet|cadets)\b/,
+  /(^|[^a-z0-9])inter(?:mediate)?\b/,
+  /(^|[^a-z0-9])year\s*\d\b/,
+  /(^|[^a-z0-9])net\s*-?\s*set\s*-?\s*go\b|netsetgo/,
+]
 
 // Any grade whose name contains one of these is rejected outright.
 const REJECT = [
@@ -69,6 +102,7 @@ const SUBGRADE_PATTERNS: RegExp[] = [
  *  Uses alphanumeric boundaries so "men" doesn't match inside "women". */
 export function isRejected(name: string): boolean {
   const n = norm(name)
+  if (JUNIOR_PATTERNS.some(re => re.test(n))) return true
   if (SUBGRADE_PATTERNS.some(re => re.test(n))) return true
   return REJECT.some(r => {
     const t = norm(r).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -95,21 +129,25 @@ export function filterSeniorWomensAGrade(grades: StructuredGrade[]): (Structured
 
   for (const g of grades) {
     if (!g.name) continue
-    // Structured guards: must be Women + Senior when those fields are present.
-    if (g.gender && !/^women$/i.test(g.gender.trim())) continue
-    if (g.age    && !/^senior$/i.test(g.age.trim()))    continue
+    // Structured guards. Gender: reject men's/boys/mixed/girls (accept Women or
+    // unset). Age: reject clearly-junior ages (accept Senior/Open/Adult/unset —
+    // PlayHQ labels most senior comps "Open", not "Senior").
+    if (g.gender && /(^|[^a-z])(men|mens|boys|mixed|girls|male)([^a-z]|$)/i.test(g.gender)) continue
+    if (g.age    && /(junior|u\/?\s*\d|under|primary|mini|cadet|year\s*\d|\d{1,2}\s*(?:&|and)?\s*under|net\s*-?\s*set)/i.test(g.age)) continue
     if (isRejected(g.name)) continue
 
     const n = norm(g.name)
-    // Must look like a top senior grade.
-    const pIdx = PREFERRED.findIndex(p => n.includes(p))
+    // Must look like a top senior grade — by preferred name, strength keyword,
+    // or the broad A-Grade recogniser.
+    const pIdx = PREFERRED.findIndex(p => n === p || n.includes(p))
     const sIdx = STRENGTH_KEYWORDS.findIndex(k => n.includes(k))
-    if (pIdx === -1 && sIdx === -1) continue
+    const reHit = A_GRADE_RE.test(n)
+    if (pIdx === -1 && sIdx === -1 && !reHit) continue
 
     out.push({
       ...g,
-      matchedRule: pIdx >= 0 ? `preferred:${PREFERRED[pIdx]}` : `strength:${STRENGTH_KEYWORDS[sIdx]}`,
-      priority:    pIdx >= 0 ? pIdx : 100 + sIdx,
+      matchedRule: pIdx >= 0 ? `preferred:${PREFERRED[pIdx]}` : sIdx >= 0 ? `strength:${STRENGTH_KEYWORDS[sIdx]}` : 'regex:a-grade',
+      priority:    pIdx >= 0 ? pIdx : sIdx >= 0 ? 100 + sIdx : 200,
     })
   }
 
@@ -141,6 +179,10 @@ export function matchAGrade(candidates: GradeCandidate[]): GradeMatch | undefine
     const hit = eligible.find(c => norm(c.name).includes(kw))
     if (hit) return { ...hit, matchedRule: `strength:${kw}`, priority: 100 + k }
   }
+
+  // 3) Last resort: the broad A-Grade recogniser.
+  const reHit = eligible.find(c => A_GRADE_RE.test(norm(c.name)))
+  if (reHit) return { ...reHit, matchedRule: 'regex:a-grade', priority: 200 }
 
   return undefined
 }
