@@ -28,12 +28,40 @@ export interface AdminLeague {
   websiteUrl: string | null; facebookUrl: string | null; logoUrl: string | null
   state?: { code: string } | null; association?: { name: string } | null
   _count?: { clubSeasons: number }
+  archivedAt?: string | null; approvalStatus?: string; leagueType?: string | null; reviewReason?: string | null
 }
 export interface AdminClub {
   id: string; name: string; shortName: string | null; region: string | null
   logoUrl: string | null; websiteUrl: string | null; primaryColour: string | null
   secondaryColour: string | null; notes: string | null; source: string | null
   bestRank: number | null; isActive: boolean; state?: { code: string } | null
+  archivedAt?: string | null; approvalStatus?: string; townName?: string | null
+}
+
+export interface DashboardData {
+  counts: { leaguesActive: number; leaguesArchived: number; clubs: number; clubsArchived: number; teams: number; pendingReviews: number; ocrImports: number }
+  lastRun: { weekLabel: string; completedAt: string; clubCount: number } | null
+  lastScrape: { lastScrapedAt: string; sourceType: string } | null
+  warnings: number
+  recentLeagues: { id: string; name: string; lastManualUpdateAt: string; status: string }[]
+  recentClubs: { id: string; name: string; updatedAt: string }[]
+  flaggedLeagues: { id: string; name: string; syncError: string | null; needsStrengthReview: boolean; strengthConfidence: number }[]
+}
+export interface ReviewItem {
+  id: string; entityType: string; entityId: string | null; kind: string; reason: string
+  confidence: number | null; payload: string | null; status: string; createdAt: string; resolvedAt: string | null
+}
+export interface BackupRow { id: string; label: string; kind: string; counts: string; createdAt: string }
+export interface AuditRow {
+  id: string; action: string; entityType: string; entityId: string | null; source: string | null
+  reason: string | null; before: string | null; after: string | null; createdAt: string
+  user?: { email: string; name: string | null } | null
+}
+export interface SettingRow { key: string; value: string }
+export interface RecalcReport {
+  leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
+  clubsRanked: number
+  top: { rank: number; clubName: string; leagueName: string | null; powerRating: number }[]
 }
 
 export interface OcrRow {
@@ -52,6 +80,9 @@ export const admin = {
   createLeague: (b: Record<string, unknown>) => req<{ data: AdminLeague }>('POST', '/admin/manage/leagues', b).then(r => r.data),
   editLeague:   (id: string, b: Record<string, unknown>) => req<{ data: AdminLeague; note?: string }>('PATCH', `/admin/manage/leagues/${id}`, b),
   deleteLeague: (id: string) => req<{ note?: string }>('DELETE', `/admin/manage/leagues/${id}`),
+  restoreLeague: (id: string) => req<{ note?: string }>('POST', `/admin/manage/leagues/${id}/restore`),
+  approveLeague: (id: string) => req<{ note?: string }>('POST', `/admin/manage/leagues/${id}/approve`),
+  rejectLeague:  (id: string, reason?: string) => req<{ note?: string }>('POST', `/admin/manage/leagues/${id}/reject`, { reason }),
   setStrength:  (id: string, override: number | null) => req<{ note?: string }>('POST', `/admin/manage/leagues/${id}/strength`, { override }),
   toggleScrape: (id: string, enabled: boolean) => req('POST', `/admin/manage/leagues/${id}/scraping`, { enabled }),
   mergeLeagues: (keepId: string, mergeId: string) => req<{ note?: string }>('POST', '/admin/manage/leagues/merge', { keepId, mergeId }),
@@ -61,6 +92,7 @@ export const admin = {
   createClub:   (b: Record<string, unknown>) => req<{ data: AdminClub }>('POST', '/admin/manage/clubs', b).then(r => r.data),
   editClub:     (id: string, b: Record<string, unknown>) => req<{ data: AdminClub }>('PATCH', `/admin/manage/clubs/${id}`, b),
   deleteClub:   (id: string) => req<{ note?: string }>('DELETE', `/admin/manage/clubs/${id}`),
+  restoreClub:  (id: string) => req<{ note?: string }>('POST', `/admin/manage/clubs/${id}/restore`),
   moveClub:     (id: string, toLeagueId: string) => req<{ note?: string }>('POST', `/admin/manage/clubs/${id}/move`, { toLeagueId }),
   mergeClubs:   (keepId: string, mergeId: string) => req<{ note?: string }>('POST', '/admin/manage/clubs/merge', { keepId, mergeId }),
   // Rankings
@@ -70,4 +102,15 @@ export const admin = {
   // OCR
   ocrParse:  (image: string, leagueId?: string) => req<{ data: OcrPreview }>('POST', '/admin/ocr/parse', { image, leagueId }).then(r => r.data),
   ocrCommit: (leagueId: string, entries: unknown[]) => req<{ data: { league: string; teams: number }; note?: string }>('POST', '/admin/ocr/commit', { leagueId, entries }),
+  // Platform — dashboard, recalc, reviews, backups, audit, settings
+  dashboard:   () => req<{ data: DashboardData }>('GET', '/admin/platform/dashboard').then(r => r.data),
+  recalculate: () => req<{ data: RecalcReport }>('POST', '/admin/platform/recalculate').then(r => r.data),
+  listReviews: (status = 'PENDING') => req<{ data: ReviewItem[] }>('GET', `/admin/platform/reviews?status=${status}`).then(r => r.data),
+  resolveReview: (id: string, action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => req<{ data: ReviewItem }>('POST', `/admin/platform/reviews/${id}/resolve`, { action }),
+  listBackups: () => req<{ data: BackupRow[] }>('GET', '/admin/platform/backups').then(r => r.data),
+  createBackup: (label?: string) => req<{ data: { id: string; counts: Record<string, number> } }>('POST', '/admin/platform/backups', { label }),
+  restoreBackup: (id: string) => req<{ data: { restored: boolean; from: string } }>('POST', `/admin/platform/backups/${id}/restore`),
+  listAudit: (entityType?: string) => req<{ data: AuditRow[] }>('GET', `/admin/platform/audit${entityType ? `?entityType=${entityType}` : ''}`).then(r => r.data),
+  listSettings: () => req<{ data: SettingRow[] }>('GET', '/admin/platform/settings').then(r => r.data),
+  setSetting: (key: string, value: string) => req<{ data: SettingRow }>('POST', '/admin/platform/settings', { key, value }),
 }

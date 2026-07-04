@@ -4,7 +4,7 @@
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -22,10 +22,20 @@ function useToast() {
   return { show, node }
 }
 
+const TABS = [
+  ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
+  ['ocr', 'Image Import'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
+  ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+] as const
+type Tab = typeof TABS[number][0]
+
 export default function Admin() {
   const [authed, setAuthed] = useState(!!getKey())
-  const [tab, setTab] = useState<'leagues' | 'clubs' | 'ocr' | 'rankings'>('leagues')
+  const [tab, setTab] = useState<Tab>('dashboard')
+  const [pending, setPending] = useState(0)
   const t = useToast()
+
+  useEffect(() => { if (authed) admin.listReviews('PENDING').then(r => setPending(r.length)).catch(() => {}) }, [authed, tab])
 
   if (!authed) return <Login onIn={() => setAuthed(true)} />
 
@@ -37,18 +47,236 @@ export default function Admin() {
           <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-          {(['leagues', 'clubs', 'ocr', 'rankings'] as const).map(x => (
+          {TABS.map(([x, label]) => (
             <button key={x} onClick={() => setTab(x)} style={{ ...btn(tab === x ? C.pink : '#1b2233'), color: tab === x ? '#fff' : C.mute }}>
-              {x === 'ocr' ? 'Image Import' : x[0].toUpperCase() + x.slice(1)}
+              {label}{x === 'reviews' && pending > 0 && <span style={{ marginLeft: 6, background: C.gold, color: '#111', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{pending}</span>}
             </button>
           ))}
         </div>
+        {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
         {tab === 'leagues' && <Leagues toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
         {tab === 'ocr' && <ImageImport toast={t.show} />}
+        {tab === 'reviews' && <Reviews toast={t.show} />}
         {tab === 'rankings' && <Rankings toast={t.show} />}
+        {tab === 'audit' && <AuditLog toast={t.show} />}
+        {tab === 'backups' && <Backups toast={t.show} />}
+        {tab === 'settings' && <Settings toast={t.show} />}
       </div>
       {t.node}
+    </div>
+  )
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
+  const [d, setD] = useState<DashboardData | null>(null)
+  useEffect(() => { admin.dashboard().then(setD).catch(e => toast(e.message, false)) }, [])
+  if (!d) return <div style={box}>Loading…</div>
+  const stat = (label: string, value: number | string, colour = C.text, onClick?: () => void) => (
+    <div style={{ ...box, cursor: onClick ? 'pointer' : 'default', minWidth: 130 }} onClick={onClick}>
+      <div style={{ fontSize: 28, fontWeight: 800, color: colour }}>{value}</div>
+      <div style={{ color: C.mute, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+    </div>
+  )
+  const fmt = (s?: string | null) => s ? new Date(s).toLocaleString() : '—'
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {stat('Active leagues', d.counts.leaguesActive, C.text, () => go('leagues'))}
+        {stat('Archived leagues', d.counts.leaguesArchived, C.mute)}
+        {stat('Clubs', d.counts.clubs, C.text, () => go('clubs'))}
+        {stat('Teams', d.counts.teams)}
+        {stat('Pending reviews', d.counts.pendingReviews, d.counts.pendingReviews ? C.gold : C.green, () => go('reviews'))}
+        {stat('Image sources', d.counts.ocrImports)}
+        {stat('Warnings', d.warnings, d.warnings ? C.red : C.green)}
+      </div>
+      <div style={box}>
+        <b>Status</b>
+        <div style={{ color: C.mute, fontSize: 13, marginTop: 8, display: 'grid', gap: 4 }}>
+          <div>Last ranking run: <span style={{ color: C.text }}>{d.lastRun ? `${d.lastRun.weekLabel} · ${d.lastRun.clubCount} clubs · ${fmt(d.lastRun.completedAt)}` : '—'}</span></div>
+          <div>Last scrape: <span style={{ color: C.text }}>{d.lastScrape ? `${d.lastScrape.sourceType} · ${fmt(d.lastScrape.lastScrapedAt)}` : '—'}</span></div>
+        </div>
+      </div>
+      {d.flaggedLeagues.length > 0 && (
+        <div style={box}>
+          <b style={{ color: C.gold }}>⚠ Flagged leagues ({d.flaggedLeagues.length})</b>
+          <div style={{ marginTop: 8 }}>
+            {d.flaggedLeagues.map(l => (
+              <div key={l.id} style={{ fontSize: 13, padding: '4px 0', borderBottom: `1px solid ${C.line}` }}>
+                {l.name} — {l.syncError ? <span style={{ color: C.red }}>{l.syncError}</span> : <span style={{ color: C.gold }}>strength review (conf {l.strengthConfidence?.toFixed(2)})</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={box}>
+          <b>Recently updated leagues</b>
+          <div style={{ marginTop: 8 }}>{d.recentLeagues.map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{fmt(l.lastManualUpdateAt)}</span></div>)}</div>
+        </div>
+        <div style={box}>
+          <b>Recently updated clubs</b>
+          <div style={{ marginTop: 8 }}>{d.recentClubs.map(c => <div key={c.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{c.name} <span style={{ float: 'right' }}>{fmt(c.updatedAt)}</span></div>)}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Pending Reviews ──────────────────────────────────────────────────────────
+function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [items, setItems] = useState<ReviewItem[]>([])
+  const [status, setStatus] = useState('PENDING')
+  const load = () => admin.listReviews(status).then(setItems).catch(e => toast(e.message, false))
+  useEffect(() => { load() }, [status])
+  const resolve = async (id: string, action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => {
+    try { await admin.resolveReview(id, action); toast(`Marked ${action}`); await load() } catch (e) { toast((e as Error).message, false) }
+  }
+  return (
+    <div style={box}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <b>Review queue ({items.length})</b>
+        <select style={{ ...input, width: 140 }} value={status} onChange={e => setStatus(e.target.value)}>
+          <option value="PENDING">Pending</option><option value="ALL">All</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      {items.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>Nothing to review — everything is clean. ✓</p>}
+      <div style={{ display: 'grid', gap: 8 }}>
+        {items.map(it => (
+          <div key={it.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: '#0d1220' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <div>
+                <span style={{ background: '#1b2233', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
+                <span style={{ color: C.mute, fontSize: 12, marginLeft: 8 }}>{it.entityType}{it.confidence != null ? ` · conf ${it.confidence.toFixed(2)}` : ''}</span>
+                <div style={{ fontSize: 13, marginTop: 4 }}>{it.reason}</div>
+              </div>
+              {it.status === 'PENDING' && (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button style={btn(C.green)} onClick={() => resolve(it.id, 'APPROVED')}>Approve</button>
+                  <button style={btn(C.gold)} onClick={() => resolve(it.id, 'MERGED')}>Merge</button>
+                  <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
+                  <button style={btn(C.red)} onClick={() => resolve(it.id, 'REJECTED')}>Reject</button>
+                </div>
+              )}
+              {it.status !== 'PENDING' && <span style={{ color: C.mute, fontSize: 12 }}>{it.status}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+function AuditLog({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<AuditRow[]>([])
+  useEffect(() => { admin.listAudit().then(setRows).catch(e => toast(e.message, false)) }, [])
+  return (
+    <div style={box}>
+      <b>Audit log ({rows.length})</b>
+      <p style={{ color: C.mute, fontSize: 12, marginTop: 4 }}>Every change is recorded and never deleted.</p>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead><tr><th style={th}>When</th><th style={th}>Action</th><th style={th}>Entity</th><th style={th}>Source</th><th style={th}>By</th></tr></thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.id}>
+                <td style={{ ...td, color: C.mute, whiteSpace: 'nowrap' }}>{new Date(r.createdAt).toLocaleString()}</td>
+                <td style={td}><span style={{ color: C.pink, fontWeight: 700 }}>{r.action}</span></td>
+                <td style={td}>{r.entityType}{r.entityId ? <span style={{ color: C.mute }}> · {r.entityId.slice(0, 8)}</span> : ''}{r.reason ? <div style={{ color: C.mute, fontSize: 11 }}>{r.reason}</div> : null}</td>
+                <td style={td}><span style={{ color: C.mute }}>{r.source ?? '—'}</span></td>
+                <td style={{ ...td, color: C.mute }}>{r.user?.name ?? r.user?.email ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ─── Backups ──────────────────────────────────────────────────────────────────
+function Backups({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<BackupRow[]>([])
+  const [busy, setBusy] = useState(false)
+  const load = () => admin.listBackups().then(setRows).catch(e => toast(e.message, false))
+  useEffect(() => { load() }, [])
+  const create = async () => {
+    const label = prompt('Backup label (optional)') ?? undefined
+    setBusy(true)
+    try { const r = await admin.createBackup(label || undefined); toast(`Backup created — ${Object.values(r.data.counts).reduce((a, b) => a + b, 0)} rows`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const restore = async (b: BackupRow) => {
+    if (!confirm(`Restore "${b.label}"? A safety snapshot of the current state is taken first. Nothing is permanently lost.`)) return
+    setBusy(true)
+    try { const r = await admin.restoreBackup(b.id); toast(`Restored from ${r.data.from}`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  return (
+    <div style={box}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <b>Backups &amp; restore points ({rows.length})</b>
+        <button disabled={busy} style={btn(C.green)} onClick={create}>+ Create backup now</button>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead><tr><th style={th}>When</th><th style={th}>Label</th><th style={th}>Kind</th><th style={th}>Rows</th><th style={th}></th></tr></thead>
+          <tbody>
+            {rows.map(b => {
+              const counts = (() => { try { return JSON.parse(b.counts) as Record<string, number> } catch { return {} } })()
+              const total = Object.values(counts).reduce((a, c) => a + c, 0)
+              return (
+                <tr key={b.id}>
+                  <td style={{ ...td, color: C.mute, whiteSpace: 'nowrap' }}>{new Date(b.createdAt).toLocaleString()}</td>
+                  <td style={td}>{b.label}</td>
+                  <td style={td}><span style={{ color: b.kind === 'PRE_RESTORE' ? C.gold : C.mute }}>{b.kind}</span></td>
+                  <td style={td}>{total}</td>
+                  <td style={td}><button disabled={busy} style={btn(C.gold)} onClick={() => restore(b)}>Restore</button></td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+function Settings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<SettingRow[]>([])
+  const [key, setK] = useState(''); const [val, setV] = useState('')
+  const load = () => admin.listSettings().then(setRows).catch(e => toast(e.message, false))
+  useEffect(() => { load() }, [])
+  const save = async (k: string, v: string) => { try { await admin.setSetting(k, v); toast('Saved'); await load() } catch (e) { toast((e as Error).message, false) } }
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>Settings (key / value)</b>
+        <div style={{ overflowX: 'auto', marginTop: 10 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr><th style={th}>Key</th><th style={th}>Value</th></tr></thead>
+            <tbody>
+              {rows.map(s => (
+                <tr key={s.key}>
+                  <td style={td}>{s.key}</td>
+                  <td style={td}><input style={input} defaultValue={s.value} onBlur={e => { if (e.target.value !== s.value) save(s.key, e.target.value) }} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style={box}>
+        <b>Add / update setting</b>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          <input style={{ ...input, width: 220 }} placeholder="key" value={key} onChange={e => setK(e.target.value)} />
+          <input style={{ ...input, width: 260 }} placeholder="value" value={val} onChange={e => setV(e.target.value)} />
+          <button style={btn()} onClick={() => { if (key) { save(key, val); setK(''); setV('') } }}>Save</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -98,8 +326,8 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
             <thead><tr><th style={th}>League</th><th style={th}>St</th><th style={th}>Teams</th><th style={th}>Strength</th><th style={th}>Override</th><th style={th}>Conf</th><th style={th}>Status</th><th style={th}></th></tr></thead>
             <tbody>
               {rows.map(l => (
-                <tr key={l.id} style={{ background: l.needsStrengthReview ? 'rgba(244,193,77,0.08)' : undefined }}>
-                  <td style={td}>{l.name}{l.needsStrengthReview && <span title="needs review" style={{ color: C.gold, marginLeft: 6 }}>⚠</span>}</td>
+                <tr key={l.id} style={{ background: l.needsStrengthReview ? 'rgba(244,193,77,0.08)' : undefined, opacity: l.archivedAt ? 0.5 : 1 }}>
+                  <td style={td}>{l.name}{l.needsStrengthReview && <span title="needs review" style={{ color: C.gold, marginLeft: 6 }}>⚠</span>}{l.archivedAt && <span style={{ color: C.mute, marginLeft: 6, fontSize: 11 }}>[archived]</span>}</td>
                   <td style={td}>{l.state?.code ?? '—'}</td>
                   <td style={td}>{l._count?.clubSeasons ?? '—'}</td>
                   <td style={td}>{Math.round(l.strengthScore)}</td>
@@ -115,7 +343,10 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   </td>
                   <td style={td}>
                     <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename league', l.name); if (n && n !== l.name) save(() => admin.editLeague(l.id, { name: n })) }}>Edit</button>
-                    <button style={btn(C.red)} onClick={() => { if (confirm(`Delete ${l.name}? This removes its clubs + ladder.`)) save(() => admin.deleteLeague(l.id)) }}>Del</button>
+                    {l.approvalStatus === 'PENDING' && <button style={{ ...btn(C.green), marginRight: 6 }} onClick={() => save(() => admin.approveLeague(l.id))}>Approve</button>}
+                    {l.archivedAt
+                      ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreLeague(l.id))}>Restore</button>
+                      : <button style={btn(C.red)} onClick={() => { if (confirm(`Archive ${l.name}? It is recoverable — nothing is permanently deleted.`)) save(() => admin.deleteLeague(l.id)) }}>Archive</button>}
                   </td>
                 </tr>
               ))}
@@ -179,14 +410,16 @@ function Clubs({ toast }: { toast: (t: string, ok?: boolean) => void }) {
             <thead><tr><th style={th}>Club</th><th style={th}>State</th><th style={th}>Region</th><th style={th}>Actions</th></tr></thead>
             <tbody>
               {clubs.map(c => (
-                <tr key={c.id}>
-                  <td style={td}>{c.name}</td>
+                <tr key={c.id} style={{ opacity: c.archivedAt ? 0.5 : 1 }}>
+                  <td style={td}>{c.name}{c.archivedAt && <span style={{ color: C.mute, marginLeft: 6, fontSize: 11 }}>[archived]</span>}</td>
                   <td style={td}>{c.state?.code ?? '—'}</td>
                   <td style={td}>{c.region ?? '—'}</td>
                   <td style={td}>
                     <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename club', c.name); if (n && n !== c.name) save(() => admin.editClub(c.id, { name: n })) }}>Edit</button>
                     <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const to = prompt('Move to leagueId'); if (to) save(() => admin.moveClub(c.id, to)) }}>Move</button>
-                    <button style={btn(C.red)} onClick={() => { if (confirm(`Delete ${c.name}?`)) save(() => admin.deleteClub(c.id)) }}>Del</button>
+                    {c.archivedAt
+                      ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreClub(c.id))}>Restore</button>
+                      : <button style={btn(C.red)} onClick={() => { if (confirm(`Archive ${c.name}? Recoverable — nothing permanently deleted.`)) save(() => admin.deleteClub(c.id)) }}>Archive</button>}
                   </td>
                 </tr>
               ))}
@@ -288,16 +521,50 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
 // ─── Rankings ──────────────────────────────────────────────────────────────
 function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [busy, setBusy] = useState(false)
+  const [report, setReport] = useState<Awaited<ReturnType<typeof admin.recalculate>> | null>(null)
   const run = async (fn: () => Promise<unknown>, ok: string) => { setBusy(true); try { await fn(); toast(ok) } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
+  const recalc = async () => {
+    setBusy(true)
+    try { const r = await admin.recalculate(); setReport(r); toast(`Recalculated — ${r.clubsRanked} clubs, ${r.leagues.length} leagues`) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
   return (
-    <div style={{ ...box, display: 'grid', gap: 12, maxWidth: 460 }}>
-      <b>Rankings</b>
-      <p style={{ color: C.mute, fontSize: 13, margin: 0 }}>Re-run the national ranking, or lock it so imports/edits don't change the published standings.</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button disabled={busy} style={btn()} onClick={() => run(() => admin.rerank().then(r => toast(`Re-ranked ${r.data.clubsRanked} clubs`)), 'done')}>Re-rank now</button>
-        <button disabled={busy} style={btn(C.gold)} onClick={() => run(admin.lock, 'Rankings locked')}>Lock</button>
-        <button disabled={busy} style={btn('#2a3145')} onClick={() => run(admin.unlock, 'Rankings unlocked')}>Unlock</button>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ ...box, display: 'grid', gap: 12 }}>
+        <b>National rankings</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: 0 }}>Recalculate rebuilds every league's multi-factor strength from its clubs' national ratings (manual overrides always win), then re-ranks. Lock to freeze the published standings.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button disabled={busy} style={btn(C.green)} onClick={recalc}>{busy ? 'Working…' : '↻ Recalculate national rankings'}</button>
+          <button disabled={busy} style={btn()} onClick={() => run(() => admin.rerank().then(r => toast(`Re-ranked ${r.data.clubsRanked} clubs`)), 'done')}>Re-rank only</button>
+          <button disabled={busy} style={btn(C.gold)} onClick={() => run(admin.lock, 'Rankings locked')}>Lock</button>
+          <button disabled={busy} style={btn('#2a3145')} onClick={() => run(admin.unlock, 'Rankings unlocked')}>Unlock</button>
+        </div>
       </div>
+      {report && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={box}>
+            <b>League strength (top 20)</b>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8, fontSize: 12 }}>
+              <thead><tr><th style={th}>League</th><th style={th}>Before</th><th style={th}>After</th><th style={th}>Conf</th></tr></thead>
+              <tbody>{report.leagues.slice(0, 20).map((l, i) => (
+                <tr key={i} style={{ background: l.review ? 'rgba(244,193,77,0.08)' : undefined }}>
+                  <td style={td}>{l.name}{l.review && <span style={{ color: C.gold }}> ⚠</span>}</td>
+                  <td style={td}>{l.before}</td><td style={td}>{l.after}</td><td style={{ ...td, color: l.conf < 0.45 ? C.gold : C.mute }}>{l.conf.toFixed(2)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+          <div style={box}>
+            <b>Top 25 nationally</b>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8, fontSize: 12 }}>
+              <thead><tr><th style={th}>#</th><th style={th}>Club</th><th style={th}>League</th><th style={th}>Rating</th></tr></thead>
+              <tbody>{report.top.map(t => (
+                <tr key={t.rank}><td style={td}>{t.rank}</td><td style={td}>{t.clubName}</td><td style={{ ...td, color: C.mute }}>{t.leagueName ?? '—'}</td><td style={td}>{t.powerRating.toFixed(2)}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

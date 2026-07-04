@@ -43,6 +43,31 @@ router.get('/dashboard', async (_req, res) => {
   } })
 })
 
+// ─── Audit log ───────────────────────────────────────────────────────────────
+router.get('/audit', async (req, res) => {
+  const take = Math.min(Number(req.query.limit) || 200, 500)
+  const entity = req.query.entityType as string | undefined
+  const logs = await prisma.auditLog.findMany({
+    where: entity ? { entityType: entity } : {},
+    orderBy: { createdAt: 'desc' }, take,
+    select: { id: true, action: true, entityType: true, entityId: true, source: true, reason: true, before: true, after: true, createdAt: true, user: { select: { email: true, name: true } } },
+  })
+  res.json({ data: logs })
+})
+
+// ─── Settings (key/value) ────────────────────────────────────────────────────
+router.get('/settings', async (_req, res) => {
+  const rows = await prisma.setting.findMany({ orderBy: { key: 'asc' } })
+  res.json({ data: rows })
+})
+router.post('/settings', async (req, res) => {
+  const { key, value } = req.body as { key?: string; value?: string }
+  if (!key) return res.status(400).json({ error: 'key required' })
+  const row = await prisma.setting.upsert({ where: { key }, update: { value: value ?? '' }, create: { key, value: value ?? '' } })
+  await audit('SET_SETTING', 'Setting', key, { value })
+  res.json({ data: row })
+})
+
 // ─── National recalculation ──────────────────────────────────────────────────
 router.post('/recalculate', async (_req, res) => {
   const locked = (await prisma.setting.findUnique({ where: { key: 'rankingsLocked' } }).catch(() => null))?.value === 'true'
