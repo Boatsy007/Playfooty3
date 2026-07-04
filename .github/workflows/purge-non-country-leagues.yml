@@ -1,0 +1,36 @@
+name: Purge non-country leagues (keep only country FNLs) + rank
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: 'Dry run (classify + print only, delete nothing). true/false'
+        required: false
+        default: 'false'
+
+jobs:
+  purge:
+    name: Purge + rank
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+      DRY: ${{ inputs.dry }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Purge
+        working-directory: backend
+        run: |
+          args=()
+          [ "$DRY" = "true" ] && args+=("--dry")
+          npx tsx src/jobs/purge-non-country-leagues.ts "${args[@]}"
