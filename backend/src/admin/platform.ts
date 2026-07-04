@@ -35,7 +35,7 @@ router.get('/dashboard', async (_req, res) => {
     prisma.club.count({ where: { archivedAt: { not: null } } }),
     prisma.clubLeagueSeason.count({ where: { isActive: true } }),
     prisma.reviewItem.count({ where: { status: 'PENDING' } }),
-    prisma.leagueSource.count({ where: { sourceType: 'MANUAL_IMAGE' } }),
+    prisma.ocrImport.count(),
     prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' }, select: { weekLabel: true, completedAt: true, clubCount: true } }),
     prisma.league.findMany({ where: { lastManualUpdateAt: { not: null } }, orderBy: { lastManualUpdateAt: 'desc' }, take: 8, select: { id: true, name: true, lastManualUpdateAt: true, status: true } }),
     prisma.club.findMany({ orderBy: { updatedAt: 'desc' }, take: 8, select: { id: true, name: true, updatedAt: true } }),

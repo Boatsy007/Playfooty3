@@ -98,9 +98,15 @@ export interface OcrRow {
   match: { clubId: string | null; matchedName: string | null; score: number; confident: boolean }
 }
 export interface OcrPreview {
-  detectedLeague: string | null; detectedGrade?: string | null
-  matchedLeagueId: string | null; rows: OcrRow[]; uncertain: number; notes: string | null
+  importId?: string | null; detectedLeague: string | null; detectedGrade?: string | null
+  matchedLeagueId: string | null; rows: OcrRow[]; uncertain: number; confidence?: number | null; notes: string | null
 }
+export interface OcrHistoryRow {
+  id: string; leagueId: string | null; leagueName: string | null; detectedLeague: string | null
+  detectedGrade: string | null; rowCount: number; uncertainCount: number; confidence: number | null
+  status: string; notes: string | null; createdBy: string; createdAt: string; committedAt: string | null
+}
+export interface OcrHistoryDetail extends OcrHistoryRow { image: string; rows: string | null; committedRows: string | null }
 
 export const admin = {
   // Leagues
@@ -129,7 +135,10 @@ export const admin = {
   unlock:  () => req('POST', '/admin/manage/rankings/unlock'),
   // OCR
   ocrParse:  (image: string, leagueId?: string) => req<{ data: OcrPreview }>('POST', '/admin/ocr/parse', { image, leagueId }).then(r => r.data),
-  ocrCommit: (leagueId: string, entries: unknown[]) => req<{ data: { league: string; teams: number }; note?: string }>('POST', '/admin/ocr/commit', { leagueId, entries }),
+  ocrCommit: (leagueId: string, entries: unknown[], importId?: string | null) => req<{ data: { league: string; teams: number }; note?: string }>('POST', '/admin/ocr/commit', { leagueId, entries, importId }),
+  ocrHistory: () => req<{ data: OcrHistoryRow[] }>('GET', '/admin/ocr/history').then(r => r.data),
+  ocrHistoryDetail: (id: string) => req<{ data: OcrHistoryDetail }>('GET', `/admin/ocr/history/${id}`).then(r => r.data),
+  ocrDiscard: (id: string) => req<{ data: { id: string; status: string } }>('POST', `/admin/ocr/history/${id}/discard`),
   // Platform — dashboard, recalc, reviews, backups, audit, settings
   dashboard:   () => req<{ data: DashboardData }>('GET', '/admin/platform/dashboard').then(r => r.data),
   recalculate: () => req<{ data: RecalcReport }>('POST', '/admin/platform/recalculate').then(r => r.data),

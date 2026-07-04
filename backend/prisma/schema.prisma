@@ -500,6 +500,32 @@ model Backup {
   @@map("backups")
 }
 
+// OCR image imports (Phase 3) — every ladder image ever uploaded is kept:
+// original image, extraction, confidence, what was committed, when, by whom.
+// Never deleted — discarded imports are status DISCARDED, not removed.
+model OcrImport {
+  id             String    @id @default(uuid())
+  leagueId       String?
+  leagueName     String?                       // resolved league at commit time
+  image          String                        // original data-URL / base64 image
+  detectedLeague String?                       // what the OCR read off the image
+  detectedGrade  String?
+  rowCount       Int       @default(0)
+  uncertainCount Int       @default(0)         // rows without a confident club match
+  confidence     Float?                        // mean club-match score (0–1)
+  rows           String?                       // JSON: extracted + matched preview rows
+  committedRows  String?                       // JSON: what the operator actually applied
+  status         String    @default("PREVIEWED") // PREVIEWED | COMMITTED | DISCARDED
+  notes          String?
+  createdBy      String    @default("admin")
+  createdAt      DateTime  @default(now())
+  committedAt    DateTime?
+
+  @@index([leagueId])
+  @@index([createdAt])
+  @@map("ocr_imports")
+}
+
 // Global key/value settings (e.g. rankingsLocked, currentSeason).
 model Setting {
   key       String   @id

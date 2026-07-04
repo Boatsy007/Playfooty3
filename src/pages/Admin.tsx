@@ -4,7 +4,7 @@
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -620,7 +620,10 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState<OcrPreview | null>(null)
   const [rows, setRows] = useState<OcrRow[]>([])
-  useEffect(() => { admin.listLeagues().then(setLeagues).catch(() => {}) }, [])
+  const [history, setHistory] = useState<OcrHistoryRow[]>([])
+  const [detail, setDetail] = useState<OcrHistoryDetail | null>(null)
+  const loadHistory = () => admin.ocrHistory().then(setHistory).catch(() => {})
+  useEffect(() => { admin.listLeagues().then(setLeagues).catch(() => {}); loadHistory() }, [])
 
   const onFile = (f: File | null) => { if (!f) return; const r = new FileReader(); r.onload = () => setImage(r.result as string); r.readAsDataURL(f) }
   const parse = async () => {
@@ -630,6 +633,7 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
       const p = await admin.ocrParse(image, leagueId || undefined)
       setPreview(p); setRows(p.rows); if (p.matchedLeagueId) setLeagueId(p.matchedLeagueId)
       toast(`Detected ${p.rows.length} rows${p.uncertain ? `, ${p.uncertain} uncertain` : ''}`)
+      loadHistory()
     } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const commit = async () => {
@@ -637,8 +641,9 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
     setBusy(true)
     try {
       const entries = rows.map(r => ({ team: r.match.matchedName && r.match.clubId ? r.match.matchedName : r.team, clubId: r.match.clubId, position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, goalsFor: r.goalsFor, goalsAgainst: r.goalsAgainst, points: r.points }))
-      const res = await admin.ocrCommit(leagueId, entries)
+      const res = await admin.ocrCommit(leagueId, entries, preview?.importId)
       toast(`Imported ${res.data.teams} teams — ${res.note}`); setPreview(null); setImage(null); setRows([])
+      loadHistory()
     } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const setCell = (i: number, k: keyof OcrRow, v: string) => setRows(rs => rs.map((r, j) => j === i ? { ...r, [k]: k === 'team' ? v : (v === '' ? undefined : Number(v)) } : r))
@@ -692,6 +697,49 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      <div style={box}>
+        <b>Import history ({history.length})</b>
+        <p style={{ color: C.mute, fontSize: 12, marginTop: 4 }}>Every image ever uploaded is kept — original image, extraction, confidence and what was committed. Discarded imports are archived, never deleted.</p>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead><tr><th style={th}>When</th><th style={th}>League</th><th style={th}>Rows</th><th style={th}>Conf</th><th style={th}>Status</th><th style={th}></th></tr></thead>
+            <tbody>
+              {history.map(h => (
+                <tr key={h.id}>
+                  <td style={{ ...td, color: C.mute, whiteSpace: 'nowrap' }}>{new Date(h.createdAt).toLocaleString()}</td>
+                  <td style={td}>{h.leagueName ?? h.detectedLeague ?? '—'}{h.detectedGrade ? <span style={{ color: C.mute }}> · {h.detectedGrade}</span> : null}</td>
+                  <td style={td}>{h.rowCount}{h.uncertainCount ? <span style={{ color: C.gold }}> ({h.uncertainCount} unsure)</span> : null}</td>
+                  <td style={{ ...td, color: (h.confidence ?? 1) < 0.75 ? C.gold : C.mute }}>{h.confidence != null ? h.confidence.toFixed(2) : '—'}</td>
+                  <td style={td}><span style={{ color: h.status === 'COMMITTED' ? C.green : h.status === 'DISCARDED' ? C.mute : C.gold, fontWeight: 700 }}>{h.status}</span></td>
+                  <td style={td}>
+                    <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6, padding: '3px 8px', fontSize: 11 }} onClick={async () => { try { setDetail(await admin.ocrHistoryDetail(h.id)) } catch (e) { toast((e as Error).message, false) } }}>View</button>
+                    {h.status === 'PREVIEWED' && <button style={{ ...btn(C.red), padding: '3px 8px', fontSize: 11 }} onClick={async () => { try { await admin.ocrDiscard(h.id); toast('Discarded (kept in history)'); loadHistory() } catch (e) { toast((e as Error).message, false) } }}>Discard</button>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {detail && (
+        <div style={box}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <b>Import {new Date(detail.createdAt).toLocaleString()} — {detail.status}</b>
+            <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setDetail(null)}>Close</button>
+          </div>
+          <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+            <img src={detail.image} alt="original upload" style={{ maxHeight: 280, maxWidth: '48%', borderRadius: 8, border: `1px solid ${C.line}` }} />
+            <div style={{ flex: 1, minWidth: 260, fontSize: 12, color: C.mute, lineHeight: 1.8 }}>
+              <div>Detected: <span style={{ color: C.text }}>{detail.detectedLeague ?? '—'}{detail.detectedGrade ? ` · ${detail.detectedGrade}` : ''}</span></div>
+              <div>Rows: <span style={{ color: C.text }}>{detail.rowCount}</span> · Uncertain: <span style={{ color: detail.uncertainCount ? C.gold : C.text }}>{detail.uncertainCount}</span> · Confidence: <span style={{ color: C.text }}>{detail.confidence?.toFixed(2) ?? '—'}</span></div>
+              <div>By: <span style={{ color: C.text }}>{detail.createdBy}</span>{detail.committedAt && <> · Committed: <span style={{ color: C.green }}>{new Date(detail.committedAt).toLocaleString()}</span></>}</div>
+              {detail.notes && <div>Notes: {detail.notes}</div>}
+            </div>
           </div>
         </div>
       )}
