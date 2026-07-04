@@ -18,6 +18,47 @@ import { finalStrength } from '../config/league-strength-auto.js'
 import { getISOWeekLabel } from '../utils/week-label.js'
 import { logger }       from '../utils/logger.js'
 
+export interface RecalcReport {
+  leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
+  clubsRanked: number
+  top: { rank: number; clubName: string; leagueName: string | null; powerRating: number }[]
+}
+
+/**
+ * Full national recalculation: rank → recompute every active league's strength
+ * from its clubs' national ratings (manual overrides win) → re-rank. Returns a
+ * report. Reusable by the CLI and the admin "Recalculate National Rankings".
+ */
+export async function recalculateNational(): Promise<RecalcReport> {
+  const label = getISOWeekLabel()
+  await rankAndStore(label)
+
+  const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
+  if (!run) return { leagues: [], clubsRanked: 0, top: [] }
+
+  const entries = await prisma.rankingEntry.findMany({ where: { runId: run.id }, select: { leagueId: true, powerRating: true } })
+  const byLeague = new Map<string, number[]>()
+  for (const e of entries) { if (e.leagueId) byLeague.set(e.leagueId, [...(byLeague.get(e.leagueId) ?? []), e.powerRating]) }
+
+  const leagues = await prisma.league.findMany({ where: { isActive: true, enabled: true }, include: { association: { select: { name: true } } } })
+  const report: RecalcReport['leagues'] = []
+  for (const l of leagues) {
+    const ratings = byLeague.get(l.id) ?? []
+    const cls = await prisma.clubLeagueSeason.findMany({ where: { leagueId: l.id, season: '2026', grade: 'A Grade' }, select: { played: true, goalsFor: true, goalsAgainst: true } })
+    const dataComplete = cls.length > 0 && cls.every(c => c.played > 0 && (c.goalsFor > 0 || c.goalsAgainst > 0))
+    const v2 = computeLeagueStrengthV2(ratings, 1, dataComplete)
+    const final = finalStrength(v2.rating, l.manualStrengthOverride)
+    const finalScore = l.manualStrengthOverride != null ? l.manualStrengthOverride * 20 : v2.score
+    await prisma.league.update({ where: { id: l.id }, data: { automaticStrengthRating: v2.rating, finalStrengthRating: final, strengthScore: finalScore, strengthTier: Math.max(1, Math.min(5, Math.round(final))), strengthConfidence: v2.confidence, needsStrengthReview: l.manualStrengthOverride == null && v2.needsReview } })
+    report.push({ name: l.association?.name ?? l.name, before: Math.round(l.strengthScore), after: Math.round(finalScore), conf: v2.confidence, review: l.manualStrengthOverride == null && v2.needsReview })
+  }
+
+  const { clubsRanked } = await rankAndStore(label)
+  const run2 = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
+  const top = run2 ? await prisma.rankingEntry.findMany({ where: { runId: run2.id }, orderBy: { rank: 'asc' }, take: 25, select: { rank: true, clubName: true, leagueName: true, powerRating: true } }) : []
+  return { leagues: report.sort((a, b) => b.after - a.after), clubsRanked, top }
+}
+
 async function main() {
   const label = getISOWeekLabel()
 

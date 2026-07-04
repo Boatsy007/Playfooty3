@@ -15,6 +15,7 @@ import { adminDashboardRouter } from './admin/dashboard.js'
 import { adminSettingsRouter }  from './admin/settings.js'
 import { adminManageRouter }    from './admin/manage.js'
 import { adminOcrRouter }       from './admin/ocr.js'
+import { adminPlatformRouter }  from './admin/platform.js'
 import { logger }              from './utils/logger.js'
 
 const app  = express()
@@ -53,6 +54,7 @@ app.use('/admin',          adminDashboardRouter)
 app.use('/admin/settings', adminSettingsRouter)
 app.use('/admin/manage',   adminManageRouter)
 app.use('/admin/ocr',      adminOcrRouter)
+app.use('/admin/platform', adminPlatformRouter)
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

@@ -188,22 +188,37 @@ router.post('/leagues/merge', async (req, res) => {
   res.json({ data: { keepId }, note: await rerank() })
 })
 
+// Soft-delete: archive a league (recoverable) — never destroys data. Its source
+// is deactivated so it leaves the rankings; the rows + history are preserved.
 router.delete('/leagues/:id', async (req, res) => {
-  const clubs = await prisma.clubLeagueSeason.findMany({ where: { leagueId: req.params.id }, select: { clubId: true }, distinct: ['clubId'] })
-  await prisma.clubLeagueSeason.deleteMany({ where: { leagueId: req.params.id } })
-  await prisma.leagueSource.deleteMany({ where: { leagueId: req.params.id } })
-  await prisma.rankingEntry.deleteMany({ where: { leagueId: req.params.id } })
-  const orphans = [] as string[]
-  for (const c of clubs) if ((await prisma.clubLeagueSeason.count({ where: { clubId: c.clubId } })) === 0) orphans.push(c.clubId)
-  if (orphans.length) {
-    await prisma.rankingEntry.deleteMany({ where: { clubId: { in: orphans } } })
-    await prisma.rankingSnapshot.deleteMany({ where: { clubId: { in: orphans } } })
-    await prisma.clubNameVariant.deleteMany({ where: { clubId: { in: orphans } } })
-    await prisma.club.deleteMany({ where: { id: { in: orphans } } })
-  }
-  await prisma.league.delete({ where: { id: req.params.id } })
-  await audit('DELETE_LEAGUE', 'League', req.params.id, null, null)
-  res.json({ data: { deleted: req.params.id }, note: await rerank() })
+  const before = await prisma.league.findUnique({ where: { id: req.params.id } })
+  if (!before) return res.status(404).json({ error: 'not found' })
+  await prisma.leagueSource.updateMany({ where: { leagueId: req.params.id }, data: { isActive: false } })
+  const updated = await prisma.league.update({ where: { id: req.params.id }, data: { archivedAt: new Date(), enabled: false, isActive: false, status: 'ARCHIVED', lastManualUpdateAt: new Date() } })
+  await audit('ARCHIVE_LEAGUE', 'League', req.params.id, before, updated)
+  res.json({ data: { archived: req.params.id }, note: await rerank() })
+})
+
+// Restore an archived league back into the rankings.
+router.post('/leagues/:id/restore', async (req, res) => {
+  await prisma.leagueSource.updateMany({ where: { leagueId: req.params.id }, data: { isActive: true } })
+  const updated = await prisma.league.update({ where: { id: req.params.id }, data: { archivedAt: null, enabled: true, isActive: true, status: 'ACTIVE', lastManualUpdateAt: new Date() } })
+  await audit('RESTORE_LEAGUE', 'League', req.params.id, null, updated)
+  res.json({ data: updated, note: await rerank() })
+})
+
+// Approve / reject a pending league.
+router.post('/leagues/:id/approve', async (req, res) => {
+  const updated = await prisma.league.update({ where: { id: req.params.id }, data: { approvalStatus: 'APPROVED', enabled: true, isActive: true, status: 'ACTIVE', reviewReason: null, lastManualUpdateAt: new Date() } })
+  await audit('APPROVE_LEAGUE', 'League', req.params.id, null, updated)
+  res.json({ data: updated, note: await rerank() })
+})
+router.post('/leagues/:id/reject', async (req, res) => {
+  const { reason } = req.body as { reason?: string }
+  await prisma.leagueSource.updateMany({ where: { leagueId: req.params.id }, data: { isActive: false } })
+  const updated = await prisma.league.update({ where: { id: req.params.id }, data: { approvalStatus: 'REJECTED', enabled: false, isActive: false, status: 'ARCHIVED', reviewReason: reason ?? 'Rejected', archivedAt: new Date(), lastManualUpdateAt: new Date() } })
+  await audit('REJECT_LEAGUE', 'League', req.params.id, null, updated)
+  res.json({ data: updated, note: await rerank() })
 })
 
 // ─── CLUBS ────────────────────────────────────────────────────────────────────
@@ -272,14 +287,22 @@ router.post('/clubs/merge', async (req, res) => {
   res.json({ data: { keepId }, note: await rerank() })
 })
 
+// Soft-delete: retire a club (recoverable). Its ladder rows are deactivated so
+// it leaves the rankings, but the club + history are preserved.
 router.delete('/clubs/:id', async (req, res) => {
-  await prisma.clubLeagueSeason.deleteMany({ where: { clubId: req.params.id } })
-  await prisma.rankingEntry.deleteMany({ where: { clubId: req.params.id } })
-  await prisma.rankingSnapshot.deleteMany({ where: { clubId: req.params.id } })
-  await prisma.clubNameVariant.deleteMany({ where: { clubId: req.params.id } })
-  await prisma.club.delete({ where: { id: req.params.id } })
-  await audit('DELETE_CLUB', 'Club', req.params.id, null, null)
-  res.json({ data: { deleted: req.params.id }, note: await rerank() })
+  const before = await prisma.club.findUnique({ where: { id: req.params.id } })
+  if (!before) return res.status(404).json({ error: 'not found' })
+  await prisma.clubLeagueSeason.updateMany({ where: { clubId: req.params.id }, data: { isActive: false } })
+  const updated = await prisma.club.update({ where: { id: req.params.id }, data: { archivedAt: new Date(), isActive: false } })
+  await audit('ARCHIVE_CLUB', 'Club', req.params.id, before, updated)
+  res.json({ data: { archived: req.params.id }, note: await rerank() })
+})
+
+router.post('/clubs/:id/restore', async (req, res) => {
+  await prisma.clubLeagueSeason.updateMany({ where: { clubId: req.params.id }, data: { isActive: true } })
+  const updated = await prisma.club.update({ where: { id: req.params.id }, data: { archivedAt: null, isActive: true } })
+  await audit('RESTORE_CLUB', 'Club', req.params.id, null, updated)
+  res.json({ data: updated, note: await rerank() })
 })
 
 // ─── RANKINGS ─────────────────────────────────────────────────────────────────

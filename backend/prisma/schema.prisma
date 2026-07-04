@@ -104,6 +104,12 @@ model League {
   facebookUrl        String?
   logoUrl            String?
 
+  // ── Never-destroy: soft-delete / archive / approval ──────────────────────
+  archivedAt     DateTime?                            // soft-deleted / archived
+  approvalStatus String    @default("APPROVED")       // PENDING | APPROVED | REJECTED
+  leagueType     String?                              // FNL | FANL | STANDALONE_NA | OTHER
+  reviewReason   String?
+
   // Averages (recalculated each cycle)
   avgGoalsPerGame  Float?
   avgMarginPerGame Float?
@@ -179,6 +185,11 @@ model Club {
   manualOverride Boolean  @default(false)  // protect manual clubs from auto imports
   source         String?                    // origin of this club record
   bestRank       Int?                       // historical best national rank
+
+  // Never-destroy: soft-delete / archive / approval
+  archivedAt     DateTime?
+  approvalStatus String   @default("APPROVED")  // PENDING | APPROVED | REJECTED
+  townName       String?                          // real town this club belongs to
 
   // Relationships
   state          State            @relation(fields: [stateId], references: [id])
@@ -445,11 +456,43 @@ model AuditLog {
   before     String?  // JSON
   after      String?  // JSON
   ipAddress  String?
+  source     String?  // ADMIN | OCR | PLAYHQ | CSV | SYSTEM
+  reason     String?  // optional human reason
   createdAt  DateTime @default(now())
 
   user AdminUser @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// Nothing uncertain publishes automatically — it enters this queue.
+model ReviewItem {
+  id         String    @id @default(uuid())
+  entityType String    // League | Club | Ladder | Ranking | Logo
+  entityId   String?
+  kind       String    // UNKNOWN_LEAGUE | DUPLICATE_CLUB | LOW_CONFIDENCE_OCR | NAME_CHANGE | LADDER_CHANGE | MISSING_LOGO | STRENGTH_UNCERTAIN
+  reason     String
+  confidence Float?     // 0–1 where applicable
+  payload    String?    // JSON — the proposed change / context
+  status     String    @default("PENDING")  // PENDING | APPROVED | REJECTED | MERGED | IGNORED
+  createdAt  DateTime   @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  @@index([status])
+  @@map("review_items")
+}
+
+// One-click backups / restore points (full JSON snapshot of core tables).
+model Backup {
+  id        String   @id @default(uuid())
+  label     String
+  kind      String   @default("MANUAL")  // MANUAL | NIGHTLY | PRE_RESTORE
+  counts    String?  // JSON summary { leagues, clubs, ... }
+  data      String   // JSON dump of core tables
+  createdAt DateTime @default(now())
+
+  @@map("backups")
 }
 
 // Global key/value settings (e.g. rankingsLocked, currentSeason).

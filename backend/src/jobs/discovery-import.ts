@@ -222,6 +222,8 @@ async function importLeague(
     })
   } else {
     if (!league.enabled) { logger.info('DiscoveryImport: league disabled, skipping', { league: league.name }); return null }
+    // Never overwrite operator-edited data — auto imports skip manual-override leagues.
+    if (league.manualOverride) { logger.info('DiscoveryImport: manual override, skipping', { league: league.name }); return null }
     // Adopt it under discovery ownership (attach PlayHQ metadata, mark auto).
     league = await prisma.league.update({
       where: { id: league.id },
