@@ -142,8 +142,10 @@ export const admin = {
   // Platform — dashboard, recalc, reviews, backups, audit, settings
   dashboard:   () => req<{ data: DashboardData }>('GET', '/admin/platform/dashboard').then(r => r.data),
   recalculate: () => req<{ data: RecalcReport }>('POST', '/admin/platform/recalculate').then(r => r.data),
-  listReviews: (status = 'PENDING') => req<{ data: ReviewItem[] }>('GET', `/admin/platform/reviews?status=${status}`).then(r => r.data),
+  listReviews: (status = 'PENDING', kind?: string) => req<{ data: ReviewItem[]; meta?: { kinds: { kind: string; count: number }[] } }>('GET', `/admin/platform/reviews?status=${status}${kind ? `&kind=${kind}` : ''}`),
   resolveReview: (id: string, action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => req<{ data: ReviewItem }>('POST', `/admin/platform/reviews/${id}/resolve`, { action }),
+  resolveReviewsBulk: (ids: string[], action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => req<{ data: { resolved: number } }>('POST', '/admin/platform/reviews/bulk', { ids, action }),
+  qualitySweep: () => req<{ data: { duplicateClubs: number; missingLogos: number; orphanClubs: number; staleLeagues: number; raised: number; skippedExisting: number } }>('POST', '/admin/platform/quality/sweep').then(r => r.data),
   listBackups: () => req<{ data: BackupRow[] }>('GET', '/admin/platform/backups').then(r => r.data),
   createBackup: (label?: string) => req<{ data: { id: string; counts: Record<string, number> } }>('POST', '/admin/platform/backups', { label }),
   restoreBackup: (id: string) => req<{ data: { restored: boolean; from: string } }>('POST', `/admin/platform/backups/${id}/restore`),

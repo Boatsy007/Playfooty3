@@ -10,6 +10,8 @@ import { recalculateNational } from '../jobs/recompute-strength.js'
 import { parsePlayHQUrl }   from '../discovery/playhq-url.js'
 import { dispatchWorkflow, listRuns, getRun, githubConfig } from '../integrations/github-dispatch.js'
 import { previewCsv, commitCsv, type CsvEntity, type PreviewRow } from '../jobs/csv-import.js'
+import { createBackup } from '../jobs/backup.js'
+import { sweepDataQuality } from '../jobs/data-quality.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -175,8 +177,15 @@ router.post('/recalculate', async (_req, res) => {
 // ─── Review queue ─────────────────────────────────────────────────────────────
 router.get('/reviews', async (req, res) => {
   const status = (req.query.status as string) ?? 'PENDING'
-  const items = await prisma.reviewItem.findMany({ where: status === 'ALL' ? {} : { status }, orderBy: { createdAt: 'desc' }, take: 200 })
-  res.json({ data: items })
+  const kind = req.query.kind as string | undefined
+  const items = await prisma.reviewItem.findMany({
+    where: { ...(status === 'ALL' ? {} : { status }), ...(kind ? { kind } : {}) },
+    orderBy: [{ confidence: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],   // least-confident first
+    take: 300,
+  })
+  // Kind counts so the UI can render filter chips with badges.
+  const kinds = await prisma.reviewItem.groupBy({ by: ['kind'], where: { status: 'PENDING' }, _count: { kind: true } })
+  res.json({ data: items, meta: { kinds: kinds.map(k => ({ kind: k.kind, count: k._count.kind })) } })
 })
 router.post('/reviews', async (req, res) => {
   const b = req.body as { entityType: string; entityId?: string; kind: string; reason: string; confidence?: number; payload?: unknown }
@@ -190,35 +199,43 @@ router.post('/reviews/:id/resolve', async (req, res) => {
   await audit('RESOLVE_REVIEW', 'ReviewItem', item.id, { action })
   res.json({ data: item })
 })
+// Bulk resolve — approve/ignore/reject many items in one click.
+router.post('/reviews/bulk', async (req, res) => {
+  const { ids, action } = req.body as { ids?: string[]; action?: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED' }
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids required' })
+  if (!action || !['APPROVED', 'REJECTED', 'MERGED', 'IGNORED'].includes(action)) return res.status(400).json({ error: 'invalid action' })
+  const result = await prisma.reviewItem.updateMany({ where: { id: { in: ids }, status: 'PENDING' }, data: { status: action, resolvedAt: new Date(), resolvedBy: 'admin' } })
+  await audit('RESOLVE_REVIEWS_BULK', 'ReviewItem', null, { action, count: result.count })
+  res.json({ data: { resolved: result.count, action } })
+})
 
-// ─── Backups / restore points ─────────────────────────────────────────────────
-async function snapshot(): Promise<{ counts: Record<string, number>; data: string }> {
-  const [states, associations, leagues, clubs, leagueSources, clubLeagueSeasons] = await Promise.all([
-    prisma.state.findMany(), prisma.association.findMany(), prisma.league.findMany(),
-    prisma.club.findMany(), prisma.leagueSource.findMany(), prisma.clubLeagueSeason.findMany(),
-  ])
-  const counts = { states: states.length, associations: associations.length, leagues: leagues.length, clubs: clubs.length, leagueSources: leagueSources.length, clubLeagueSeasons: clubLeagueSeasons.length }
-  return { counts, data: JSON.stringify({ states, associations, leagues, clubs, leagueSources, clubLeagueSeasons }) }
-}
+// ─── Data-quality sweep (Phase 5) ─────────────────────────────────────────────
+// Scans for duplicate clubs, missing logos, orphan clubs and stale leagues, and
+// raises review items (idempotent — pending items are never duplicated).
+router.post('/quality/sweep', async (_req, res) => {
+  try {
+    const report = await sweepDataQuality()
+    await audit('QUALITY_SWEEP', 'ReviewItem', null, report, 'SYSTEM')
+    res.json({ data: report })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'sweep failed' }) }
+})
 
+// ─── Backups / restore points (snapshot/createBackup shared with the nightly job) ─
 router.get('/backups', async (_req, res) => {
   const backups = await prisma.backup.findMany({ orderBy: { createdAt: 'desc' }, take: 50, select: { id: true, label: true, kind: true, counts: true, createdAt: true } })
   res.json({ data: backups })
 })
 router.post('/backups', async (req, res) => {
   const { label } = req.body as { label?: string }
-  const snap = await snapshot()
-  const backup = await prisma.backup.create({ data: { label: label ?? `Backup ${new Date().toISOString()}`, kind: 'MANUAL', counts: JSON.stringify(snap.counts), data: snap.data } })
-  await audit('CREATE_BACKUP', 'Backup', backup.id, snap.counts)
-  res.status(201).json({ data: { id: backup.id, counts: snap.counts } })
+  const backup = await createBackup('MANUAL', label)
+  await audit('CREATE_BACKUP', 'Backup', backup.id, backup.counts)
+  res.status(201).json({ data: backup })
 })
 // Restore reseeds core tables from a backup (upsert; takes a safety snapshot first).
 router.post('/backups/:id/restore', async (req, res) => {
   const backup = await prisma.backup.findUnique({ where: { id: req.params.id } })
   if (!backup) return res.status(404).json({ error: 'not found' })
-  // Safety snapshot before restore.
-  const pre = await snapshot()
-  await prisma.backup.create({ data: { label: `Pre-restore ${new Date().toISOString()}`, kind: 'PRE_RESTORE', counts: JSON.stringify(pre.counts), data: pre.data } })
+  await createBackup('PRE_RESTORE')   // safety snapshot before restore
 
   const d = JSON.parse(backup.data) as { states: any[]; associations: any[]; leagues: any[]; clubs: any[]; leagueSources: any[]; clubLeagueSeasons: any[] }
   let restored = 0

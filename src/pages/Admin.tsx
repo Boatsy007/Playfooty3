@@ -35,7 +35,7 @@ export default function Admin() {
   const [pending, setPending] = useState(0)
   const t = useToast()
 
-  useEffect(() => { if (authed) admin.listReviews('PENDING').then(r => setPending(r.length)).catch(() => {}) }, [authed, tab])
+  useEffect(() => { if (authed) admin.listReviews('PENDING').then(r => setPending(r.data.length)).catch(() => {}) }, [authed, tab])
 
   if (!authed) return <Login onIn={() => setAuthed(true)} />
 
@@ -295,42 +295,92 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
 // ─── Pending Reviews ──────────────────────────────────────────────────────────
 function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [items, setItems] = useState<ReviewItem[]>([])
+  const [kinds, setKinds] = useState<{ kind: string; count: number }[]>([])
   const [status, setStatus] = useState('PENDING')
-  const load = () => admin.listReviews(status).then(setItems).catch(e => toast(e.message, false))
-  useEffect(() => { load() }, [status])
+  const [kind, setKind] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [busy, setBusy] = useState(false)
+  const load = () => admin.listReviews(status, kind || undefined).then(r => { setItems(r.data); setKinds(r.meta?.kinds ?? []); setSelected(new Set()) }).catch(e => toast(e.message, false))
+  useEffect(() => { load() }, [status, kind])
   const resolve = async (id: string, action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => {
     try { await admin.resolveReview(id, action); toast(`Marked ${action}`); await load() } catch (e) { toast((e as Error).message, false) }
   }
+  const bulk = async (action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => {
+    if (selected.size === 0) return toast('select items first', false)
+    setBusy(true)
+    try { const r = await admin.resolveReviewsBulk([...selected], action); toast(`${r.data.resolved} item(s) marked ${action}`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const sweep = async () => {
+    setBusy(true)
+    try { const r = await admin.qualitySweep(); toast(`Sweep: ${r.raised} new item(s) raised (${r.duplicateClubs} dup groups, ${r.missingLogos} no-logo, ${r.orphanClubs} orphans, ${r.staleLeagues} stale)`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const toggle = (id: string) => setSelected(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const allSelected = items.length > 0 && items.every(i => i.status !== 'PENDING' || selected.has(i.id))
+  const confColour = (c: number | null) => c == null ? C.mute : c < 0.4 ? C.red : c < 0.7 ? C.gold : C.green
+
   return (
-    <div style={box}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <b>Review queue ({items.length})</b>
-        <select style={{ ...input, width: 140 }} value={status} onChange={e => setStatus(e.target.value)}>
-          <option value="PENDING">Pending</option><option value="ALL">All</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option>
-        </select>
-      </div>
-      {items.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>Nothing to review — everything is clean. ✓</p>}
-      <div style={{ display: 'grid', gap: 8 }}>
-        {items.map(it => (
-          <div key={it.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: '#0d1220' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-              <div>
-                <span style={{ background: '#1b2233', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
-                <span style={{ color: C.mute, fontSize: 12, marginLeft: 8 }}>{it.entityType}{it.confidence != null ? ` · conf ${it.confidence.toFixed(2)}` : ''}</span>
-                <div style={{ fontSize: 13, marginTop: 4 }}>{it.reason}</div>
-              </div>
-              {it.status === 'PENDING' && (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button style={btn(C.green)} onClick={() => resolve(it.id, 'APPROVED')}>Approve</button>
-                  <button style={btn(C.gold)} onClick={() => resolve(it.id, 'MERGED')}>Merge</button>
-                  <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
-                  <button style={btn(C.red)} onClick={() => resolve(it.id, 'REJECTED')}>Reject</button>
-                </div>
-              )}
-              {it.status !== 'PENDING' && <span style={{ color: C.mute, fontSize: 12 }}>{it.status}</span>}
-            </div>
-          </div>
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ ...box, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <b style={{ marginRight: 4 }}>Filter</b>
+        <button style={{ ...btn(kind === '' ? C.pink : '#1b2233'), color: kind === '' ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind('')}>All</button>
+        {kinds.map(k => (
+          <button key={k.kind} style={{ ...btn(kind === k.kind ? C.pink : '#1b2233'), color: kind === k.kind ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind(kind === k.kind ? '' : k.kind)}>
+            {k.kind.replace(/_/g, ' ').toLowerCase()} <span style={{ background: C.gold, color: '#111', borderRadius: 8, padding: '0 6px', marginLeft: 4 }}>{k.count}</span>
+          </button>
         ))}
+        <span style={{ flex: 1 }} />
+        <select style={{ ...input, width: 130 }} value={status} onChange={e => setStatus(e.target.value)}>
+          <option value="PENDING">Pending</option><option value="ALL">All</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="IGNORED">Ignored</option>
+        </select>
+        <button disabled={busy} style={btn('#2a3145')} onClick={sweep}>{busy ? 'Working…' : '⟳ Run quality sweep'}</button>
+      </div>
+
+      <div style={box}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+          <b>Review queue ({items.length}) <span style={{ color: C.mute, fontWeight: 400, fontSize: 12 }}>— least confident first</span></b>
+          {selected.size > 0 && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ color: C.mute, fontSize: 12 }}>{selected.size} selected</span>
+              <button disabled={busy} style={btn(C.green)} onClick={() => bulk('APPROVED')}>Approve all</button>
+              <button disabled={busy} style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => bulk('IGNORED')}>Ignore all</button>
+              <button disabled={busy} style={btn(C.red)} onClick={() => bulk('REJECTED')}>Reject all</button>
+            </div>
+          )}
+        </div>
+        {items.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>Nothing to review — everything is clean. ✓</p>}
+        {items.length > 0 && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.mute, fontSize: 12, marginBottom: 8, cursor: 'pointer' }}>
+            <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(items.filter(i => i.status === 'PENDING').map(i => i.id)))} />
+            Select all pending
+          </label>
+        )}
+        <div style={{ display: 'grid', gap: 8 }}>
+          {items.map(it => (
+            <div key={it.id} style={{ border: `1px solid ${selected.has(it.id) ? C.pink : C.line}`, borderRadius: 8, padding: 12, background: '#0d1220' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {it.status === 'PENDING' && <input type="checkbox" checked={selected.has(it.id)} onChange={() => toggle(it.id)} style={{ marginTop: 4 }} />}
+                  <div>
+                    <span style={{ background: '#1b2233', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
+                    <span style={{ color: C.mute, fontSize: 12, marginLeft: 8 }}>{it.entityType} · {new Date(it.createdAt).toLocaleDateString()}</span>
+                    {it.confidence != null && <span style={{ color: confColour(it.confidence), fontSize: 12, marginLeft: 8, fontWeight: 700 }}>conf {it.confidence.toFixed(2)}</span>}
+                    <div style={{ fontSize: 13, marginTop: 4 }}>{it.reason}</div>
+                  </div>
+                </div>
+                {it.status === 'PENDING' ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button style={btn(C.green)} onClick={() => resolve(it.id, 'APPROVED')}>Approve</button>
+                    <button style={btn(C.gold)} onClick={() => resolve(it.id, 'MERGED')}>Merge</button>
+                    <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
+                    <button style={btn(C.red)} onClick={() => resolve(it.id, 'REJECTED')}>Reject</button>
+                  </div>
+                ) : <span style={{ color: C.mute, fontSize: 12 }}>{it.status}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
