@@ -68,6 +68,11 @@ export interface ImportReport {
   isNew?: boolean; clubsAdded: number; clubsUpdated: number; ladderRows: number; ladderUpdated: boolean
   rankingRecalculated: boolean; clubsRanked: number; confidence: number; warnings: string[]; reviewsRaised: number; error?: string
 }
+export interface EngineInfo { repo: string; ref: string; configured: boolean }
+export interface WorkflowRun {
+  id: number; status: string; conclusion: string | null; htmlUrl: string; createdAt: string; name: string; event: string
+}
+export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string }
 export interface RecalcReport {
   leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
   clubsRanked: number
@@ -123,8 +128,14 @@ export const admin = {
   listAudit: (entityType?: string) => req<{ data: AuditRow[] }>('GET', `/admin/platform/audit${entityType ? `?entityType=${entityType}` : ''}`).then(r => r.data),
   listSettings: () => req<{ data: SettingRow[] }>('GET', '/admin/platform/settings').then(r => r.data),
   setSetting: (key: string, value: string) => req<{ data: SettingRow }>('POST', '/admin/platform/settings', { key, value }),
-  // PlayHQ URL import (Phase 1) + League sync (Phase 10)
+  // PlayHQ URL import (Phase 1) + League sync (Phase 10) — dispatched to GitHub Actions
   classifyUrl: (url: string) => req<{ data: ParsedUrl }>('POST', '/admin/platform/playhq/classify', { url }).then(r => r.data),
-  importUrl:   (url: string) => req<{ data: ImportReport }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),
-  syncLeague:  (id: string) => req<{ data: ImportReport }>('POST', `/admin/platform/leagues/${id}/sync`).then(r => r.data),
+  importUrl:   (url: string) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),
+  syncLeague:  (id: string) => req<{ data: DispatchResult }>('POST', `/admin/platform/leagues/${id}/sync`).then(r => r.data),
+  syncAll:     () => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/sync-all').then(r => r.data),
+  discover:    (b: { assocFilter?: string; maxAssociations?: string }) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/discover', b).then(r => r.data),
+  // Execution engine (GitHub Actions) status
+  engineInfo:  () => req<{ data: EngineInfo }>('GET', '/admin/platform/engine').then(r => r.data),
+  engineRuns:  (workflow?: string) => req<{ data: WorkflowRun[] }>('GET', `/admin/platform/engine/runs${workflow ? `?workflow=${workflow}` : ''}`).then(r => r.data),
+  engineRun:   (id: number) => req<{ data: WorkflowRun }>('GET', `/admin/platform/engine/runs/${id}`).then(r => r.data),
 }

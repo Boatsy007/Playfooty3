@@ -7,9 +7,13 @@ import { Router }          from 'express'
 import { prisma }          from '../db/client.js'
 import { requireAdminKey } from '../api/middleware/auth.js'
 import { recalculateNational } from '../jobs/recompute-strength.js'
-import { importFromUrl, syncLeague } from '../jobs/playhq-url-import.js'
 import { parsePlayHQUrl }   from '../discovery/playhq-url.js'
+import { dispatchWorkflow, listRuns, getRun, githubConfig } from '../integrations/github-dispatch.js'
 import { logger }          from '../utils/logger.js'
+
+// Workflow files (the browser-backed execution engine on GitHub Actions).
+const WF_URL_IMPORT = 'playhq-url-import.yml'
+const WF_DISCOVER   = 'discover-import.yml'
 
 const router = Router()
 router.use(requireAdminKey)
@@ -70,32 +74,71 @@ router.post('/settings', async (req, res) => {
   res.json({ data: row })
 })
 
-// ─── PlayHQ URL import (Phase 1) ──────────────────────────────────────────────
-// Preview: classify a pasted URL without importing (instant, no browser).
+// ─── Execution engine status ──────────────────────────────────────────────────
+// The admin panel dispatches browser-backed work to GitHub Actions (Playwright
+// cannot run inside Vercel). These endpoints expose config + run status so the
+// UI can stay one-click and poll results.
+router.get('/engine', async (_req, res) => {
+  const cfg = githubConfig()
+  res.json({ data: { repo: cfg.repo, ref: cfg.ref, configured: cfg.hasToken } })
+})
+router.get('/engine/runs', async (req, res) => {
+  const file = (req.query.workflow as string) || WF_URL_IMPORT
+  try { res.json({ data: await listRuns(file, Math.min(Number(req.query.limit) || 10, 30)) }) }
+  catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'failed to list runs' }) }
+})
+router.get('/engine/runs/:id', async (req, res) => {
+  try { res.json({ data: await getRun(Number(req.params.id)) }) }
+  catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'failed to get run' }) }
+})
+
+// ─── PlayHQ URL import (Phase 1) — dispatched to GitHub Actions ───────────────
+// Preview: classify a pasted URL without importing (instant, local, no browser).
 router.post('/playhq/classify', async (req, res) => {
   const { url } = req.body as { url?: string }
   if (!url) return res.status(400).json({ error: 'url required' })
   res.json({ data: parsePlayHQUrl(url) })
 })
-// Import: resolve the A-Grade ladder for a pasted URL and persist + re-rank.
+// Import: dispatch the browser-backed import workflow with the pasted URL.
 router.post('/playhq/import', async (req, res) => {
-  const { url, rerank } = req.body as { url?: string; rerank?: boolean }
+  const { url } = req.body as { url?: string }
   if (!url) return res.status(400).json({ error: 'url required' })
+  const parsed = parsePlayHQUrl(url)
+  if (!parsed.ok || !parsed.orgSlug) return res.status(400).json({ error: parsed.warnings.join('; ') || 'Could not parse PlayHQ URL' })
   try {
-    const report = await importFromUrl(url, { rerank: rerank !== false })
-    await audit('PLAYHQ_URL_IMPORT', 'League', report.leagueId ?? null, { url, status: report.status, added: report.clubsAdded, updated: report.clubsUpdated }, 'PLAYHQ_URL')
-    res.json({ data: report })
-  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'import failed' }) }
+    const out = await dispatchWorkflow(WF_URL_IMPORT, { url })
+    await audit('PLAYHQ_URL_IMPORT_DISPATCH', 'League', null, { url, runId: out.run?.id ?? null }, 'PLAYHQ_URL')
+    res.status(202).json({ data: { ...out, kind: parsed.kind } })
+  } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
 })
 
-// ─── League sync (Phase 10 — weekly workflow) ─────────────────────────────────
+// ─── League sync (Phase 10) — dispatched to GitHub Actions ────────────────────
 router.post('/leagues/:id/sync', async (req, res) => {
   try {
-    const report = await syncLeague(req.params.id, { rerank: true })
-    await audit('SYNC_LEAGUE', 'League', req.params.id, { status: report.status, updated: report.clubsUpdated }, 'PLAYHQ_SYNC')
-    if (report.status === 'FAILED') return res.status(400).json({ error: report.error, data: report })
-    res.json({ data: report })
-  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'sync failed' }) }
+    const out = await dispatchWorkflow(WF_URL_IMPORT, { sync_league_id: req.params.id })
+    await audit('SYNC_LEAGUE_DISPATCH', 'League', req.params.id, { runId: out.run?.id ?? null }, 'PLAYHQ_SYNC')
+    res.status(202).json({ data: out })
+  } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
+})
+// Sync every league that has a stored PlayHQ URL (weekly refresh).
+router.post('/playhq/sync-all', async (_req, res) => {
+  try {
+    const out = await dispatchWorkflow(WF_URL_IMPORT, { sync_all: 'true' })
+    await audit('SYNC_ALL_DISPATCH', 'League', null, { runId: out.run?.id ?? null }, 'PLAYHQ_SYNC')
+    res.status(202).json({ data: out })
+  } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
+})
+// Discovery scrape (crawl PlayHQ + import discovered A-Grade leagues).
+router.post('/playhq/discover', async (req, res) => {
+  const { assocFilter, maxAssociations } = req.body as { assocFilter?: string; maxAssociations?: string }
+  try {
+    const inputs: Record<string, string> = {}
+    if (assocFilter) inputs.assoc_filter = assocFilter
+    if (maxAssociations) inputs.max_associations = String(maxAssociations)
+    const out = await dispatchWorkflow(WF_DISCOVER, inputs)
+    await audit('DISCOVERY_DISPATCH', 'League', null, { runId: out.run?.id ?? null, assocFilter, maxAssociations }, 'PLAYHQ_DISCOVERY')
+    res.status(202).json({ data: out })
+  } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
 })
 
 // ─── National recalculation ──────────────────────────────────────────────────

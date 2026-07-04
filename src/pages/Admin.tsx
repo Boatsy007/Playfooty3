@@ -3,8 +3,8 @@
  * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ImportReport, type ParsedUrl } from '../lib/admin'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -125,23 +125,28 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
   )
 }
 
-// ─── PlayHQ URL Import (Phase 1) ──────────────────────────────────────────────
-function ReportCard({ r }: { r: ImportReport }) {
-  const colour = r.status === 'SUCCESS' ? C.green : r.status === 'NO_DATA' ? C.gold : C.red
-  const line = (label: string, val: ReactNode) => <div style={{ fontSize: 13, padding: '2px 0' }}><span style={{ color: C.mute }}>{label}: </span>{val}</div>
+// ─── PlayHQ Import + Sync (Phase 1/10) — dispatched to GitHub Actions ─────────
+const runColour = (r: WorkflowRun) =>
+  r.status !== 'completed' ? C.gold : r.conclusion === 'success' ? C.green : C.red
+const runLabel = (r: WorkflowRun) =>
+  r.status !== 'completed' ? r.status.replace('_', ' ') : (r.conclusion ?? 'done')
+
+function RunList({ runs, title }: { runs: WorkflowRun[]; title: string }) {
   return (
-    <div style={{ ...box, borderColor: colour }}>
-      <b style={{ color: colour }}>{r.status === 'SUCCESS' ? '✓ Import complete' : r.status === 'NO_DATA' ? '⚠ No ladder data' : '✗ Import failed'}</b>
-      {r.error && <div style={{ color: C.red, fontSize: 13, marginTop: 4 }}>{r.error}</div>}
-      {r.league && line('League', <b>{r.league}{r.isNew ? ' (new)' : ''}</b>)}
-      {line('Clubs added', r.clubsAdded)}
-      {line('Clubs updated', r.clubsUpdated)}
-      {line('Ladder rows', r.ladderRows)}
-      {line('Ladder updated', r.ladderUpdated ? '✓' : '—')}
-      {line('Ranking recalculated', r.rankingRecalculated ? `✓ (${r.clubsRanked} clubs)` : '—')}
-      {line('Confidence', r.confidence.toFixed(2))}
-      {r.reviewsRaised > 0 && line('Raised for review', <span style={{ color: C.gold }}>{r.reviewsRaised} club(s)</span>)}
-      {r.warnings.length > 0 && <div style={{ marginTop: 6 }}>{r.warnings.map((w, i) => <div key={i} style={{ color: C.gold, fontSize: 12 }}>⚠ {w}</div>)}</div>}
+    <div style={box}>
+      <b>{title}</b>
+      {runs.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No runs yet.</p>}
+      <div style={{ marginTop: 8, display: 'grid', gap: 4 }}>
+        {runs.map(r => (
+          <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '4px 0', borderBottom: `1px solid ${C.line}` }}>
+            <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: runColour(r), marginRight: 8 }} />{new Date(r.createdAt).toLocaleString()} <span style={{ color: C.mute }}>· {r.event}</span></span>
+            <span style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <span style={{ color: runColour(r), fontWeight: 700, textTransform: 'capitalize' }}>{runLabel(r)}</span>
+              <a href={r.htmlUrl} target="_blank" rel="noreferrer" style={{ color: C.pink, fontSize: 12 }}>view ↗</a>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -150,24 +155,44 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [url, setUrl] = useState('')
   const [parsed, setParsed] = useState<ParsedUrl | null>(null)
   const [busy, setBusy] = useState(false)
-  const [report, setReport] = useState<ImportReport | null>(null)
+  const [engine, setEngine] = useState<EngineInfo | null>(null)
+  const [runs, setRuns] = useState<WorkflowRun[]>([])
+
+  const loadRuns = () => admin.engineRuns('playhq-url-import.yml').then(setRuns).catch(() => {})
+  useEffect(() => { admin.engineInfo().then(setEngine).catch(() => {}); loadRuns() }, [])
+  // Poll while any run is active.
+  useEffect(() => {
+    if (!runs.some(r => r.status !== 'completed')) return
+    const t = setInterval(loadRuns, 6000)
+    return () => clearInterval(t)
+  }, [runs])
 
   const classify = async (u: string) => { setParsed(null); if (!u.trim()) return; try { setParsed(await admin.classifyUrl(u)) } catch { /* ignore preview errors */ } }
-  const doImport = async () => {
-    if (!url.trim()) return toast('paste a PlayHQ URL', false)
-    setBusy(true); setReport(null)
-    try { const r = await admin.importUrl(url); setReport(r); toast(r.status === 'SUCCESS' ? `Imported ${r.league}` : r.status, r.status === 'SUCCESS') }
+  const dispatch = async (fn: () => Promise<{ htmlUrl: string }>, msg: string) => {
+    setBusy(true)
+    try { const out = await fn(); toast(`${msg} — running on GitHub Actions`); setTimeout(loadRuns, 1500); return out }
     catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
+  const doImport = () => { if (!url.trim()) return toast('paste a PlayHQ URL', false); dispatch(() => admin.importUrl(url), 'Import dispatched') }
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ ...box, borderColor: engine && !engine.configured ? C.red : C.line }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <b>Execution engine — GitHub Actions</b>
+          {engine && <span style={{ fontSize: 12, color: engine.configured ? C.green : C.red }}>{engine.configured ? `● connected · ${engine.repo} @ ${engine.ref}` : '● not configured'}</span>}
+        </div>
+        <p style={{ color: C.mute, fontSize: 12, margin: '6px 0 0' }}>PlayHQ scraping runs in a headless browser on GitHub's runners (not in the serverless API), then writes to the same database and re-ranks. Every action here dispatches a workflow and tracks it below.</p>
+        {engine && !engine.configured && <p style={{ color: C.red, fontSize: 12, margin: '6px 0 0' }}>Set <code>GITHUB_DISPATCH_TOKEN</code> (Actions: read &amp; write) in the API environment to enable one-click dispatch.</p>}
+      </div>
+
       <div style={box}>
         <b>Import from PlayHQ URL</b>
-        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Paste ANY PlayHQ URL — association, competition, season, grade or ladder. The system detects what it is, finds the A&nbsp;Grade Senior Women's ladder, imports the clubs + ladder, and re-ranks. Manual edits and overrides are never overwritten.</p>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Paste ANY PlayHQ URL — association, competition, season, grade or ladder. The workflow detects what it is, finds the A&nbsp;Grade Senior Women's ladder, imports the clubs + ladder, and re-ranks. Manual edits and overrides are never overwritten.</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input style={{ ...input, flex: 1, minWidth: 320 }} placeholder="https://www.playhq.com/netball-australia/org/…" value={url}
             onChange={e => { setUrl(e.target.value); classify(e.target.value) }} onKeyDown={e => e.key === 'Enter' && doImport()} />
-          <button disabled={busy || !url.trim()} style={btn(C.green)} onClick={doImport}>{busy ? 'Importing…' : 'Import'}</button>
+          <button disabled={busy || !url.trim()} style={btn(C.green)} onClick={doImport}>{busy ? 'Dispatching…' : 'Import'}</button>
         </div>
         {parsed && (
           <div style={{ marginTop: 10, fontSize: 12, color: C.mute }}>
@@ -178,8 +203,15 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           </div>
         )}
       </div>
-      {busy && <div style={box}><span style={{ color: C.mute }}>Scraping PlayHQ (headless browser) — this can take up to a minute…</span></div>}
-      {report && <ReportCard r={report} />}
+
+      <div style={{ ...box, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <b style={{ marginRight: 8 }}>Bulk</b>
+        <button disabled={busy} style={btn()} onClick={() => dispatch(() => admin.syncAll(), 'Sync-all dispatched')}>↻ Sync all leagues (weekly)</button>
+        <button disabled={busy} style={btn('#2a3145')} onClick={() => dispatch(() => admin.discover({}), 'Discovery dispatched')}>Discover new leagues</button>
+        <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={loadRuns}>Refresh status</button>
+      </div>
+
+      <RunList runs={runs} title="Recent import / sync runs" />
     </div>
   )
 }
@@ -403,7 +435,7 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   </td>
                   <td style={td}>
                     <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename league', l.name); if (n && n !== l.name) save(() => admin.editLeague(l.id, { name: n })) }}>Edit</button>
-                    <button title="Re-scrape stored PlayHQ URL" style={{ ...btn('#1b3a2a'), color: C.green, marginRight: 6 }} onClick={() => save(async () => { const r = await admin.syncLeague(l.id); return { note: r.status === 'SUCCESS' ? `synced ${r.ladderRows} rows (+${r.clubsAdded}/~${r.clubsUpdated})` : (r.error ?? r.status) } })}>Sync</button>
+                    <button title="Re-scrape stored PlayHQ URL on GitHub Actions" style={{ ...btn('#1b3a2a'), color: C.green, marginRight: 6 }} onClick={() => save(async () => { await admin.syncLeague(l.id); return { note: 'sync dispatched to GitHub Actions' } })}>Sync</button>
                     {l.approvalStatus === 'PENDING' && <button style={{ ...btn(C.green), marginRight: 6 }} onClick={() => save(() => admin.approveLeague(l.id))}>Approve</button>}
                     {l.archivedAt
                       ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreLeague(l.id))}>Restore</button>
