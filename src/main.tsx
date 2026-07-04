@@ -1,19 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import './index.css'
 import App from './App.tsx'
-import ClubPackages from './pages/ClubPackages.tsx'
 import PowerRankings from './pages/PowerRankings.tsx'
 import Directory from './pages/Directory.tsx'
 import FullRankings from './pages/FullRankings.tsx'
 import TeamProfile from './pages/TeamProfile.tsx'
 import LeagueProfile from './pages/LeagueProfile.tsx'
 import Leagues from './pages/Leagues.tsx'
-import Championship from './pages/Championship.tsx'
 import News from './pages/News.tsx'
 import NewsArticle from './pages/NewsArticle.tsx'
+import About from './pages/About.tsx'
 import Admin from './pages/Admin.tsx'
 
 function ScrollToTop() {
@@ -28,17 +27,20 @@ createRoot(document.getElementById('root')!).render(
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/club-packages" element={<ClubPackages />} />
         <Route path="/power-rankings" element={<PowerRankings />} />
         <Route path="/rankings" element={<FullRankings />} />
         <Route path="/team/:clubId" element={<TeamProfile />} />
         <Route path="/league/:leagueId" element={<LeagueProfile />} />
         <Route path="/leagues" element={<Leagues />} />
-        <Route path="/championship" element={<Championship />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<NewsArticle />} />
         <Route path="/directory" element={<Directory />} />
+        <Route path="/about" element={<About />} />
         <Route path="/admin" element={<Admin />} />
+        {/* V1 championship routes retired (postponed, not deleted) — the pages
+            remain in the repo so the championship can plug back in later. */}
+        <Route path="/championship" element={<Navigate to="/rankings" replace />} />
+        <Route path="/club-packages" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

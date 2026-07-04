@@ -6,14 +6,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 const NAV_H = 96 // px — tall enough for the full logo
 
 const links = [
-  { label: 'Rankings',     href: '/rankings',     route: '/rankings'     },
-  { label: 'Clubs',        href: '/directory',    route: '/directory'    },
-  { label: 'Leagues',      href: '/leagues',      route: '/leagues'      },
-  { label: 'Championship', href: '/championship', route: '/championship' },
-  { label: 'News',         href: '/news',         route: '/news'         },
-  { label: 'Gold Coast',   href: '#gold-coast',   route: '/'             },
-  { label: 'Partners',     href: '#partners',     route: '/'             },
-  { label: 'FAQ',          href: '#faq',          route: '/'             },
+  { label: 'Home',     href: '/',           route: '/'          },
+  { label: 'Rankings', href: '/rankings',   route: '/rankings'  },
+  { label: 'Leagues',  href: '/leagues',    route: '/leagues'   },
+  { label: 'Clubs',    href: '/directory',  route: '/directory' },
+  { label: 'News',     href: '/news',       route: '/news'      },
+  { label: 'About',    href: '/about',      route: '/about'     },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -98,11 +96,10 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img
-              src="/logo.webp"
-              alt="CNCA — Country Netball Championships Australia"
-              style={{ height: NAV_H - 10, width: 'auto', objectFit: 'contain', objectPosition: 'left center' }}
-            />
+            <span className="flex items-baseline gap-1.5">
+              <span className="font-display leading-none" style={{ fontSize: '1.9rem', color: '#111111', letterSpacing: '0.01em' }}>GOT</span>
+              <span className="font-display leading-none" style={{ fontSize: '1.9rem', color: '#ff2c91', letterSpacing: '0.01em' }}>NETTY</span>
+            </span>
           </button>
 
           {/* Desktop links */}
@@ -152,7 +149,7 @@ export default function Nav() {
               transition={{ duration: 0.45, delay: 0.42, ease }}
               whileHover={{ scale: 1.04, y: -1 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => go('#invitation')}
+              onClick={() => go('/rankings', '/rankings')}
               className="ml-4 font-bold rounded-full text-white text-[13px] tracking-wide"
               style={{
                 background: '#ff2c91',
@@ -169,7 +166,7 @@ export default function Nav() {
                 e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,44,145,0.3)'
               }}
             >
-              Request Invitation
+              View Rankings
             </motion.button>
           </div>
 
@@ -258,17 +255,17 @@ export default function Nav() {
                 className="mt-8 space-y-3"
               >
                 <button
-                  onClick={() => go('#invitation')}
+                  onClick={() => go('/rankings', '/rankings')}
                   className="w-full font-bold rounded-2xl text-white text-base py-4"
                   style={{
                     background: '#ff2c91',
                     boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
                   }}
                 >
-                  Request Invitation
+                  View National Rankings
                 </button>
                 <p className="text-center text-xs" style={{ color: 'rgba(17,17,17,0.3)' }}>
-                  CNCA · Gold Coast · October 2027
+                  Got Netty · Australia's Home of Country Netball
                 </p>
               </motion.div>
             </nav>

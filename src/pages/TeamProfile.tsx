@@ -19,16 +19,16 @@ export default function TeamProfile() {
   const navigate = useNavigate()
 
   useSeo({
-    title: data ? `${data.clubName} Netball National Ranking | CNCA` : 'Team Profile | CNCA',
+    title: data ? `${data.clubName} Netball National Ranking | Got Netty` : 'Club Profile | Got Netty',
     description: data
       ? (data.rank != null
-          ? `${data.clubName} is ranked #${data.rank} in Australia's country netball A Grade rankings — power rating ${data.powerRating?.toFixed(1) ?? '—'}, playing in ${data.leagueName ?? 'its league'}. ${data.qualified ? 'Currently qualified' : 'Currently outside the cut-off'} for the CNCA Championship.`
-          : `${data.clubName} — country netball club profile${data.leagueName ? ` in ${data.leagueName}` : ''}. Record, form and national ranking on CNCA.`)
-      : 'Country netball team profile and national ranking.',
+          ? `${data.clubName} is ranked #${data.rank} in Australia's country netball A Grade rankings — power rating ${data.powerRating?.toFixed(1) ?? '—'}, playing in ${data.leagueName ?? 'its league'}. Record, form and national ranking on Got Netty.`
+          : `${data.clubName} — country netball club profile${data.leagueName ? ` in ${data.leagueName}` : ''}. Record, form and national ranking on Got Netty.`)
+      : 'Country netball club profile and national ranking.',
     path: `/team/${clubId}`,
     jsonLd: data ? {
       '@context': 'https://schema.org', '@type': 'SportsTeam', sport: 'Netball', name: data.clubName,
-      memberOf: { '@type': 'SportsOrganization', name: data.leagueName }, url: `https://cnca.com.au/team/${clubId}`,
+      memberOf: { '@type': 'SportsOrganization', name: data.leagueName }, url: `https://gotnetty.com.au/team/${clubId}`,
     } : undefined,
   })
 
@@ -104,17 +104,17 @@ export default function TeamProfile() {
             <FormPips form={data.recentForm} />
             <div className="font-condensed" style={{ color: MUTE, fontSize: 12, marginTop: 10, letterSpacing: '0.03em' }}>Last 5 · most recent right</div>
           </Block>
-          <Block title="Championship Status">
-            {data.qualified
-              ? <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Trophy size={20} color={GOLD_DK} /><span style={{ color: TEXT, fontWeight: 700 }}>Qualified — Top {data.qualifyCutoff}</span></div>
-              : <span style={{ color: MUTE }}>Currently outside the Top {data.qualifyCutoff}</span>}
-            <Link to="/championship" className="font-condensed" style={linkStyle}>About the Championship <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>
+          <Block title="National Standing">
+            {data.rank != null
+              ? <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Trophy size={20} color={GOLD_DK} /><span style={{ color: TEXT, fontWeight: 700 }}>Ranked #{data.rank} in Australia</span></div>
+              : <span style={{ color: MUTE }}>Not yet ranked this season</span>}
+            <Link to="/rankings" className="font-condensed" style={linkStyle}>Full National Rankings <ChevronRight size={13} style={{ verticalAlign: '-2px' }} /></Link>
           </Block>
         </div>
 
         {[
           ['Club History', `A record of ${data.clubName}’s premierships, notable seasons and rivalries will live here.`],
-          ['Honours', 'Premierships, best & fairest awards and national championship appearances.'],
+          ['Honours', 'Premierships, best & fairest awards and national ranking history.'],
           ['Contact & Details', 'Home venue, committee and contact information — coming soon.'],
           ['Photos', 'Team and match-day gallery.'],
           ['Sponsors', 'Club partners and supporters.'],
@@ -135,7 +135,7 @@ export default function TeamProfile() {
             <h3 className="font-display" style={{ color: '#fff', fontSize: 'clamp(1.8rem,5vw,2.6rem)', margin: '0 0 8px', lineHeight: 0.95 }}>IS THIS YOUR CLUB?</h3>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, margin: 0, maxWidth: 520 }}>Claim {data.clubName} to add your crest, history, honours, photos, contacts and sponsors — and keep your national profile current.</p>
           </div>
-          <a href={`mailto:hello@cnca.com.au?subject=${encodeURIComponent(`Claim club profile — ${data.clubName}`)}`} className="btn-pink" style={{ padding: '15px 28px', fontSize: 14, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+          <a href={`mailto:hello@gotnetty.com.au?subject=${encodeURIComponent(`Claim club profile — ${data.clubName}`)}`} className="btn-pink" style={{ padding: '15px 28px', fontSize: 14, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
             Claim This Club Profile
           </a>
         </div>

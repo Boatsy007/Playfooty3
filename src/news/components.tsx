@@ -1,5 +1,5 @@
 /**
- * CNCA News — shared presentational components. Fully isolated: all CSS is
+ * Got Netty News — shared presentational components. Fully isolated: all CSS is
  * injected under `cnews-` prefixed classes via <NewsStyles/> so nothing leaks
  * into (or depends on) the rest of the app's styling.
  */

@@ -1,5 +1,5 @@
 /**
- * CNCA National Club Directory — an official competition database, not a dump.
+ * Got Netty National Club Directory — an official competition database, not a dump.
  * Nothing shows until the visitor searches, filters by state/league, or picks a
  * letter. Bright championship styling; results link to team profiles.
  */
@@ -36,8 +36,8 @@ export default function Directory() {
   const [letter, setLetter] = useState('')
 
   useSeo({
-    title: 'National Club Directory — Country Netball | CNCA',
-    description: 'Search Australia’s country netball clubs and teams by name, state and league, or browse A–Z. The official CNCA national club directory.',
+    title: 'National Club Directory — Country Netball | Got Netty',
+    description: 'Search Australia’s country netball clubs and teams by name, state and league, or browse A–Z. The official Got Netty national club directory.',
     path: '/directory',
   })
 

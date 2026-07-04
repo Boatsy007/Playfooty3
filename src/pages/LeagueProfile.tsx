@@ -18,12 +18,12 @@ export default function LeagueProfile() {
   const navigate = useNavigate()
 
   useSeo({
-    title: data ? `${data.name} Rankings & Ladder | CNCA` : 'League | CNCA',
+    title: data ? `${data.name} Rankings & Ladder | Got Netty` : 'League | Got Netty',
     description: data
       ? `${data.name} — league strength ${strengthStars(data.strengthScore)}/5. See the ${data.rankedTeams.length} nationally-ranked teams and current ladder in Australia's country netball rankings.`
       : 'Country netball league rankings and ladder.',
     path: `/league/${leagueId}`,
-    jsonLd: data ? { '@context': 'https://schema.org', '@type': 'SportsOrganization', sport: 'Netball', name: data.name, url: `https://cnca.com.au/league/${leagueId}` } : undefined,
+    jsonLd: data ? { '@context': 'https://schema.org', '@type': 'SportsOrganization', sport: 'Netball', name: data.name, url: `https://gotnetty.com.au/league/${leagueId}` } : undefined,
   })
 
   if (loading) return <Shell><Center>Loading league…</Center></Shell>

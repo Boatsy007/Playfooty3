@@ -1,5 +1,5 @@
 /**
- * CNCA News — landing page. Premium country-netball publication feel.
+ * Got Netty News — landing page. Premium country-netball publication feel.
  * Isolated feature: reuses only the shared Nav/Footer/useSeo; all news UI and
  * styling live in the self-contained src/news module.
  */
@@ -19,7 +19,7 @@ import {
   PINK, GOLD_DK, INK, MUTE, FAINT, LINE, PAGE, PAGE_ALT,
 } from '../news/components'
 
-const RAIL_CATEGORIES: CategoryId[] = ['championship', 'club-news', 'league-news', 'rankings', 'transfers', 'player-spotlight', 'community', 'opinion', 'history']
+const RAIL_CATEGORIES: CategoryId[] = ['rankings', 'club-news', 'league-news', 'transfers', 'player-spotlight', 'community', 'opinion', 'history']
 
 export default function News() {
   const featured = featuredArticles()
@@ -30,12 +30,12 @@ export default function News() {
   const mostRead = mostReadArticles(5)
 
   useSeo({
-    title: 'CNCA News — Country Netball News, Rankings & Championship | CNCA',
-    description: 'The home of Australian country netball news: national rankings movers, Championship coverage, transfers, player and coach spotlights, club and league news, opinion and history.',
+    title: 'Got Netty News — Country Netball News & Rankings',
+    description: 'The home of Australian country netball news: national rankings movers, transfers, player and coach spotlights, club and league news, opinion and history.',
     path: '/news',
     jsonLd: {
-      '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'CNCA News',
-      description: 'Australian country netball news and features.', url: 'https://cnca.com.au/news',
+      '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Got Netty News',
+      description: 'Australian country netball news and features.', url: 'https://gotnetty.com.au/news',
     },
   })
 
@@ -50,7 +50,7 @@ export default function News() {
         <div style={{ padding: '30px 0 18px' }}>
           <Eyebrow>The Country Netball Publication</Eyebrow>
           <h1 className="font-display" style={{ fontSize: 'clamp(2.6rem,7vw,4.6rem)', color: INK, lineHeight: 0.86, margin: '12px 0 0' }}>
-            CNCA <span style={{ color: PINK }}>NEWS</span>
+            GOT NETTY <span style={{ color: PINK }}>NEWS</span>
           </h1>
         </div>
 

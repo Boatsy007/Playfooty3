@@ -20,8 +20,8 @@ export default function Leagues() {
   const [q, setQ] = useState('')
 
   useSeo({
-    title: 'Country Netball Leagues — National Strength Ratings | CNCA',
-    description: 'Every country netball league tracked by CNCA, with league strength ratings and nationally-ranked teams. Browse leagues by state.',
+    title: 'Country Netball Leagues — National Strength Ratings | Got Netty',
+    description: 'Every country netball league tracked by Got Netty, with league strength ratings and nationally-ranked teams. Browse leagues by state.',
     path: '/leagues',
   })
 

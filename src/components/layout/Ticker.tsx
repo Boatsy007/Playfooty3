@@ -1,10 +1,10 @@
 import { memo } from 'react'
 
 const segments = [
-  'NATIONAL CHAMPIONSHIP', '✦', 'A GRADE PREMIERS', '✦',
-  'INVITATION ONLY', '✦', 'GOLD COAST 2027', '✦', 'ONE NATIONAL TITLE', '✦',
-  'NATIONAL CHAMPIONSHIP', '✦', 'A GRADE PREMIERS', '✦',
-  'INVITATION ONLY', '✦', 'GOLD COAST 2027', '✦', 'ONE NATIONAL TITLE', '✦',
+  'NATIONAL RANKINGS', '✦', 'LEAGUE LADDERS', '✦',
+  'CLUB PROFILES', '✦', 'COUNTRY NETBALL NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
+  'NATIONAL RANKINGS', '✦', 'LEAGUE LADDERS', '✦',
+  'CLUB PROFILES', '✦', 'COUNTRY NETBALL NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
 ]
 
 export default memo(function Ticker() {

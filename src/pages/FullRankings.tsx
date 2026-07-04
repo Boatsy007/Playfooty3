@@ -1,7 +1,7 @@
 /**
- * Full National Rankings — the complete leaderboard (every ranked team), styled
- * as an official national championship leaderboard in the bright homepage style.
- * Top-32 qualification cut-off divider, qualified marking, rows → team profiles.
+ * Full National Rankings — the complete leaderboard (every ranked club), styled
+ * as an editorial national leaderboard in the bright homepage style.
+ * Rows link through to club profiles.
  */
 import { useNavigate, Link } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
@@ -10,10 +10,10 @@ import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import {
-  fetchRankings, useAsync, teamPath, strengthStars, QUALIFY_CUTOFF,
+  fetchRankings, useAsync, teamPath, strengthStars,
   type RankingsResponse, type RankingEntry,
 } from '../lib/rankings'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, QualBadge, Eyebrow, TeamLogo } from '../components/rankings/bits'
+import { PAGE, PAGE_ALT, TEXT, LINE, GOLD, GOLD_DK, PINK, MUTE, FAINT, FormPips, StarStrength, Movement, Eyebrow, TeamLogo } from '../components/rankings/bits'
 
 export default function FullRankings() {
   const { data, loading, error } = useAsync<RankingsResponse>(fetchRankings, [])
@@ -22,11 +22,11 @@ export default function FullRankings() {
   const week = data?.meta?.weekLabel
 
   useSeo({
-    title: 'Full National Rankings — Country Netball A Grade | CNCA',
-    description: 'The complete CNCA national rankings of Australia’s country netball A Grade teams. The top 32 qualify for the Country Netball Championship on the Gold Coast.',
+    title: 'National Country Netball Rankings — A Grade | Got Netty',
+    description: 'The complete Got Netty national rankings of Australia’s country netball A Grade clubs, ordered by power rating and updated every week of the season.',
     path: '/rankings',
     jsonLd: entries.length ? {
-      '@context': 'https://schema.org', '@type': 'ItemList', name: 'CNCA National Country Netball Rankings',
+      '@context': 'https://schema.org', '@type': 'ItemList', name: 'Got Netty National Country Netball Rankings',
       numberOfItems: entries.length, itemListElement: entries.slice(0, 100).map(e => ({ '@type': 'ListItem', position: e.rank, name: e.clubName })),
     } : undefined,
   })
@@ -44,8 +44,8 @@ export default function FullRankings() {
             THE NATIONAL<br /><span style={{ color: PINK }}>RANKINGS</span>
           </h1>
           <p style={{ color: MUTE, maxWidth: 640, fontSize: 16, lineHeight: 1.55 }}>
-            Every ranked country netball A&nbsp;Grade team in Australia, ordered by power rating.
-            The top <strong style={{ color: GOLD_DK }}>{QUALIFY_CUTOFF}</strong> currently qualify for the Championship on the Gold Coast.
+            Every ranked country netball A&nbsp;Grade club in Australia, ordered by power rating —
+            recalculated from live ladder data every week of the season.
           </p>
           {!loading && !error && <div className="font-condensed" style={{ marginTop: 14, color: FAINT, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 12 }}>{entries.length} teams ranked</div>}
         </div>
@@ -58,10 +58,9 @@ export default function FullRankings() {
         {!loading && !error && entries.length > 0 && (
           <div>
             <HeaderRow />
-            {entries.map((e, i) => (
+            {entries.map(e => (
               <div key={e.clubId}>
                 <RankRow entry={e} onClick={() => navigate(teamPath(e.clubId))} />
-                {e.rank === QUALIFY_CUTOFF && i < entries.length - 1 && <CutoffLine />}
               </div>
             ))}
           </div>
@@ -70,8 +69,8 @@ export default function FullRankings() {
         {!loading && !error && entries.length === 0 && <Centered>No rankings published yet.</Centered>}
 
         <div style={{ textAlign: 'center', marginTop: 40 }}>
-          <Link to="/championship" className="font-condensed" style={{ color: GOLD_DK, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 13, textDecoration: 'none' }}>
-            How championship qualification works →
+          <Link to="/leagues" className="font-condensed" style={{ color: GOLD_DK, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 13, textDecoration: 'none' }}>
+            Browse leagues &amp; strength ratings →
           </Link>
         </div>
       </main>
@@ -96,7 +95,6 @@ function HeaderRow() {
 }
 
 function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void }) {
-  const qualified = entry.rank <= QUALIFY_CUTOFF
   const podium = entry.rank <= 3
   const stars = strengthStars(entry.componentScores?.leagueStrength)
   const rec = entry.record
@@ -105,7 +103,7 @@ function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void 
       style={{
         width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', font: 'inherit', color: TEXT,
         gap: 12, alignItems: 'center', padding: '15px 12px',
-        borderBottom: `1px solid ${LINE}`, borderLeft: `3px solid ${qualified ? GOLD : 'transparent'}`,
+        borderBottom: `1px solid ${LINE}`, borderLeft: `3px solid ${podium ? GOLD : 'transparent'}`,
         background: podium ? 'linear-gradient(90deg, rgba(244,193,77,0.12), transparent 42%)' : PAGE,
       }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -120,7 +118,6 @@ function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void 
           <div className="show-sm" style={{ marginTop: 8, gap: 10, alignItems: 'center' }}>
             <span className="font-condensed" style={{ fontSize: 12, color: TEXT, fontWeight: 700 }}>{rec.wins}-{rec.losses}{rec.draws ? `-${rec.draws}` : ''}</span>
             <FormPips form={entry.recentForm} />
-            {qualified && <QualBadge qualified small />}
           </div>
         </div>
       </div>
@@ -137,21 +134,6 @@ function RankRow({ entry, onClick }: { entry: RankingEntry; onClick: () => void 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}><Movement current={entry.rank} previous={entry.previousRank} /></div>
       </div>
     </button>
-  )
-}
-
-function CutoffLine() {
-  return (
-    <div style={{ padding: '16px 12px', background: 'rgba(244,193,77,0.14)', borderBottom: `1px solid ${LINE}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ flex: 1, height: 2, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
-        <div className="font-condensed" style={{ textAlign: 'center', color: GOLD_DK, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 12, whiteSpace: 'nowrap' }}>
-          <Trophy size={13} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />
-          Championship Qualification Cut-Off — Top {QUALIFY_CUTOFF} currently qualify
-        </div>
-        <div style={{ flex: 1, height: 2, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
-      </div>
-    </div>
   )
 }
 

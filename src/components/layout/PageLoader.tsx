@@ -56,16 +56,16 @@ export default function PageLoader() {
               </motion.div>
             </motion.div>
 
-            {/* CNCA wordmark */}
+            {/* Got Netty wordmark */}
             <div className="overflow-hidden">
               <motion.div
                 initial={{ y: 60, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number,number,number,number], delay: 0.3 }}
-                className="flex items-baseline gap-0"
+                className="flex items-baseline gap-3"
               >
-                <span className="font-display text-6xl text-white tracking-wider">CN</span>
-                <span className="font-display text-6xl tracking-wider" style={{ color: '#ff2c91' }}>CA</span>
+                <span className="font-display text-6xl text-white tracking-wider">GOT</span>
+                <span className="font-display text-6xl tracking-wider" style={{ color: '#ff2c91' }}>NETTY</span>
               </motion.div>
             </div>
 
@@ -75,7 +75,7 @@ export default function PageLoader() {
               transition={{ duration: 0.5, delay: 0.7 }}
               className="text-xs font-bold tracking-[0.25em] uppercase text-white/50"
             >
-              Country Netball Championships Australia
+              Australia's Home of Country Netball
             </motion.p>
 
             {/* Progress bar */}
@@ -97,7 +97,7 @@ export default function PageLoader() {
             className="absolute bottom-8 left-0 right-0 flex justify-center"
           >
             <span className="text-xs text-white/30 tracking-widest uppercase">
-              Gold Coast · October 2027
+              Rankings · Ladders · Clubs · News
             </span>
           </motion.div>
         </motion.div>

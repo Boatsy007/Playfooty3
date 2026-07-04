@@ -1,5 +1,5 @@
 /**
- * CNCA News — content model, sample editorial content, and query helpers.
+ * Got Netty News — content model, sample editorial content, and query helpers.
  * ─────────────────────────────────────────────────────────────────────────────
  * Completely isolated from the rest of the app. Ships with sample articles for
  * launch; the shape is future-ready (video/podcast/gallery/author/coach fields,
@@ -68,15 +68,15 @@ export const ARTICLES: Article[] = [
     subtitle: 'A statement weekend lifts the Bellarine powerhouse to the top of the country for the first time.',
     category: 'rankings', author: { name: 'Marla Prentice', role: 'National Rankings Editor' },
     date: '2026-07-02', readingTime: 5, featured: true, trending: true, mostRead: true, breaking: true,
-    heroSeed: 'geelong-amateur', heroCredit: 'CNCA / Match Day',
+    heroSeed: 'geelong-amateur', heroCredit: 'Got Netty / Match Day',
     summary: 'Geelong Amateur have claimed top spot on the national leaderboard after a dominant Bellarine FNL performance pushed their power rating clear of the field.',
     tags: { state: 'VIC', league: 'Bellarine FNL - A Grade Netball', club: 'Geelong Amateur' },
     body: [
       { type: 'p', text: 'For the first time in the national era, Geelong Amateur sit alone at the summit of country netball. A commanding weekend on the Bellarine peninsula has done what months of consistency had been building toward.' },
       { type: 'quote', text: 'We don’t talk about rankings inside the group — but the standard we hold ourselves to is exactly what put us here.', cite: 'Geelong Amateur A Grade coach' },
-      { type: 'p', text: 'The result reshapes the top of the leaderboard heading into the back half of the season, with the Championship cut-off now firmly in view for the chasing pack.' },
+      { type: 'p', text: 'The result reshapes the top of the leaderboard heading into the back half of the season, with the chasing pack closing in.' },
       { type: 'h', text: 'What it means for the run home' },
-      { type: 'p', text: 'With the top 32 qualifying for the Gold Coast, every percentage point matters. Geelong Amateur’s rise tightens the squeeze on the bubble teams below the line.' },
+      { type: 'p', text: 'At the top of the national leaderboard, every percentage point matters. Geelong Amateur’s rise tightens the squeeze on the clubs chasing them.' },
     ],
     gallery: [{ seed: 'ga-1', caption: 'Centre pass under lights.' }, { seed: 'ga-2', caption: 'The huddle.' }],
   }),
@@ -113,7 +113,7 @@ export const ARTICLES: Article[] = [
     subtitle: 'Everything that shifted the national picture this weekend, in one place.',
     category: 'rankings', author: { name: 'Marla Prentice', role: 'National Rankings Editor' },
     date: '2026-06-29', readingTime: 6, mostRead: true, breaking: true,
-    heroSeed: 'roundwrap', summary: 'The biggest risers, the shock results and the clubs sweating on the top-32 cut-off after a huge round.',
+    heroSeed: 'roundwrap', summary: 'The biggest risers, the shock results and the clubs on the move after a huge round.',
     tags: { state: 'National' },
     body: [
       { type: 'p', text: 'A round that rearranged the leaderboard from top to bubble. We break down who moved, who slipped, and who is now staring at the cut-off line.' },
@@ -230,8 +230,12 @@ export const ARTICLES: Article[] = [
 // ── Query helpers ───────────────────────────────────────────────────────────
 const byDateDesc = (a: Article, b: Article) => +new Date(b.date) - +new Date(a.date)
 
-export const allArticles = () => [...ARTICLES].sort(byDateDesc)
-export const getArticle = (slug: string) => ARTICLES.find(a => a.slug === slug) ?? null
+// V1 reposition: championship coverage is postponed with the event — its
+// sample articles stay in the model but are excluded from every public feed.
+const LIVE = ARTICLES.filter(a => a.category !== 'championship')
+
+export const allArticles = () => [...LIVE].sort(byDateDesc)
+export const getArticle = (slug: string) => LIVE.find(a => a.slug === slug) ?? null
 export const featuredArticles = () => allArticles().filter(a => a.featured)
 export const latestArticles = (n = 8) => allArticles().slice(0, n)
 export const trendingArticles = (n = 6) => allArticles().filter(a => a.trending).slice(0, n)
@@ -274,9 +278,9 @@ export function searchArticles(f: NewsFilters) {
   })
 }
 
-export const uniqueStates = () => [...new Set(ARTICLES.map(a => a.tags.state).filter(Boolean) as string[])].sort()
-export const uniqueLeagues = () => [...new Set(ARTICLES.map(a => a.tags.league).filter(Boolean) as string[])].sort()
-export const uniqueClubs = () => [...new Set(ARTICLES.map(a => a.tags.club).filter(Boolean) as string[])].sort()
+export const uniqueStates = () => [...new Set(LIVE.map(a => a.tags.state).filter(Boolean) as string[])].sort()
+export const uniqueLeagues = () => [...new Set(LIVE.map(a => a.tags.league).filter(Boolean) as string[])].sort()
+export const uniqueClubs = () => [...new Set(LIVE.map(a => a.tags.club).filter(Boolean) as string[])].sort()
 
 export function formatDate(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })

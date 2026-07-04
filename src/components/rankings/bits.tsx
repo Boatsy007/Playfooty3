@@ -1,7 +1,7 @@
 /**
- * Shared presentational bits for the rankings product — BRIGHT championship
+ * Shared presentational bits for the rankings product — BRIGHT editorial
  * style matching the homepage: white/off-white pages, black display headings,
- * hot-pink highlights, gold for qualification/championship accents.
+ * hot-pink highlights, gold for podium/leader accents.
  */
 import { TrendingUp, TrendingDown, Minus, Star } from 'lucide-react'
 import type { FormResult } from '../../lib/rankings'
@@ -68,7 +68,7 @@ export function QualBadge({ qualified, small }: { qualified: boolean; small?: bo
       border: `1px solid ${qualified ? 'rgba(244,193,77,0.5)' : LINE}`,
     }}>
       <span style={{ width: 6, height: 6, borderRadius: 999, background: qualified ? GOLD : 'rgba(17,17,17,0.25)' }} />
-      {qualified ? 'Qualified' : 'Outside cut'}
+      {qualified ? 'Top 32 Nationally' : 'Nationally Ranked'}
     </span>
   )
 }

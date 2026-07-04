@@ -1,5 +1,5 @@
 /**
- * CNCA Admin Panel — hybrid data engine control surface.
+ * Got Netty Admin Panel — hybrid data engine control surface.
  * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
@@ -43,7 +43,7 @@ export default function Admin() {
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>CNCA <span style={{ color: C.pink }}>Admin</span></h1>
+          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
           <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
@@ -504,7 +504,7 @@ function Login({ onIn }: { onIn: () => void }) {
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui' }}>
       <div style={{ ...box, width: 340 }}>
-        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>CNCA <span style={{ color: C.pink }}>Admin</span></h1>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
         <p style={{ color: C.mute, fontSize: 13, marginTop: 0 }}>Enter the admin key to continue.</p>
         <input style={input} type="password" placeholder="Admin key" value={k} onChange={e => setK(e.target.value)} onKeyDown={e => e.key === 'Enter' && k && (setKey(k), onIn())} />
         <button style={{ ...btn(), width: '100%', marginTop: 12 }} onClick={() => { if (k) { setKey(k); onIn() } }}>Unlock</button>

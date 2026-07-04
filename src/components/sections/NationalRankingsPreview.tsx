@@ -22,7 +22,7 @@ export default function NationalRankingsPreview() {
             AUSTRALIA’S <span style={{ color: PINK }}>TOP 10</span>
           </h2>
           <p style={{ color: MUTE, fontSize: 15.5, maxWidth: 520 }}>
-            The strongest country netball A&nbsp;Grade clubs in the nation, ranked from live ladder data.
+            The strongest country netball A&nbsp;Grade clubs in the nation, ranked from live ladder data — Australia’s national leaderboard.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function NationalRankingsPreview() {
           <Link to="/rankings" className="btn-pink" style={{ padding: '15px 30px', fontSize: 14, letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             View Full Rankings <ArrowRight size={16} />
           </Link>
-          <span className="font-condensed" style={{ color: FAINT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 12 }}>Top 32 qualify for the Championship</span>
+          <span className="font-condensed" style={{ color: FAINT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 12 }}>Updated every week of the season</span>
         </div>
       </div>
     </section>

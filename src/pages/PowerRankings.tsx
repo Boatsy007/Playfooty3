@@ -1,5 +1,5 @@
 /**
- * CNCA National Power Rankings
+ * Got Netty National Power Rankings
  * Editorial weekly rankings — designed for future live-data integration.
  * Live data fetched from /api/top10 on mount.
  */
@@ -349,7 +349,7 @@ function RankingsHero({ onScrollToTop10, onScrollToMethod, clubs }: { onScrollTo
         >
           <div className="w-6 h-[1.5px]" style={{ background: '#ff2c91' }} />
           <span className="font-condensed font-bold tracking-[0.28em] uppercase text-[10px]" style={{ color: '#f4c14d' }}>
-            CNCA National Power Rankings · {WEEK_LABEL}
+            Got Netty National Power Rankings · {WEEK_LABEL}
           </span>
           <AnimatePresence mode="wait">
             <motion.div
@@ -793,7 +793,7 @@ function ClubDrawer({ club, onClose }: { club: RankedClub; onClose: () => void }
           {/* Future placeholders */}
           <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)' }}>
             <p className="font-condensed font-bold text-[10px] tracking-[0.2em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Coming Soon</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Full match history · Power rating graph · CNCA appearances · Head-to-head records</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Full match history · Power rating graph · National ranking history · Head-to-head records</p>
           </div>
         </div>
       </motion.div>
@@ -1029,7 +1029,7 @@ function Top10Section({
           >
             <Info size={13} style={{ color: 'rgba(255,255,255,0.3)', marginTop: '1px', flexShrink: 0 }} />
             <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              <strong style={{ color: 'rgba(255,255,255,0.5)' }}>CNCA Power Rankings</strong> are an editorial ranking — not an official Netball Australia or governing body ranking. Rankings update each Monday during the competitive season using publicly available results. Pilot data: NGFNL A Grade Netball, 2026 Season.
+              <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Got Netty Power Rankings</strong> are an editorial ranking — not an official Netball Australia or governing body ranking. Rankings update each Monday during the competitive season using publicly available results. Pilot data: NGFNL A Grade Netball, 2026 Season.
             </p>
           </motion.div>
         </div>
@@ -1134,7 +1134,7 @@ function WeeklyAnalysisSection() {
         >
           <div>
             <p className="font-condensed font-bold text-[9px] tracking-[0.22em] uppercase mb-1" style={{ color: 'rgba(17,17,17,0.3)' }}>Coming Soon</p>
-            <p className="font-display" style={{ fontSize: '1.1rem', color: 'rgba(17,17,17,0.4)' }}>Full editorial analysis every Monday — by the CNCA team.</p>
+            <p className="font-display" style={{ fontSize: '1.1rem', color: 'rgba(17,17,17,0.4)' }}>Full editorial analysis every Monday — by the Got Netty team.</p>
           </div>
           <Clock size={20} style={{ color: 'rgba(17,17,17,0.2)', flexShrink: 0 }} />
         </motion.div>
@@ -1168,7 +1168,7 @@ function RankingFormula({ sectionRef }: { sectionRef: React.RefObject<HTMLDivEle
               HOW THE<br /><span style={{ color: '#ff2c91' }}>FORMULA WORKS.</span>
             </h2>
             <p className="leading-relaxed mb-5" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.75 }}>
-              CNCA Power Rankings are an editorial ranking — not an official Netball Australia or state body ranking. We use publicly available results and our own transparent algorithm to score and rank clubs across Australia every Monday.
+              Got Netty Power Rankings are an editorial ranking — not an official Netball Australia or state body ranking. We use publicly available results and our own transparent algorithm to score and rank clubs across Australia every Monday.
             </p>
             <p className="leading-relaxed" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.28)', lineHeight: 1.75 }}>
               No algorithm is perfect. Our goal is to spark honest debate, reward consistent performance and give every country netball club in Australia something to aspire to. Rankings are updated each Monday during the competitive season.
@@ -1284,10 +1284,10 @@ function RankingsCTA() {
             WANT TO BE<br /><span style={{ color: '#ff2c91' }}>ON THIS LIST?</span>
           </h2>
           <p className="mb-10" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.35)', maxWidth: '40ch', margin: '0 auto 2.5rem', lineHeight: 1.7 }}>
-            CNCA Power Rankings feature clubs from across Australia. Request your club's invitation to the 2027 national championship.
+            Got Netty Power Rankings feature clubs from across Australia. Follow the full national leaderboard — updated every Monday.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/rankings')}
             className="font-bold rounded-full text-white text-sm tracking-wide inline-flex items-center gap-2 transition-all"
             style={{
               background: '#ff2c91',
@@ -1303,10 +1303,10 @@ function RankingsCTA() {
               e.currentTarget.style.boxShadow = '0 8px 48px rgba(255,44,145,0.35)'
             }}
           >
-            Request Club Invitation <ArrowRight size={15} />
+            View Full National Rankings <ArrowRight size={15} />
           </button>
           <p className="mt-5 font-condensed font-bold text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            Gold Coast · Queensland · October 2027
+            Got Netty · Australia's Home of Country Netball
           </p>
         </motion.div>
       </div>
@@ -1351,20 +1351,20 @@ export default function PowerRankings() {
   const schemaData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "CNCA National Power Rankings — Australia's Best Country Netball Clubs",
-    "description": "The CNCA National Power Rankings rank Australia's strongest country netball clubs each week using a transparent performance formula. Updated every Monday during the competitive season.",
-    "url": "https://cnca.com.au/power-rankings",
-    "publisher": { "@type": "SportsOrganization", "name": "CNCA — Country Netball Championships Australia", "url": "https://cnca.com.au" },
+    "name": "Got Netty National Power Rankings — Australia's Best Country Netball Clubs",
+    "description": "The Got Netty National Power Rankings rank Australia's strongest country netball clubs each week using a transparent performance formula. Updated every Monday during the competitive season.",
+    "url": "https://gotnetty.com.au/power-rankings",
+    "publisher": { "@type": "SportsOrganization", "name": "Got Netty", "url": "https://gotnetty.com.au" },
     "breadcrumb": {
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://cnca.com.au" },
-        { "@type": "ListItem", "position": 2, "name": "Power Rankings", "item": "https://cnca.com.au/power-rankings" },
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://gotnetty.com.au" },
+        { "@type": "ListItem", "position": 2, "name": "Power Rankings", "item": "https://gotnetty.com.au/power-rankings" },
       ]
     },
     "mainEntity": {
       "@type": "ItemList",
-      "name": `CNCA National Power Rankings — ${WEEK_LABEL}`,
+      "name": `Got Netty National Power Rankings — ${WEEK_LABEL}`,
       "description": "Weekly editorial ranking of Australia's strongest country netball clubs.",
       "itemListElement": rankings.map(c => ({ "@type": "ListItem", "position": c.rank, "name": `${c.name} — Power Rating ${c.powerRating}` }))
     }
