@@ -4,7 +4,7 @@
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -23,7 +23,7 @@ function useToast() {
 }
 
 const TABS = [
-  ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
+  ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
   ['ocr', 'Image Import'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
   ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
 ] as const
@@ -55,6 +55,7 @@ export default function Admin() {
         </div>
         {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
         {tab === 'playhq' && <PlayHQImport toast={t.show} />}
+        {tab === 'csv' && <CsvImport toast={t.show} />}
         {tab === 'leagues' && <Leagues toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
         {tab === 'ocr' && <ImageImport toast={t.show} />}
@@ -121,6 +122,81 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
           <div style={{ marginTop: 8 }}>{d.recentClubs.map(c => <div key={c.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{c.name} <span style={{ float: 'right' }}>{fmt(c.updatedAt)}</span></div>)}</div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── CSV Import (Phase 4) — validate → preview → commit ──────────────────────
+const CSV_TEMPLATES: Record<CsvEntity, string> = {
+  leagues:  'League,State,Region,Strength,Website,Facebook',
+  clubs:    'Name,State,Town,League,Logo,Website',
+  teams:    'Club,League,Season,Grade',
+  ladders:  'League,Team,Position,Played,Wins,Losses,Draws,GoalsFor,GoalsAgainst,Percentage,Points,Season,Grade',
+  mappings: 'Alias,Canonical,Source',
+  rankings: 'Club,BestRank',
+}
+const CSV_ENTITIES: CsvEntity[] = ['leagues', 'clubs', 'teams', 'ladders', 'mappings', 'rankings']
+
+function CsvImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [entity, setEntity] = useState<CsvEntity>('ladders')
+  const [csv, setCsv] = useState('')
+  const [preview, setPreview] = useState<CsvPreview | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const onFile = (f: File | null) => { if (!f) return; const r = new FileReader(); r.onload = () => setCsv(r.result as string); r.readAsText(f) }
+  const doPreview = async () => {
+    if (!csv.trim()) return toast('paste or upload CSV', false)
+    setBusy(true); setPreview(null)
+    try { const p = await admin.csvPreview(entity, csv); setPreview(p); toast(`${p.okCount} ok · ${p.warnCount} warn · ${p.errorCount} error`) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const doCommit = async () => {
+    if (!preview) return
+    if (preview.errorCount && !confirm(`${preview.errorCount} error row(s) will be skipped. Import the ${preview.okCount + preview.warnCount} valid row(s)?`)) return
+    setBusy(true)
+    try { const r = await admin.csvCommit(entity, preview.rows); toast(`Imported — ${r.created} created, ${r.updated} updated, ${r.skipped} skipped`); setPreview(null); setCsv('') }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const colour = (s: string) => s === 'ok' ? C.green : s === 'warn' ? C.gold : C.red
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>CSV Import</b>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Bulk-import leagues, clubs, teams, ladders, alias mappings or rankings. Every row is validated and previewed before anything is written. Error rows are skipped; anonymous club names are flagged. Manual overrides are never overwritten.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select style={{ ...input, width: 150 }} value={entity} onChange={e => { setEntity(e.target.value as CsvEntity); setPreview(null) }}>
+            {CSV_ENTITIES.map(x => <option key={x} value={x}>{x[0].toUpperCase() + x.slice(1)}</option>)}
+          </select>
+          <input type="file" accept=".csv,text/csv" onChange={e => onFile(e.target.files?.[0] ?? null)} style={{ color: C.mute, fontSize: 13 }} />
+          <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setCsv(CSV_TEMPLATES[entity] + '\n')}>Insert header template</button>
+        </div>
+        <textarea style={{ ...input, marginTop: 10, minHeight: 120, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} placeholder={CSV_TEMPLATES[entity]} value={csv} onChange={e => setCsv(e.target.value)} />
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <button disabled={busy || !csv.trim()} style={btn()} onClick={doPreview}>{busy ? 'Validating…' : 'Validate & preview'}</button>
+          {preview && <button disabled={busy || (preview.okCount + preview.warnCount) === 0} style={btn(C.green)} onClick={doCommit}>Import {preview.okCount + preview.warnCount} valid row(s)</button>}
+        </div>
+      </div>
+
+      {preview && (
+        <div style={box}>
+          <b>Preview — {preview.total} rows · <span style={{ color: C.green }}>{preview.okCount} ok</span> · <span style={{ color: C.gold }}>{preview.warnCount} warn</span> · <span style={{ color: C.red }}>{preview.errorCount} error</span></b>
+          <div style={{ overflowX: 'auto', marginTop: 8 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead><tr><th style={th}>#</th>{Object.keys(preview.rows[0]?.data ?? {}).map(k => <th key={k} style={th}>{k}</th>)}<th style={th}>Status</th></tr></thead>
+              <tbody>
+                {preview.rows.slice(0, 300).map(r => (
+                  <tr key={r.index} style={{ background: r.status === 'error' ? 'rgba(255,84,112,0.08)' : r.status === 'warn' ? 'rgba(244,193,77,0.06)' : undefined }}>
+                    <td style={td}>{r.index}</td>
+                    {Object.keys(preview.rows[0].data).map(k => <td key={k} style={td}>{r.data[k]}</td>)}
+                    <td style={td}><span style={{ color: colour(r.status), fontWeight: 700 }}>{r.status}</span><div style={{ color: C.mute, fontSize: 11 }}>{r.messages.join('; ')}</div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

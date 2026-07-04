@@ -30,6 +30,8 @@ app.use(cors({
 // before the global 1mb parser so it wins for /admin/ocr and everything else
 // stays capped at 1mb.
 app.use('/admin/ocr', express.json({ limit: '20mb' }))
+// CSV imports (ladders) can be large too.
+app.use('/admin/platform/csv', express.json({ limit: '20mb' }))
 app.use(express.json({ limit: '1mb' }))
 
 // ── API routes ───────────────────────────────────────────────────────────────

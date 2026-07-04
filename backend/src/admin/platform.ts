@@ -9,6 +9,7 @@ import { requireAdminKey } from '../api/middleware/auth.js'
 import { recalculateNational } from '../jobs/recompute-strength.js'
 import { parsePlayHQUrl }   from '../discovery/playhq-url.js'
 import { dispatchWorkflow, listRuns, getRun, githubConfig } from '../integrations/github-dispatch.js'
+import { previewCsv, commitCsv, type CsvEntity, type PreviewRow } from '../jobs/csv-import.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -139,6 +140,25 @@ router.post('/playhq/discover', async (req, res) => {
     await audit('DISCOVERY_DISPATCH', 'League', null, { runId: out.run?.id ?? null, assocFilter, maxAssociations }, 'PLAYHQ_DISCOVERY')
     res.status(202).json({ data: out })
   } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
+})
+
+// ─── CSV import (Phase 4) — validate → preview → commit ──────────────────────
+const CSV_ENTITIES: CsvEntity[] = ['leagues', 'clubs', 'teams', 'ladders', 'mappings', 'rankings']
+router.post('/csv/preview', async (req, res) => {
+  const { entity, csv } = req.body as { entity?: string; csv?: string }
+  if (!entity || !CSV_ENTITIES.includes(entity as CsvEntity)) return res.status(400).json({ error: `entity must be one of ${CSV_ENTITIES.join(', ')}` })
+  if (!csv) return res.status(400).json({ error: 'csv required' })
+  res.json({ data: previewCsv(entity as CsvEntity, csv) })
+})
+router.post('/csv/commit', async (req, res) => {
+  const { entity, rows } = req.body as { entity?: string; rows?: PreviewRow[] }
+  if (!entity || !CSV_ENTITIES.includes(entity as CsvEntity)) return res.status(400).json({ error: 'invalid entity' })
+  if (!Array.isArray(rows)) return res.status(400).json({ error: 'rows required' })
+  try {
+    const result = await commitCsv(entity as CsvEntity, rows)
+    await audit('CSV_IMPORT', entity, null, { created: result.created, updated: result.updated, skipped: result.skipped }, 'CSV')
+    res.json({ data: result })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'commit failed' }) }
 })
 
 // ─── National recalculation ──────────────────────────────────────────────────

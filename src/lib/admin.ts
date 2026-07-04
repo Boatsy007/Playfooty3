@@ -73,6 +73,13 @@ export interface WorkflowRun {
   id: number; status: string; conclusion: string | null; htmlUrl: string; createdAt: string; name: string; event: string
 }
 export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string }
+export type CsvEntity = 'leagues' | 'clubs' | 'teams' | 'ladders' | 'mappings' | 'rankings'
+export interface CsvPreviewRow { index: number; data: Record<string, string>; status: 'ok' | 'warn' | 'error'; messages: string[] }
+export interface CsvPreview {
+  entity: CsvEntity; headers: string[]; required: string[]; total: number
+  okCount: number; warnCount: number; errorCount: number; rows: CsvPreviewRow[]
+}
+export interface CsvCommitResult { entity: CsvEntity; created: number; updated: number; skipped: number; warnings: string[] }
 export interface RecalcReport {
   leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
   clubsRanked: number
@@ -138,4 +145,7 @@ export const admin = {
   engineInfo:  () => req<{ data: EngineInfo }>('GET', '/admin/platform/engine').then(r => r.data),
   engineRuns:  (workflow?: string) => req<{ data: WorkflowRun[] }>('GET', `/admin/platform/engine/runs${workflow ? `?workflow=${workflow}` : ''}`).then(r => r.data),
   engineRun:   (id: number) => req<{ data: WorkflowRun }>('GET', `/admin/platform/engine/runs/${id}`).then(r => r.data),
+  // CSV import (Phase 4)
+  csvPreview:  (entity: CsvEntity, csv: string) => req<{ data: CsvPreview }>('POST', '/admin/platform/csv/preview', { entity, csv }).then(r => r.data),
+  csvCommit:   (entity: CsvEntity, rows: CsvPreviewRow[]) => req<{ data: CsvCommitResult }>('POST', '/admin/platform/csv/commit', { entity, rows }).then(r => r.data),
 }
