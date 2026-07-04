@@ -14,6 +14,7 @@ import { directoryRouter }     from './api/routes/directory.js'
 import { adminDashboardRouter } from './admin/dashboard.js'
 import { adminSettingsRouter }  from './admin/settings.js'
 import { adminManageRouter }    from './admin/manage.js'
+import { adminOcrRouter }       from './admin/ocr.js'
 import { logger }              from './utils/logger.js'
 
 const app  = express()
@@ -24,6 +25,10 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') ?? '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }))
+// Ladder images are large — give the OCR route a bigger JSON limit. Registered
+// before the global 1mb parser so it wins for /admin/ocr and everything else
+// stays capped at 1mb.
+app.use('/admin/ocr', express.json({ limit: '20mb' }))
 app.use(express.json({ limit: '1mb' }))
 
 // ── API routes ───────────────────────────────────────────────────────────────
@@ -47,6 +52,7 @@ app.use('/api/history', (req, res, next) => {
 app.use('/admin',          adminDashboardRouter)
 app.use('/admin/settings', adminSettingsRouter)
 app.use('/admin/manage',   adminManageRouter)
+app.use('/admin/ocr',      adminOcrRouter)
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {
