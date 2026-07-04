@@ -467,6 +467,7 @@ function Login({ onIn }: { onIn: () => void }) {
 function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [rows, setRows] = useState<AdminLeague[]>([])
   const [busy, setBusy] = useState(false)
+  const [whyId, setWhyId] = useState<string | null>(null)
   const [mergeA, setMergeA] = useState(''); const [mergeB, setMergeB] = useState('')
   const load = () => admin.listLeagues().then(setRows).catch(e => toast(e.message, false))
   useEffect(() => { load() }, [])
@@ -493,9 +494,12 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th style={th}>League</th><th style={th}>St</th><th style={th}>Teams</th><th style={th}>Strength</th><th style={th}>Override</th><th style={th}>Conf</th><th style={th}>Status</th><th style={th}></th></tr></thead>
             <tbody>
-              {rows.map(l => (
+              {rows.flatMap(l => [
                 <tr key={l.id} style={{ background: l.needsStrengthReview ? 'rgba(244,193,77,0.08)' : undefined, opacity: l.archivedAt ? 0.5 : 1 }}>
-                  <td style={td}>{l.name}{l.needsStrengthReview && <span title="needs review" style={{ color: C.gold, marginLeft: 6 }}>⚠</span>}{l.archivedAt && <span style={{ color: C.mute, marginLeft: 6, fontSize: 11 }}>[archived]</span>}</td>
+                  <td style={td}>
+                    {l.name}{l.needsStrengthReview && <span title="needs review" style={{ color: C.gold, marginLeft: 6 }}>⚠</span>}{l.archivedAt && <span style={{ color: C.mute, marginLeft: 6, fontSize: 11 }}>[archived]</span>}
+                    {l.strengthReasoning && <button title="Why this strength?" style={{ background: 'none', border: 'none', color: whyId === l.id ? C.pink : C.mute, cursor: 'pointer', marginLeft: 6, fontSize: 12 }} onClick={() => setWhyId(whyId === l.id ? null : l.id)}>why?</button>}
+                  </td>
                   <td style={td}>{l.state?.code ?? '—'}</td>
                   <td style={td}>{l._count?.clubSeasons ?? '—'}</td>
                   <td style={td}>{Math.round(l.strengthScore)}</td>
@@ -517,8 +521,16 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                       ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreLeague(l.id))}>Restore</button>
                       : <button style={btn(C.red)} onClick={() => { if (confirm(`Archive ${l.name}? It is recoverable — nothing is permanently deleted.`)) save(() => admin.deleteLeague(l.id)) }}>Archive</button>}
                   </td>
-                </tr>
-              ))}
+                </tr>,
+                ...(whyId === l.id && l.strengthReasoning ? [
+                  <tr key={`${l.id}-why`}>
+                    <td colSpan={8} style={{ ...td, background: '#0d1220', color: C.mute, fontSize: 12, lineHeight: 1.6 }}>
+                      <b style={{ color: C.gold }}>Why {l.name} is rated {l.finalStrengthRating.toFixed(1)}★:</b> {l.strengthReasoning}
+                      {l.strengthCalculatedAt && <span style={{ color: C.mute }}> — calculated {new Date(l.strengthCalculatedAt).toLocaleString()}</span>}
+                    </td>
+                  </tr>,
+                ] : []),
+              ])}
             </tbody>
           </table>
         </div>
@@ -691,7 +703,13 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
 function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [busy, setBusy] = useState(false)
   const [report, setReport] = useState<Awaited<ReturnType<typeof admin.recalculate>> | null>(null)
+  const [explain, setExplain] = useState<Record<number, string>>({})
   const run = async (fn: () => Promise<unknown>, ok: string) => { setBusy(true); try { await fn(); toast(ok) } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
+  const whyClub = async (rank: number, clubId: string) => {
+    if (explain[rank]) { setExplain(p => { const n = { ...p }; delete n[rank]; return n }); return }
+    try { const e = await admin.explainClub(clubId); setExplain(p => ({ ...p, [rank]: e.reasoning + (e.league?.reasoning ? ` League: ${e.league.reasoning}` : '') })) }
+    catch (err) { toast((err as Error).message, false) }
+  }
   const recalc = async () => {
     setBusy(true)
     try { const r = await admin.recalculate(); setReport(r); toast(`Recalculated — ${r.clubsRanked} clubs, ${r.leagues.length} leagues`) }
@@ -712,12 +730,17 @@ function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
       {report && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div style={box}>
-            <b>League strength (top 20)</b>
+            <b>League strength (top 20) — click a league for its reasoning</b>
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8, fontSize: 12 }}>
               <thead><tr><th style={th}>League</th><th style={th}>Before</th><th style={th}>After</th><th style={th}>Conf</th></tr></thead>
               <tbody>{report.leagues.slice(0, 20).map((l, i) => (
                 <tr key={i} style={{ background: l.review ? 'rgba(244,193,77,0.08)' : undefined }}>
-                  <td style={td}>{l.name}{l.review && <span style={{ color: C.gold }}> ⚠</span>}</td>
+                  <td style={td}>
+                    <details>
+                      <summary style={{ cursor: 'pointer' }}>{l.name}{l.review && <span style={{ color: C.gold }}> ⚠</span>}</summary>
+                      <div style={{ color: C.mute, fontSize: 11, lineHeight: 1.6, paddingTop: 4 }}>{l.reasoning}</div>
+                    </details>
+                  </td>
                   <td style={td}>{l.before}</td><td style={td}>{l.after}</td><td style={{ ...td, color: l.conf < 0.45 ? C.gold : C.mute }}>{l.conf.toFixed(2)}</td>
                 </tr>
               ))}</tbody>
@@ -726,10 +749,14 @@ function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           <div style={box}>
             <b>Top 25 nationally</b>
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8, fontSize: 12 }}>
-              <thead><tr><th style={th}>#</th><th style={th}>Club</th><th style={th}>League</th><th style={th}>Rating</th></tr></thead>
-              <tbody>{report.top.map(t => (
-                <tr key={t.rank}><td style={td}>{t.rank}</td><td style={td}>{t.clubName}</td><td style={{ ...td, color: C.mute }}>{t.leagueName ?? '—'}</td><td style={td}>{t.powerRating.toFixed(2)}</td></tr>
-              ))}</tbody>
+              <thead><tr><th style={th}>#</th><th style={th}>Club</th><th style={th}>League</th><th style={th}>Rating</th><th style={th}></th></tr></thead>
+              <tbody>{report.top.flatMap(t => [
+                <tr key={t.rank}>
+                  <td style={td}>{t.rank}</td><td style={td}>{t.clubName}</td><td style={{ ...td, color: C.mute }}>{t.leagueName ?? '—'}</td><td style={td}>{t.powerRating.toFixed(2)}</td>
+                  <td style={td}>{t.clubId && <button style={{ background: 'none', border: 'none', color: explain[t.rank] ? C.pink : C.mute, cursor: 'pointer', fontSize: 11 }} onClick={() => whyClub(t.rank, t.clubId!)}>why?</button>}</td>
+                </tr>,
+                ...(explain[t.rank] ? [<tr key={`${t.rank}-why`}><td colSpan={5} style={{ ...td, background: '#0d1220', color: C.mute, fontSize: 11, lineHeight: 1.6 }}>{explain[t.rank]}</td></tr>] : []),
+              ])}</tbody>
             </table>
           </div>
         </div>

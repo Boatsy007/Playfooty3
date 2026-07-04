@@ -73,6 +73,11 @@ model League {
   finalStrengthRating     Float   @default(3.0)   // = manualOverride ?? automatic
   strengthConfidence      Float   @default(0.3)   // 0–1
 
+  // Phase 6: explainability — why the league holds its rating, and when it was
+  // last computed. Written by every national recalculation.
+  strengthReasoning    String?
+  strengthCalculatedAt DateTime?
+
   // PlayHQ discovery metadata (automated). Does NOT affect the ranking formula.
   playhqOrgSlug       String?
   playhqGradeId       String?

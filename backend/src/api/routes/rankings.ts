@@ -11,6 +11,7 @@ import { Router }        from 'express'
 import { prisma }        from '../../db/client.js'
 import { cachePublic }   from '../middleware/cache-middleware.js'
 import { publicRateLimit } from '../middleware/rate-limit.js'
+import { clubRankingReasoning } from '../../config/ranking-reasoning.js'
 import { logger }        from '../../utils/logger.js'
 
 const router = Router()
@@ -163,6 +164,58 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
     res.status(500).json({ error: 'Internal server error', detail: String(err) })
+  }
+})
+
+// GET /api/rankings/explain/:clubId — why this club is ranked where it is,
+// plus why its league carries its strength rating (Phase 6 explainability).
+router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, res) => {
+  try {
+    const run = await getLatestRun()
+    if (!run) { res.status(404).json({ error: 'No completed ranking run' }); return }
+
+    const entry = await prisma.rankingEntry.findUnique({
+      where: { runId_clubId: { runId: run.id, clubId: String(req.params.clubId) } },
+    })
+    if (!entry) { res.status(404).json({ error: 'Club not found in the current rankings' }); return }
+
+    let componentScores: Record<string, number> = {}
+    let recentForm: string[] = []
+    try { componentScores = JSON.parse(entry.componentScores || '{}') } catch { /* keep {} */ }
+    try { recentForm = JSON.parse(entry.recentForm || '[]') } catch { /* keep [] */ }
+
+    // Active weights (falls back to defaults inside the reasoning module).
+    const config = await prisma.rankingConfig.findFirst({ where: { isActive: true }, orderBy: { createdAt: 'desc' } })
+    let weights
+    try { weights = config?.weights ? JSON.parse(config.weights as string) : undefined } catch { weights = undefined }
+
+    const league = entry.leagueId
+      ? await prisma.league.findUnique({ where: { id: entry.leagueId }, select: { strengthReasoning: true, strengthConfidence: true, finalStrengthRating: true, strengthCalculatedAt: true } })
+      : null
+
+    res.json({ data: {
+      clubId:      entry.clubId,
+      clubName:    entry.clubName,
+      rank:        entry.rank,
+      powerRating: entry.powerRating,
+      weekLabel:   run.weekLabel,
+      reasoning:   clubRankingReasoning({
+        clubName: entry.clubName, leagueName: entry.leagueName, rank: entry.rank,
+        powerRating: entry.powerRating, rankMovement: entry.rankMovement,
+        componentScores, recentForm, weights,
+      }),
+      componentScores,
+      league: league ? {
+        name:          entry.leagueName,
+        strength:      league.finalStrengthRating,
+        confidence:    league.strengthConfidence,
+        reasoning:     league.strengthReasoning,
+        calculatedAt:  league.strengthCalculatedAt,
+      } : null,
+    } })
+  } catch (err) {
+    logger.error('GET /rankings/explain error', { detail: String(err) })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 

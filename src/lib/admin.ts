@@ -29,6 +29,7 @@ export interface AdminLeague {
   state?: { code: string } | null; association?: { name: string } | null
   _count?: { clubSeasons: number }
   archivedAt?: string | null; approvalStatus?: string; leagueType?: string | null; reviewReason?: string | null
+  strengthReasoning?: string | null; strengthCalculatedAt?: string | null
 }
 export interface AdminClub {
   id: string; name: string; shortName: string | null; region: string | null
@@ -81,9 +82,14 @@ export interface CsvPreview {
 }
 export interface CsvCommitResult { entity: CsvEntity; created: number; updated: number; skipped: number; warnings: string[] }
 export interface RecalcReport {
-  leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
+  leagues: { name: string; before: number; after: number; conf: number; review: boolean; reasoning: string }[]
   clubsRanked: number
-  top: { rank: number; clubName: string; leagueName: string | null; powerRating: number }[]
+  top: { rank: number; clubId?: string; clubName: string; leagueName: string | null; powerRating: number }[]
+}
+export interface ClubExplanation {
+  clubId: string; clubName: string; rank: number; powerRating: number; weekLabel: string
+  reasoning: string; componentScores: Record<string, number>
+  league: { name: string; strength: number; confidence: number; reasoning: string | null; calculatedAt: string | null } | null
 }
 
 export interface OcrRow {
@@ -148,4 +154,6 @@ export const admin = {
   // CSV import (Phase 4)
   csvPreview:  (entity: CsvEntity, csv: string) => req<{ data: CsvPreview }>('POST', '/admin/platform/csv/preview', { entity, csv }).then(r => r.data),
   csvCommit:   (entity: CsvEntity, rows: CsvPreviewRow[]) => req<{ data: CsvCommitResult }>('POST', '/admin/platform/csv/commit', { entity, rows }).then(r => r.data),
+  // Ranking explainability (Phase 6) — public endpoint, but handy in admin too
+  explainClub: (clubId: string) => req<{ data: ClubExplanation }>('GET', `/api/rankings/explain/${clubId}`).then(r => r.data),
 }

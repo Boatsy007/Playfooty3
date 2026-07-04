@@ -14,14 +14,15 @@
 import { prisma }       from '../db/client.js'
 import { rankAndStore } from './playhq-scrape.js'
 import { computeLeagueStrengthV2 } from '../config/league-strength-v2.js'
+import { leagueStrengthReasoning } from '../config/ranking-reasoning.js'
 import { finalStrength } from '../config/league-strength-auto.js'
 import { getISOWeekLabel } from '../utils/week-label.js'
 import { logger }       from '../utils/logger.js'
 
 export interface RecalcReport {
-  leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
+  leagues: { name: string; before: number; after: number; conf: number; review: boolean; reasoning: string }[]
   clubsRanked: number
-  top: { rank: number; clubName: string; leagueName: string | null; powerRating: number }[]
+  top: { rank: number; clubId?: string; clubName: string; leagueName: string | null; powerRating: number }[]
 }
 
 /**
@@ -49,13 +50,14 @@ export async function recalculateNational(): Promise<RecalcReport> {
     const v2 = computeLeagueStrengthV2(ratings, 1, dataComplete)
     const final = finalStrength(v2.rating, l.manualStrengthOverride)
     const finalScore = l.manualStrengthOverride != null ? l.manualStrengthOverride * 20 : v2.score
-    await prisma.league.update({ where: { id: l.id }, data: { automaticStrengthRating: v2.rating, finalStrengthRating: final, strengthScore: finalScore, strengthTier: Math.max(1, Math.min(5, Math.round(final))), strengthConfidence: v2.confidence, needsStrengthReview: l.manualStrengthOverride == null && v2.needsReview } })
-    report.push({ name: l.association?.name ?? l.name, before: Math.round(l.strengthScore), after: Math.round(finalScore), conf: v2.confidence, review: l.manualStrengthOverride == null && v2.needsReview })
+    const reasoning = leagueStrengthReasoning({ leagueName: l.name, v2, manualOverride: l.manualStrengthOverride })
+    await prisma.league.update({ where: { id: l.id }, data: { automaticStrengthRating: v2.rating, finalStrengthRating: final, strengthScore: finalScore, strengthTier: Math.max(1, Math.min(5, Math.round(final))), strengthConfidence: v2.confidence, needsStrengthReview: l.manualStrengthOverride == null && v2.needsReview, strengthReasoning: reasoning, strengthCalculatedAt: new Date() } })
+    report.push({ name: l.association?.name ?? l.name, before: Math.round(l.strengthScore), after: Math.round(finalScore), conf: v2.confidence, review: l.manualStrengthOverride == null && v2.needsReview, reasoning })
   }
 
   const { clubsRanked } = await rankAndStore(label)
   const run2 = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
-  const top = run2 ? await prisma.rankingEntry.findMany({ where: { runId: run2.id }, orderBy: { rank: 'asc' }, take: 25, select: { rank: true, clubName: true, leagueName: true, powerRating: true } }) : []
+  const top = run2 ? await prisma.rankingEntry.findMany({ where: { runId: run2.id }, orderBy: { rank: 'asc' }, take: 25, select: { rank: true, clubId: true, clubName: true, leagueName: true, powerRating: true } }) : []
   return { leagues: report.sort((a, b) => b.after - a.after), clubsRanked, top }
 }
 
@@ -98,6 +100,8 @@ async function main() {
         strengthTier:            Math.max(1, Math.min(5, Math.round(final))),
         strengthConfidence:      v2.confidence,
         needsStrengthReview:     l.manualStrengthOverride == null && v2.needsReview,
+        strengthReasoning:       leagueStrengthReasoning({ leagueName: l.name, v2, manualOverride: l.manualStrengthOverride }),
+        strengthCalculatedAt:    new Date(),
       },
     })
     report.push({ name: l.association?.name ?? l.name, before: Math.round(l.strengthScore), after: Math.round(finalScore), conf: v2.confidence, review: l.manualStrengthOverride == null && v2.needsReview })
