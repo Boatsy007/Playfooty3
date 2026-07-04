@@ -1,0 +1,27 @@
+name: Recompute league strength (v2 multi-factor) + rank
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  strength:
+    name: Recompute strength + rank
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Recompute strength
+        working-directory: backend
+        run: npx tsx src/jobs/recompute-strength.ts
