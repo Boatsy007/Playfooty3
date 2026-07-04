@@ -38,6 +38,7 @@ router.get('/', publicRateLimit, cachePublic(3600), async (req, res) => {
         strengthScore:  l.strengthScore,
         sourceTypes:    l.sources.map(s => s.sourceType),
         clubCount:      l._count.clubSeasons,
+        lastSyncedAt:   l.lastSyncedAt,
       })),
       meta: { total: leagues.length },
     })

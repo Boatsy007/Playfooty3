@@ -99,3 +99,66 @@ body {
 @media (max-width: 820px) {
   .rr-grid { grid-template-columns: 46px minmax(0,1fr) auto; }
 }
+
+/* ── Got Netty homepage design system ─────────────────────────────── */
+:root {
+  --gn-line: rgba(17,17,17,0.09);
+  --gn-shadow: 0 1px 2px rgba(17,17,17,0.04), 0 16px 40px -20px rgba(17,17,17,0.14);
+  --gn-shadow-lift: 0 2px 4px rgba(17,17,17,0.05), 0 28px 56px -20px rgba(17,17,17,0.22);
+  --gn-radius: 18px;
+  --gn-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Card: the one card. Border, soft shadow, lift on hover. */
+.gn-card {
+  background: #ffffff;
+  border: 1px solid var(--gn-line);
+  border-radius: var(--gn-radius);
+  box-shadow: var(--gn-shadow);
+  transition: transform 0.28s var(--gn-ease), box-shadow 0.28s var(--gn-ease), border-color 0.28s var(--gn-ease);
+}
+a.gn-card, button.gn-card { cursor: pointer; }
+.gn-card-hover:hover { transform: translateY(-3px); box-shadow: var(--gn-shadow-lift); border-color: rgba(17,17,17,0.14); }
+.gn-card-hover:focus-visible { outline: 2px solid #ff2c91; outline-offset: 2px; }
+
+/* Interactive rows (leaderboards, lists) */
+.gn-row { transition: background 0.16s ease, transform 0.16s ease; }
+.gn-row:hover { background: rgba(17,17,17,0.025); }
+.gn-row:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+
+/* Skeleton shimmer */
+@keyframes gn-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.gn-skel {
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(17,17,17,0.05) 25%, rgba(17,17,17,0.09) 50%, rgba(17,17,17,0.05) 75%);
+  background-size: 200% 100%;
+  animation: gn-shimmer 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gn-skel { animation: none; }
+  .gn-card, .gn-card-hover, .gn-row { transition: none; }
+}
+
+/* Live pulse dot */
+@keyframes gn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.45); } 60% { box-shadow: 0 0 0 7px rgba(34,197,94,0); } }
+.gn-live-dot { width: 7px; height: 7px; border-radius: 999px; background: #22c55e; animation: gn-pulse 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .gn-live-dot { animation: none; } }
+
+/* Horizontal snap rail (mobile card strips) */
+.gn-rail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }
+.gn-rail::-webkit-scrollbar { display: none; }
+.gn-rail > * { scroll-snap-align: start; flex-shrink: 0; }
+
+/* Buttons: secondary outline */
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; border-radius: 9999px;
+  border: 1.5px solid rgba(17,17,17,0.16); color: rgba(17,17,17,0.72); background: transparent;
+  transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
+}
+.btn-ghost:hover { border-color: #ff2c91; color: #ff2c91; transform: translateY(-1px); }
+.btn-ghost:focus-visible, .btn-pink:focus-visible { outline: 2px solid #ff2c91; outline-offset: 3px; }
+
+/* Ghost button on the dark masthead */
+.btn-ghost.on-dark { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
+.btn-ghost.on-dark:hover { border-color: #ff2c91; color: #ffffff; }

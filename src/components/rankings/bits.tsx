@@ -1,5 +1,5 @@
 /**
- * Shared presentational bits for the rankings product — BRIGHT editorial
+ * Shared presentational bits for the rankings product, in the bright editorial
  * style matching the homepage: white/off-white pages, black display headings,
  * hot-pink highlights, gold for podium/leader accents.
  */
@@ -20,7 +20,7 @@ export const CYAN = '#4dd9f4'
 export const DARK = '#0b0e17'   // premium dark feature blocks only
 
 export function FormPips({ form }: { form: FormResult[] }) {
-  if (!form?.length) return <span style={{ color: MUTE, fontSize: 12 }}>—</span>
+  if (!form?.length) return <span style={{ color: MUTE, fontSize: 12 }}>·</span>
   return (
     <div style={{ display: 'flex', gap: 4 }}>
       {form.slice(-5).map((r, i) => (
