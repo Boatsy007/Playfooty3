@@ -14,6 +14,7 @@ import Leagues from './pages/Leagues.tsx'
 import Championship from './pages/Championship.tsx'
 import News from './pages/News.tsx'
 import NewsArticle from './pages/NewsArticle.tsx'
+import Admin from './pages/Admin.tsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/news" element={<News />} />
         <Route path="/news/:slug" element={<NewsArticle />} />
         <Route path="/directory" element={<Directory />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
