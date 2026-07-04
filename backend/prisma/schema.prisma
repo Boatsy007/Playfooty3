@@ -87,6 +87,23 @@ model League {
   lastSyncedAt        DateTime?
   syncError           String?
 
+  // ── Phase 2: multi-source provenance + admin/status ──────────────────────
+  primarySource      String?   // PLAYHQ | NETBALL_CONNECT | COUNTRY_FOOTY | MANUAL_IMAGE | MANUAL | CSV
+  importType         String?   @default("AUTO")     // AUTO | MANUAL | IMAGE
+  sourceUrl          String?
+  status             String    @default("ACTIVE")   // ACTIVE | DISABLED | NEEDS_REVIEW
+  lastSuccessAt      DateTime?                        // last successful scrape
+  lastManualUpdateAt DateTime?                        // last operator edit
+  dataConfidence     Float     @default(0.5)         // 0–1 confidence in the data
+  failureCount       Int       @default(0)
+  retryCount         Int       @default(0)
+  manualOverride     Boolean   @default(false)       // protect from auto imports
+  hidden             Boolean   @default(false)       // hide from public site
+  regionName         String?                          // country region label
+  websiteUrl         String?
+  facebookUrl        String?
+  logoUrl            String?
+
   // Averages (recalculated each cycle)
   avgGoalsPerGame  Float?
   avgMarginPerGame Float?
@@ -157,6 +174,11 @@ model Club {
 
   isActive Boolean @default(true)
   notes    String?
+
+  // Phase 2: manual provenance
+  manualOverride Boolean  @default(false)  // protect manual clubs from auto imports
+  source         String?                    // origin of this club record
+  bestRank       Int?                       // historical best national rank
 
   // Relationships
   state          State            @relation(fields: [stateId], references: [id])
@@ -428,4 +450,13 @@ model AuditLog {
   user AdminUser @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// Global key/value settings (e.g. rankingsLocked, currentSeason).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }
