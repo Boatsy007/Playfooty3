@@ -13,6 +13,7 @@ import { leaguesRouter }       from './api/routes/leagues.js'
 import { directoryRouter }     from './api/routes/directory.js'
 import { adminDashboardRouter } from './admin/dashboard.js'
 import { adminSettingsRouter }  from './admin/settings.js'
+import { adminManageRouter }    from './admin/manage.js'
 import { logger }              from './utils/logger.js'
 
 const app  = express()
@@ -45,6 +46,7 @@ app.use('/api/history', (req, res, next) => {
 // ── Admin routes (key-protected) ─────────────────────────────────────────────
 app.use('/admin',          adminDashboardRouter)
 app.use('/admin/settings', adminSettingsRouter)
+app.use('/admin/manage',   adminManageRouter)
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {
