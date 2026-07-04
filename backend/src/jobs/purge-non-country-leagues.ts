@@ -15,27 +15,42 @@ import { prisma }       from '../db/client.js'
 import { rankAndStore } from './playhq-scrape.js'
 import { classifyLeague } from '../discovery/country-league-filter.js'
 import { getISOWeekLabel } from '../utils/week-label.js'
-import { logger }       from '../utils/logger.js'
 
 const norm = (s: string) => (s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]/g, '')
 
-async function hardDeleteLeague(leagueId: string): Promise<void> {
-  // Clubs that play ONLY in this league become orphans → delete them fully.
-  const clubs = await prisma.club.findMany({ where: { leagueSeasons: { some: { leagueId } } }, select: { id: true } })
-  await prisma.clubLeagueSeason.deleteMany({ where: { leagueId } })
-  await prisma.leagueSource.deleteMany({ where: { leagueId } })
-  await prisma.rankingEntry.deleteMany({ where: { leagueId } })
-  await prisma.match.deleteMany({ where: { leagueId } }).catch(() => {})
-  for (const c of clubs) {
-    const stillPlays = await prisma.clubLeagueSeason.count({ where: { clubId: c.id } })
-    if (stillPlays > 0) continue
-    await prisma.rankingEntry.deleteMany({ where: { clubId: c.id } })
-    await prisma.rankingSnapshot.deleteMany({ where: { clubId: c.id } })
-    await prisma.clubNameVariant.deleteMany({ where: { clubId: c.id } })
-    await prisma.match.deleteMany({ where: { OR: [{ homeClubId: c.id }, { awayClubId: c.id }] } }).catch(() => {})
-    await prisma.club.delete({ where: { id: c.id } }).catch(() => {})
+/**
+ * Bulk hard-delete a set of leagues in a handful of set-based queries (not
+ * per-league/per-club loops, which make thousands of pooler round-trips and can
+ * hang). Clubs that end up in NO remaining league are removed too.
+ */
+async function hardDeleteLeagues(dropIds: string[], keepIds: string[]): Promise<void> {
+  if (dropIds.length === 0) return
+
+  // Clubs that appear in a dropped league…
+  const clubsInDrop = await prisma.clubLeagueSeason.findMany({ where: { leagueId: { in: dropIds } }, select: { clubId: true }, distinct: ['clubId'] })
+  // …and clubs still in a kept league (must be preserved).
+  const clubsInKeep = keepIds.length
+    ? await prisma.clubLeagueSeason.findMany({ where: { leagueId: { in: keepIds } }, select: { clubId: true }, distinct: ['clubId'] })
+    : []
+  const keepClubSet = new Set(clubsInKeep.map(c => c.clubId))
+  const orphanClubIds = [...new Set(clubsInDrop.map(c => c.clubId))].filter(id => !keepClubSet.has(id))
+
+  // Remove league-scoped rows first (FK order), all set-based.
+  await prisma.rankingEntry.deleteMany({ where: { leagueId: { in: dropIds } } })
+  await prisma.match.deleteMany({ where: { leagueId: { in: dropIds } } }).catch(() => {})
+  await prisma.clubLeagueSeason.deleteMany({ where: { leagueId: { in: dropIds } } })
+  await prisma.leagueSource.deleteMany({ where: { leagueId: { in: dropIds } } })
+
+  // Remove now-orphaned clubs and their child rows.
+  if (orphanClubIds.length) {
+    await prisma.rankingEntry.deleteMany({ where: { clubId: { in: orphanClubIds } } })
+    await prisma.rankingSnapshot.deleteMany({ where: { clubId: { in: orphanClubIds } } })
+    await prisma.clubNameVariant.deleteMany({ where: { clubId: { in: orphanClubIds } } })
+    await prisma.match.deleteMany({ where: { OR: [{ homeClubId: { in: orphanClubIds } }, { awayClubId: { in: orphanClubIds } }] } }).catch(() => {})
+    await prisma.club.deleteMany({ where: { id: { in: orphanClubIds } } })
   }
-  await prisma.league.delete({ where: { id: leagueId } })
+
+  await prisma.league.deleteMany({ where: { id: { in: dropIds } } })
 }
 
 async function main() {
@@ -78,14 +93,14 @@ async function main() {
 
   if (dryRun) { console.log('\n(DRY RUN — nothing deleted)'); await prisma.$disconnect(); return }
 
-  let deleted = 0
-  for (const d of [...drop, ...dupDrops]) {
-    try { await hardDeleteLeague(d.id); deleted++ }
-    catch (err) { logger.warn('Purge: delete failed, skipping', { league: d.name, detail: String(err) }) }
-  }
-  // Remove associations left with no leagues.
+  const dropIds = [...drop, ...dupDrops].map(d => d.id)
+  const keepIds = leagues.filter(l => !dropIds.includes(l.id)).map(l => l.id)
+  await hardDeleteLeagues(dropIds, keepIds)
+  const deleted = dropIds.length
+
+  // Remove associations left with no leagues (bulk).
   const orphanAssocs = await prisma.association.findMany({ where: { leagues: { none: {} } }, select: { id: true } })
-  for (const a of orphanAssocs) await prisma.association.delete({ where: { id: a.id } }).catch(() => {})
+  if (orphanAssocs.length) await prisma.association.deleteMany({ where: { id: { in: orphanAssocs.map(a => a.id) } } })
 
   const { clubsRanked } = await rankAndStore(getISOWeekLabel())
   console.log(`\nDeleted ${deleted} leagues. Removed ${orphanAssocs.length} orphan associations. Re-ranked ${clubsRanked} clubs.`)
