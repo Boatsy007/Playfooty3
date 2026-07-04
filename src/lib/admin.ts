@@ -58,6 +58,16 @@ export interface AuditRow {
   user?: { email: string; name: string | null } | null
 }
 export interface SettingRow { key: string; value: string }
+export interface ParsedUrl {
+  ok: boolean; kind: string; tenant: string | null; orgSlug: string | null
+  competitionSlug: string | null; gradeSlug: string | null; gradeId: string | null
+  isLadder: boolean; associationUrl: string | null; ladderUrl: string | null; warnings: string[]
+}
+export interface ImportReport {
+  status: 'SUCCESS' | 'NO_DATA' | 'FAILED'; url?: string; kind?: string; league?: string; leagueId?: string
+  isNew?: boolean; clubsAdded: number; clubsUpdated: number; ladderRows: number; ladderUpdated: boolean
+  rankingRecalculated: boolean; clubsRanked: number; confidence: number; warnings: string[]; reviewsRaised: number; error?: string
+}
 export interface RecalcReport {
   leagues: { name: string; before: number; after: number; conf: number; review: boolean }[]
   clubsRanked: number
@@ -113,4 +123,8 @@ export const admin = {
   listAudit: (entityType?: string) => req<{ data: AuditRow[] }>('GET', `/admin/platform/audit${entityType ? `?entityType=${entityType}` : ''}`).then(r => r.data),
   listSettings: () => req<{ data: SettingRow[] }>('GET', '/admin/platform/settings').then(r => r.data),
   setSetting: (key: string, value: string) => req<{ data: SettingRow }>('POST', '/admin/platform/settings', { key, value }),
+  // PlayHQ URL import (Phase 1) + League sync (Phase 10)
+  classifyUrl: (url: string) => req<{ data: ParsedUrl }>('POST', '/admin/platform/playhq/classify', { url }).then(r => r.data),
+  importUrl:   (url: string) => req<{ data: ImportReport }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),
+  syncLeague:  (id: string) => req<{ data: ImportReport }>('POST', `/admin/platform/leagues/${id}/sync`).then(r => r.data),
 }

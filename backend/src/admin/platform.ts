@@ -7,6 +7,8 @@ import { Router }          from 'express'
 import { prisma }          from '../db/client.js'
 import { requireAdminKey } from '../api/middleware/auth.js'
 import { recalculateNational } from '../jobs/recompute-strength.js'
+import { importFromUrl, syncLeague } from '../jobs/playhq-url-import.js'
+import { parsePlayHQUrl }   from '../discovery/playhq-url.js'
 import { logger }          from '../utils/logger.js'
 
 const router = Router()
@@ -66,6 +68,34 @@ router.post('/settings', async (req, res) => {
   const row = await prisma.setting.upsert({ where: { key }, update: { value: value ?? '' }, create: { key, value: value ?? '' } })
   await audit('SET_SETTING', 'Setting', key, { value })
   res.json({ data: row })
+})
+
+// ─── PlayHQ URL import (Phase 1) ──────────────────────────────────────────────
+// Preview: classify a pasted URL without importing (instant, no browser).
+router.post('/playhq/classify', async (req, res) => {
+  const { url } = req.body as { url?: string }
+  if (!url) return res.status(400).json({ error: 'url required' })
+  res.json({ data: parsePlayHQUrl(url) })
+})
+// Import: resolve the A-Grade ladder for a pasted URL and persist + re-rank.
+router.post('/playhq/import', async (req, res) => {
+  const { url, rerank } = req.body as { url?: string; rerank?: boolean }
+  if (!url) return res.status(400).json({ error: 'url required' })
+  try {
+    const report = await importFromUrl(url, { rerank: rerank !== false })
+    await audit('PLAYHQ_URL_IMPORT', 'League', report.leagueId ?? null, { url, status: report.status, added: report.clubsAdded, updated: report.clubsUpdated }, 'PLAYHQ_URL')
+    res.json({ data: report })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'import failed' }) }
+})
+
+// ─── League sync (Phase 10 — weekly workflow) ─────────────────────────────────
+router.post('/leagues/:id/sync', async (req, res) => {
+  try {
+    const report = await syncLeague(req.params.id, { rerank: true })
+    await audit('SYNC_LEAGUE', 'League', req.params.id, { status: report.status, updated: report.clubsUpdated }, 'PLAYHQ_SYNC')
+    if (report.status === 'FAILED') return res.status(400).json({ error: report.error, data: report })
+    res.json({ data: report })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'sync failed' }) }
 })
 
 // ─── National recalculation ──────────────────────────────────────────────────

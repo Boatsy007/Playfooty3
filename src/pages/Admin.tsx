@@ -3,8 +3,8 @@
  * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
-import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow } from '../lib/admin'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ImportReport, type ParsedUrl } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -23,7 +23,7 @@ function useToast() {
 }
 
 const TABS = [
-  ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
+  ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
   ['ocr', 'Image Import'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
   ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
 ] as const
@@ -54,6 +54,7 @@ export default function Admin() {
           ))}
         </div>
         {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
+        {tab === 'playhq' && <PlayHQImport toast={t.show} />}
         {tab === 'leagues' && <Leagues toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
         {tab === 'ocr' && <ImageImport toast={t.show} />}
@@ -120,6 +121,65 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
           <div style={{ marginTop: 8 }}>{d.recentClubs.map(c => <div key={c.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{c.name} <span style={{ float: 'right' }}>{fmt(c.updatedAt)}</span></div>)}</div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── PlayHQ URL Import (Phase 1) ──────────────────────────────────────────────
+function ReportCard({ r }: { r: ImportReport }) {
+  const colour = r.status === 'SUCCESS' ? C.green : r.status === 'NO_DATA' ? C.gold : C.red
+  const line = (label: string, val: ReactNode) => <div style={{ fontSize: 13, padding: '2px 0' }}><span style={{ color: C.mute }}>{label}: </span>{val}</div>
+  return (
+    <div style={{ ...box, borderColor: colour }}>
+      <b style={{ color: colour }}>{r.status === 'SUCCESS' ? '✓ Import complete' : r.status === 'NO_DATA' ? '⚠ No ladder data' : '✗ Import failed'}</b>
+      {r.error && <div style={{ color: C.red, fontSize: 13, marginTop: 4 }}>{r.error}</div>}
+      {r.league && line('League', <b>{r.league}{r.isNew ? ' (new)' : ''}</b>)}
+      {line('Clubs added', r.clubsAdded)}
+      {line('Clubs updated', r.clubsUpdated)}
+      {line('Ladder rows', r.ladderRows)}
+      {line('Ladder updated', r.ladderUpdated ? '✓' : '—')}
+      {line('Ranking recalculated', r.rankingRecalculated ? `✓ (${r.clubsRanked} clubs)` : '—')}
+      {line('Confidence', r.confidence.toFixed(2))}
+      {r.reviewsRaised > 0 && line('Raised for review', <span style={{ color: C.gold }}>{r.reviewsRaised} club(s)</span>)}
+      {r.warnings.length > 0 && <div style={{ marginTop: 6 }}>{r.warnings.map((w, i) => <div key={i} style={{ color: C.gold, fontSize: 12 }}>⚠ {w}</div>)}</div>}
+    </div>
+  )
+}
+
+function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [url, setUrl] = useState('')
+  const [parsed, setParsed] = useState<ParsedUrl | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [report, setReport] = useState<ImportReport | null>(null)
+
+  const classify = async (u: string) => { setParsed(null); if (!u.trim()) return; try { setParsed(await admin.classifyUrl(u)) } catch { /* ignore preview errors */ } }
+  const doImport = async () => {
+    if (!url.trim()) return toast('paste a PlayHQ URL', false)
+    setBusy(true); setReport(null)
+    try { const r = await admin.importUrl(url); setReport(r); toast(r.status === 'SUCCESS' ? `Imported ${r.league}` : r.status, r.status === 'SUCCESS') }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>Import from PlayHQ URL</b>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Paste ANY PlayHQ URL — association, competition, season, grade or ladder. The system detects what it is, finds the A&nbsp;Grade Senior Women's ladder, imports the clubs + ladder, and re-ranks. Manual edits and overrides are never overwritten.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input style={{ ...input, flex: 1, minWidth: 320 }} placeholder="https://www.playhq.com/netball-australia/org/…" value={url}
+            onChange={e => { setUrl(e.target.value); classify(e.target.value) }} onKeyDown={e => e.key === 'Enter' && doImport()} />
+          <button disabled={busy || !url.trim()} style={btn(C.green)} onClick={doImport}>{busy ? 'Importing…' : 'Import'}</button>
+        </div>
+        {parsed && (
+          <div style={{ marginTop: 10, fontSize: 12, color: C.mute }}>
+            Detected: <span style={{ color: parsed.ok ? C.green : C.red, fontWeight: 700 }}>{parsed.kind}</span>
+            {parsed.orgSlug && <> · org <span style={{ color: C.text }}>{parsed.orgSlug}</span></>}
+            {parsed.gradeId && <> · grade <span style={{ color: C.text }}>{parsed.gradeId.slice(0, 10)}…</span></>}
+            {parsed.warnings.map((w, i) => <div key={i} style={{ color: C.gold }}>⚠ {w}</div>)}
+          </div>
+        )}
+      </div>
+      {busy && <div style={box}><span style={{ color: C.mute }}>Scraping PlayHQ (headless browser) — this can take up to a minute…</span></div>}
+      {report && <ReportCard r={report} />}
     </div>
   )
 }
@@ -343,6 +403,7 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   </td>
                   <td style={td}>
                     <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename league', l.name); if (n && n !== l.name) save(() => admin.editLeague(l.id, { name: n })) }}>Edit</button>
+                    <button title="Re-scrape stored PlayHQ URL" style={{ ...btn('#1b3a2a'), color: C.green, marginRight: 6 }} onClick={() => save(async () => { const r = await admin.syncLeague(l.id); return { note: r.status === 'SUCCESS' ? `synced ${r.ladderRows} rows (+${r.clubsAdded}/~${r.clubsUpdated})` : (r.error ?? r.status) } })}>Sync</button>
                     {l.approvalStatus === 'PENDING' && <button style={{ ...btn(C.green), marginRight: 6 }} onClick={() => save(() => admin.approveLeague(l.id))}>Approve</button>}
                     {l.archivedAt
                       ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreLeague(l.id))}>Restore</button>
