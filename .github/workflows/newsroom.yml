@@ -1,0 +1,52 @@
+name: Newsroom (intelligence + drafts)
+
+# Phase B3: analyse the latest ranking run, detect newsworthy signals, compute
+# trends, generate journalist-quality DRAFT articles and rebuild the search
+# index. Serverless-safe (no browser) — runs after the Monday weekly update.
+# Nothing is auto-published; drafts flow through the normal review surface.
+on:
+  schedule:
+    # 07:00 UTC Monday — an hour after the weekly update engine.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Regenerate even if the newsroom already ran for this ranking run.'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Analyse + detect only — write nothing.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  newsroom:
+    name: Newsroom analysis + drafts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run newsroom
+        working-directory: backend
+        env:
+          FORCE:   ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=""
+          [ "$FORCE" = "true" ]   && ARGS="$ARGS --force"
+          [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+          echo "Running: tsx src/jobs/newsroom-trigger.ts $ARGS"
+          npx tsx src/jobs/newsroom-trigger.ts $ARGS

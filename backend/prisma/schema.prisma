@@ -550,9 +550,147 @@ model GeneratedArticle {
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
 
+  // Phase B3 — editorial reasoning (nullable; existing rows/generators unaffected)
+  confidence  Float?                       // 0–1 overall confidence in the story
+  reasoning   String?                      // why this article exists (human-readable)
+  triggers    String?                      // JSON: which trigger rules / signals fired
+  sourceData  String?                      // JSON: the exact stats it was derived from
+  dedupeKey   String?                      // stable key for duplicate detection
+
   @@index([status, publishedAt])
   @@index([kind])
   @@map("generated_articles")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE B3 — Intelligent News & Content Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend intelligence layer. Analyses real ranking / ladder / history data to
+// detect what changed, why, and what is newsworthy, then records the reasoning.
+// New tables only; no ranking table is modified. Nothing is exposed in the UI.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A single detected newsworthy signal (the output of the trigger engine). Stores
+// the editorial reasoning: which rule fired, which stats triggered it, the clubs
+// / rankings that changed, confidence and the exact source data. dedupeKey makes
+// duplicate stories impossible (same topic + scope + week + subject).
+model NewsSignal {
+  id          String   @id @default(uuid())
+  weekLabel   String
+  season      String?
+  kind        String   // BIGGEST_RISE | NEW_NUMBER_ONE | LEAGUE_STRENGTH_CHANGE | UNDEFEATED | TOP10_ENTRY | HISTORIC_BEST | …
+  scope       String   // NATIONAL | LEAGUE | CLUB
+  headline    String   // one-line human summary
+  clubId      String?
+  clubName    String?
+  leagueId    String?
+  leagueName  String?
+  state       String?
+  metrics     String?  // JSON — the numbers behind the signal
+  triggerRule String   // the rule id that produced this signal
+  sourceData  String?  // JSON — raw rows used (audit / never-invent trail)
+  confidence  Float    @default(0.8) // 0–1
+  priority    Int      @default(0)   // higher = more newsworthy
+  dedupeKey   String   @unique       // scope+kind+week+subject
+  usedInArticle Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([weekLabel])
+  @@index([kind])
+  @@index([scope])
+  @@map("news_signals")
+}
+
+// Weekly league-strength history so "strength change / most improved / highest
+// ever" can be derived. One row per league per week (idempotent by unique key).
+model LeagueStrengthSnapshot {
+  id            String   @id @default(uuid())
+  leagueId      String
+  leagueName    String
+  weekLabel     String
+  season        String?
+  strengthScore Float
+  strengthTier  Int
+  rankedClubs   Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@unique([leagueId, weekLabel])
+  @@index([leagueId])
+  @@index([weekLabel])
+  @@map("league_strength_snapshots")
+}
+
+// Computed per-club trend metrics (for future frontend). Refreshed each run.
+model ClubTrend {
+  id             String   @id @default(uuid())
+  clubId         String   @unique
+  clubName       String
+  leagueName     String?
+  state          String?
+  currentRank    Int?
+  bestRankEver   Int?
+  worstRankEver  Int?
+  rank4wkDelta   Int?     // rank change over the last ~4 weeks (+ve = improved)
+  ratingTrend    Float?   // slope of power rating over recent weeks
+  consistency    Float?   // inverse of rank stddev (higher = steadier)
+  volatility     Float?   // rank stddev over recent weeks
+  momentum       Float?   // short-term rating momentum
+  weeksTracked   Int      @default(0)
+  isRising       Boolean  @default(false)
+  isFalling      Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@index([isRising])
+  @@index([isFalling])
+  @@map("club_trends")
+}
+
+// Editorial calendar — recurring publishing plan (backend scheduling only).
+model EditorialCalendarSlot {
+  id          String   @id @default(uuid())
+  dayOfWeek   Int      // 0=Sun … 6=Sat
+  slotKey     String   @unique // MONDAY_RANKINGS | TUESDAY_LEAGUE_ROUNDUPS | …
+  label       String
+  articleKind String   // which article kind this slot produces
+  enabled     Boolean  @default(true)
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("editorial_calendar_slots")
+}
+
+// Interconnects an article to the entities it is about (club/league/state/…).
+model ArticleLink {
+  id         String   @id @default(uuid())
+  articleId  String
+  entityType String   // CLUB | LEAGUE | STATE | RANKING | SEASON | RECORD | SIGNAL
+  entityId   String?
+  label      String?
+  createdAt  DateTime @default(now())
+
+  @@index([articleId])
+  @@index([entityType, entityId])
+  @@map("article_links")
+}
+
+// Backend search index (future search; no frontend). One row per indexed doc.
+model SearchDoc {
+  id         String   @id @default(uuid())
+  entityType String   // ARTICLE | CLUB | LEAGUE
+  entityId   String
+  title      String
+  body       String   // flattened searchable text
+  tags       String?  // JSON
+  state      String?
+  weight     Float    @default(1)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@unique([entityType, entityId])
+  @@index([entityType])
+  @@map("search_docs")
 }
 
 // Global key/value settings (e.g. rankingsLocked, currentSeason).
