@@ -22,8 +22,10 @@ import { adminNewsroomRouter }  from './admin/newsroom.js'
 import { adminQualityRouter }   from './admin/quality.js'
 import { adminResultsRouter }   from './admin/results.js'
 import { adminHistoryRouter }   from './admin/history.js'
+import { adminChampionshipsRouter } from './admin/championships.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
+import { championshipsRouter }  from './api/routes/championships.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -63,6 +65,9 @@ app.use('/api/fixtures',  fixturesRouter)   // /api/fixtures, /api/fixtures/:id,
 app.use('/api/clubs',     clubMatchRouter)
 app.use('/api/leagues',   leagueMatchRouter)
 
+// Phase B7 — championships (public reads; admin-gated writes)
+app.use('/api/championships', championshipsRouter)
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -91,6 +96,7 @@ app.use('/admin/newsroom', adminNewsroomRouter)   // Phase B3 — intelligence l
 app.use('/admin/quality',  adminQualityRouter)    // Phase B4 — data quality & integrity engine
 app.use('/admin/results',  adminResultsRouter)    // Phase B5 — results & fixtures engine
 app.use('/admin/history',  adminHistoryRouter)    // Phase B6 — historical rankings & records engine
+app.use('/admin/championships', adminChampionshipsRouter) // Phase B7 — championship engine
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

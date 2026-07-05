@@ -703,6 +703,230 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B7 — Championship Qualification & Tournament Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend foundation for future Go Netty championships. No live tournament is
+// created here. New tables only; ranking/history tables are read-only sources.
+// Championship + invitation history is permanent (soft-archive only).
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Championship {
+  id             String    @id @default(uuid())
+  name           String
+  slug           String    @unique
+  year           Int?
+  division       String    @default("OPEN")   // OPEN | U17 | B_GRADE | WOMENS | …
+  grade          String?
+  season         String?
+  status         String    @default("DRAFT")  // DRAFT | QUALIFYING | INVITING | LOCKED | LIVE | COMPLETE | ARCHIVED
+  maxTeams       Int       @default(16)
+  qualificationCutoff Int?                     // e.g. top N national rank auto-qualifies
+  description    String?
+  venueId        String?
+  startDate      DateTime?
+  endDate        DateTime?
+  archivedAt     DateTime?                     // soft delete only
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([year])
+  @@map("championships")
+}
+
+// A qualification method + its quota for a championship.
+model QualificationRule {
+  id             String   @id @default(uuid())
+  championshipId String
+  method         String   // TOP_RANKING | LEAGUE_CHAMPION | WILDCARD | HOST_INVITATION | MANUAL_INVITATION | RETURNING_CHAMPION | ADMIN_OVERRIDE
+  priority       Int      @default(0)   // lower = applied first
+  quota          Int?                    // max clubs via this method (null = unlimited)
+  params         String?  // JSON — method-specific config
+  createdAt      DateTime @default(now())
+
+  @@index([championshipId])
+  @@map("qualification_rules")
+}
+
+// Immutable snapshot of the exact rankings used when qualification was generated.
+model QualificationSnapshot {
+  id             String   @id @default(uuid())
+  championshipId String
+  runId          String?
+  weekLabel      String?
+  season         String?
+  data           String   // JSON — the ranked list used, frozen forever
+  generatedBy    String?
+  createdAt      DateTime @default(now())
+
+  @@index([championshipId])
+  @@map("qualification_snapshots")
+}
+
+// A club's qualification standing for a championship (qualified / reserve / …).
+model QualifiedClub {
+  id             String   @id @default(uuid())
+  championshipId String
+  clubId         String
+  clubName       String
+  method         String   // which QualificationRule.method qualified them
+  status         String   @default("QUALIFIED") // QUALIFIED | RESERVE | WAITLIST | REPLACEMENT | REMOVED
+  order          Int      @default(0)           // ordering within the pool/waitlist
+  state          String?
+  leagueId       String?
+  leagueName     String?
+  snapshotRank   Int?                            // national rank at qualification
+  snapshotRating Float?
+  snapshotId     String?                         // the QualificationSnapshot used
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([championshipId, clubId])
+  @@index([championshipId, status])
+  @@map("qualified_clubs")
+}
+
+// Permanent invitation ledger — never hard-deleted; status carries the history.
+model ChampionshipInvitation {
+  id             String    @id @default(uuid())
+  championshipId String
+  clubId         String
+  clubName       String
+  invitationType String    @default("QUALIFICATION") // QUALIFICATION | WILDCARD | HOST | MANUAL | REPLACEMENT
+  status         String    @default("PENDING")       // PENDING | ACCEPTED | DECLINED | WITHDRAWN | EXPIRED
+  invitedAt      DateTime  @default(now())
+  respondedAt    DateTime?
+  reason         String?
+  notes          String?
+  invitedBy      String?
+  snapshotId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([championshipId, status])
+  @@index([clubId])
+  @@map("championship_invitations")
+}
+
+model Venue {
+  id                 String   @id @default(uuid())
+  name               String
+  address            String?
+  state              String?
+  capacity           Int?
+  courtCount         Int?
+  indoorOutdoor      String?  // INDOOR | OUTDOOR | MIXED
+  contactName        String?
+  contactEmail       String?
+  contactPhone       String?
+  accommodationNotes String?
+  archivedAt         DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("venues")
+}
+
+// A team a club fields in a championship (no player lists yet).
+model ChampionshipTeam {
+  id             String   @id @default(uuid())
+  championshipId String
+  clubId         String
+  clubName       String
+  division       String?
+  coach          String?
+  manager        String?
+  captain        String?
+  colours        String?
+  status         String   @default("REGISTERED") // REGISTERED | CONFIRMED | WITHDRAWN
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([championshipId, clubId, division])
+  @@index([championshipId])
+  @@map("championship_teams")
+}
+
+// Tournament structure — pools (models only; no fixtures generated yet).
+model ChampionshipPool {
+  id             String   @id @default(uuid())
+  championshipId String
+  name           String
+  createdAt      DateTime @default(now())
+
+  @@index([championshipId])
+  @@map("championship_pools")
+}
+
+// A tournament fixture (also stores its result). Stage covers pools → finals.
+model ChampionshipFixture {
+  id             String    @id @default(uuid())
+  championshipId String
+  poolId         String?
+  stage          String    @default("POOL") // POOL | ROUND | QF | SF | GF | THIRD_PLACE
+  round          Int?
+  homeTeamId     String?
+  awayTeamId     String?
+  homeClubName   String?
+  awayClubName   String?
+  venueId        String?
+  scheduledAt    DateTime?
+  status         String    @default("SCHEDULED") // SCHEDULED | LIVE | COMPLETED | CANCELLED
+  homeScore      Int?
+  awayScore      Int?
+  winnerTeamId   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([championshipId])
+  @@index([championshipId, stage])
+  @@map("championship_fixtures")
+}
+
+// Derived pool/championship ladder.
+model ChampionshipLadder {
+  id             String   @id @default(uuid())
+  championshipId String
+  poolId         String?
+  teamId         String
+  clubName       String
+  played         Int      @default(0)
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  draws          Int      @default(0)
+  pointsFor      Int      @default(0)
+  pointsAgainst  Int      @default(0)
+  points         Int      @default(0)
+  position       Int?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@unique([championshipId, poolId, teamId])
+  @@index([championshipId])
+  @@map("championship_ladders")
+}
+
+// Permanent, immutable record of a completed championship's outcome.
+model ChampionshipHistory {
+  id             String   @id @default(uuid())
+  championshipId String   @unique
+  championshipName String
+  year           Int?
+  championClubId String?
+  championName   String?
+  runnerUpClubId String?
+  runnerUpName   String?
+  thirdClubId    String?
+  thirdName      String?
+  finalRankings  String?  // JSON
+  awards         String?  // JSON
+  qualifiedClubs String?  // JSON snapshot of who qualified
+  createdAt      DateTime @default(now())
+
+  @@map("championship_history")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B6 — Historical Rankings & Records Engine (ADDITIVE, IMMUTABLE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Permanent, append-only archive of every weekly ranking run + derived club and
