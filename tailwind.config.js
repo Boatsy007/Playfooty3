@@ -6,7 +6,7 @@ export default {
       colors: {
         pink: {
           DEFAULT: '#e30f5a',
-          light: '#ff6bb5',
+          light: '#e30f5a',
           dark: '#cc1f6e',
           muted: '#ffe0f1',
         },
