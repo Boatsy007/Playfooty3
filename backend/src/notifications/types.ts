@@ -38,8 +38,20 @@ export const NOTIFICATION_TYPES: TypeDef[] = [
   { type: 'CHAMPIONSHIP_INVITATION', label: 'Championship invitation',        category: 'CHAMPIONSHIP', severity: 'SUCCESS', recipientScope: 'CLUB' },
   // Quality / system
   { type: 'DATA_QUALITY_ALERT',      label: 'Data quality issue',             category: 'QUALITY',  severity: 'WARNING', recipientScope: 'ADMIN' },
+  { type: 'REVIEW_REQUIRED',         label: 'Review required',                category: 'QUALITY',  severity: 'WARNING', recipientScope: 'ADMIN' },
   { type: 'FAILED_SYNC',             label: 'Failed sync',                    category: 'SYSTEM',   severity: 'CRITICAL', recipientScope: 'ADMIN' },
+  { type: 'SYNC_FAILED',             label: 'Sync failed',                    category: 'SYSTEM',   severity: 'CRITICAL', recipientScope: 'ADMIN' },
+  // Spec alias: Top-100 exit (kept alongside CLUB_EXITED_TOP_100)
+  { type: 'CLUB_LEFT_TOP_100',       label: 'Club left the Top 100',          category: 'CLUB',     severity: 'WARNING', recipientScope: 'CLUB' },
 ]
+
+// Delivery channels. Paid providers are NOT integrated — PUSH and SMS are
+// declared for the future and are safe no-ops until a transport is configured.
+export const CHANNELS = ['IN_APP', 'EMAIL', 'WEBHOOK', 'PUSH', 'SMS'] as const
+export type Channel = typeof CHANNELS[number]
+export const FUTURE_CHANNELS = new Set<string>(['PUSH', 'SMS'])
+export const DIGEST_KINDS = ['DAILY_ADMIN', 'WEEKLY_RANKINGS', 'WEEKLY_CLUB', 'WEEKLY_LEAGUE'] as const
+export type DigestKind = typeof DIGEST_KINDS[number]
 
 export const TYPE_BY_KEY = new Map(NOTIFICATION_TYPES.map(t => [t.type, t]))
 export const VALID_TYPES = new Set(NOTIFICATION_TYPES.map(t => t.type))

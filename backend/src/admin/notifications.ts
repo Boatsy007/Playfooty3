@@ -12,6 +12,8 @@ import { requireAdminKey } from '../api/middleware/auth.js'
 import { runNotificationEngine } from '../notifications/index.js'
 import { seedNotificationRules, markDelivered } from '../notifications/notify.js'
 import { notificationSummary } from '../notifications/reports.js'
+import { generateDigest } from '../notifications/digests.js'
+import { DIGEST_KINDS, type DigestKind } from '../notifications/types.js'
 
 const router = Router()
 router.use(requireAdminKey)
@@ -35,6 +37,15 @@ router.patch('/rules/:type', async (req, res) => {
 })
 
 router.get('/runs', async (_req, res) => { res.json({ data: await prisma.automationRun.findMany({ orderBy: { ranAt: 'desc' }, take: 100 }) }) })
+
+// Generate a digest (dry-run by default — never dispatches).
+router.post('/digest', async (req, res) => {
+  const b = (req.body ?? {}) as { kind?: string; dryRun?: boolean }
+  const kind = (b.kind ?? 'DAILY_ADMIN').toUpperCase()
+  if (!(DIGEST_KINDS as readonly string[]).includes(kind)) return res.status(400).json({ error: `kind must be one of ${DIGEST_KINDS.join('|')}` })
+  res.json({ data: await generateDigest(kind as DigestKind, { dryRun: b.dryRun !== false }) })
+})
+router.get('/digests', async (_req, res) => { res.json({ data: await prisma.notificationDigest.findMany({ orderBy: { createdAt: 'desc' }, take: 50 }) }) })
 
 router.post('/deliver', async (req, res) => {
   const b = (req.body ?? {}) as { ids?: string[] }

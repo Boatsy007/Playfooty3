@@ -739,20 +739,50 @@ model Notification {
   @@map("notifications")
 }
 
-// Per-recipient opt-in/out for a notification type + channel.
+// Per-recipient opt-in/out for a notification type + channel. Phase B9b adds
+// optional scoping (club / league / state) + delivery frequency so a recipient
+// can subscribe narrowly (e.g. only a given league, weekly digest).
 model NotificationPreference {
   id             String   @id @default(uuid())
   recipientScope String
   recipientId    String
   type           String
-  channel        String   @default("IN_APP")
+  channel        String   @default("IN_APP") // IN_APP | EMAIL | WEBHOOK | PUSH | SMS
   enabled        Boolean  @default(true)
+  clubId         String?  // optional: restrict this preference to a club
+  leagueId       String?  // optional: restrict to a league
+  state          String?  // optional: restrict to a state
+  frequency      String   @default("INSTANT") // INSTANT | DAILY | WEEKLY | OFF
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@unique([recipientScope, recipientId, type, channel])
   @@index([recipientScope, recipientId])
+  @@index([clubId])
+  @@index([leagueId])
   @@map("notification_preferences")
+}
+
+// Digest run (daily admin / weekly rankings / weekly club / weekly league).
+// Generated content is stored; nothing is sent unless a real transport exists —
+// dryRun records the digest without dispatching.
+model NotificationDigest {
+  id             String   @id @default(uuid())
+  kind           String   // DAILY_ADMIN | WEEKLY_RANKINGS | WEEKLY_CLUB | WEEKLY_LEAGUE
+  recipientScope String   @default("ADMIN")
+  recipientId    String?
+  periodStart    DateTime
+  periodEnd      DateTime
+  itemCount      Int      @default(0)
+  content        String   // JSON — the assembled digest
+  channel        String   @default("EMAIL")
+  status         String   @default("DRY_RUN") // DRY_RUN | DRAFT | SENT
+  dryRun         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([kind])
+  @@index([createdAt])
+  @@map("notification_digests")
 }
 
 // Rule/template for a notification type (default channels, recipients, copy).

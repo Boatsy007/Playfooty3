@@ -51,7 +51,7 @@ export async function runAutomationScan(opts: { sections?: string[] } = {}): Pro
               }
             }
             if (e.rank > 100 && e.previousRank <= 100) {
-              await emit({ type: 'CLUB_EXITED_TOP_100', recipientScope: 'CLUB', recipientId: e.clubId, title: `${e.clubName} dropped out of the national Top 100`, entityType: 'Club', entityId: e.clubId, data: { rank: e.rank }, dedupeKey: `cross-out:${run.id}:${e.clubId}:100` }, report, 'RANKINGS')
+              await emit({ type: 'CLUB_LEFT_TOP_100', recipientScope: 'CLUB', recipientId: e.clubId, title: `${e.clubName} dropped out of the national Top 100`, entityType: 'Club', entityId: e.clubId, data: { rank: e.rank }, dedupeKey: `cross-out:${run.id}:${e.clubId}:100` }, report, 'RANKINGS')
             }
           }
         }
@@ -114,7 +114,7 @@ export async function runAutomationScan(opts: { sections?: string[] } = {}): Pro
       const pending = await prisma.reviewItem.count({ where: { status: 'PENDING' } })
       if (pending > 0) {
         const day = new Date().toISOString().slice(0, 10)
-        await emit({ type: 'DATA_QUALITY_ALERT', title: `${pending} data-quality item${pending === 1 ? '' : 's'} awaiting review`, data: { pending }, dedupeKey: `data-quality:${day}` }, report, 'QUALITY')
+        await emit({ type: 'REVIEW_REQUIRED', title: `${pending} item${pending === 1 ? '' : 's'} awaiting review`, data: { pending }, dedupeKey: `review-required:${day}` }, report, 'QUALITY')
       }
     } catch (e) { report.warnings.push(`quality: ${String(e)}`) }
   }
@@ -125,7 +125,7 @@ export async function runAutomationScan(opts: { sections?: string[] } = {}): Pro
       const failed = await prisma.league.findMany({ where: { isActive: true, archivedAt: null, syncError: { not: null } }, select: { id: true, name: true, syncError: true, lastSyncedAt: true } })
       for (const l of failed) {
         const stamp = l.lastSyncedAt ? l.lastSyncedAt.toISOString().slice(0, 10) : 'x'
-        await emit({ type: 'FAILED_SYNC', title: `Sync failed: ${l.name}`, body: l.syncError ?? undefined, entityType: 'League', entityId: l.id, dedupeKey: `failed-sync:${l.id}:${stamp}` }, report, 'SYSTEM')
+        await emit({ type: 'SYNC_FAILED', title: `Sync failed: ${l.name}`, body: l.syncError ?? undefined, entityType: 'League', entityId: l.id, dedupeKey: `failed-sync:${l.id}:${stamp}` }, report, 'SYSTEM')
       }
     } catch (e) { report.warnings.push(`system: ${String(e)}`) }
   }

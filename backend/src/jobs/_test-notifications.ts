@@ -8,7 +8,7 @@
  */
 
 import { prisma } from '../db/client.js'
-import { NOTIFICATION_TYPES, VALID_TYPES, TYPE_BY_KEY } from '../notifications/types.js'
+import { NOTIFICATION_TYPES, VALID_TYPES, TYPE_BY_KEY, CHANNELS, DIGEST_KINDS, FUTURE_CHANNELS } from '../notifications/types.js'
 
 async function main() {
   const checks: [string, boolean][] = []
@@ -16,11 +16,16 @@ async function main() {
   // Type catalogue covers every alert class in the brief.
   const required = [
     'RANKINGS_UPDATED', 'CLUB_MOVED_UP', 'CLUB_MOVED_DOWN', 'CLUB_ENTERED_TOP_10', 'CLUB_ENTERED_TOP_25',
-    'CLUB_ENTERED_TOP_50', 'CLUB_ENTERED_TOP_100', 'CLUB_EXITED_TOP_100', 'CLUB_NEW_NUMBER_ONE',
-    'LEAGUE_UPDATED', 'ARTICLE_PUBLISHED', 'CLAIM_APPROVED', 'CLAIM_REJECTED', 'SPONSOR_EXPIRING',
-    'SPONSOR_EXPIRED', 'CHAMPIONSHIP_INVITATION', 'DATA_QUALITY_ALERT', 'FAILED_SYNC',
+    'CLUB_ENTERED_TOP_100', 'CLUB_LEFT_TOP_100', 'LEAGUE_STRENGTH_CHANGED', 'ARTICLE_PUBLISHED',
+    'CLAIM_SUBMITTED', 'CLAIM_APPROVED', 'CLAIM_REJECTED', 'SPONSOR_EXPIRING',
+    'CHAMPIONSHIP_INVITATION', 'SYNC_FAILED', 'REVIEW_REQUIRED',
   ]
   for (const t of required) checks.push([`type ${t} present`, VALID_TYPES.has(t)])
+
+  // Channels (incl. future push/SMS) + digest kinds.
+  for (const c of ['IN_APP', 'EMAIL', 'WEBHOOK', 'PUSH', 'SMS']) checks.push([`channel ${c} declared`, (CHANNELS as readonly string[]).includes(c)])
+  checks.push(['PUSH/SMS marked future', FUTURE_CHANNELS.has('PUSH') && FUTURE_CHANNELS.has('SMS')])
+  for (const d of ['DAILY_ADMIN', 'WEEKLY_RANKINGS', 'WEEKLY_CLUB', 'WEEKLY_LEAGUE']) checks.push([`digest ${d} declared`, (DIGEST_KINDS as readonly string[]).includes(d)])
 
   checks.push(['every type has category', NOTIFICATION_TYPES.every(t => t.category.length > 0)])
   checks.push(['every type has severity', NOTIFICATION_TYPES.every(t => ['INFO', 'SUCCESS', 'WARNING', 'CRITICAL'].includes(t.severity))])
@@ -33,7 +38,7 @@ async function main() {
   checks.push(['dedupe key varies by club', key('r1', 'c1') !== key('r1', 'c2')])
 
   const pc = prisma as unknown as Record<string, { findMany?: unknown }>
-  for (const m of ['notification', 'notificationPreference', 'notificationRule', 'automationRun']) {
+  for (const m of ['notification', 'notificationPreference', 'notificationRule', 'automationRun', 'notificationDigest']) {
     checks.push([`prisma.${m} present`, typeof pc[m]?.findMany === 'function'])
   }
 
