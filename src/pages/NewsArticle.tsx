@@ -11,7 +11,7 @@ import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import {
-  loadPublished, getArticle, relatedArticles, moreFromLeague, moreFromClub, formatDate, categoryOf, type Block,
+  loadArticle, relatedArticles, moreFromLeague, moreFromClub, formatDate, categoryOf, type Article, type Block,
 } from '../news/content'
 import {
   NewsStyles, EditorialImage, ArticleCard, CategoryTag, SectionHead,
@@ -21,10 +21,14 @@ import {
 export default function NewsArticle() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
-  const [ready, setReady] = useState(false)
-  useEffect(() => { loadPublished().then(() => setReady(true)) }, [])
-  void ready
-  const article = getArticle(slug)
+  const [article, setArticle] = useState<Article | null>(null)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadArticle(slug).then(next => { if (alive) setArticle(next) }).finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [slug])
   const cat = article ? categoryOf(article.category) : null
   const url = `https://gotnetty.com.au/news/${slug}`
 
@@ -52,11 +56,13 @@ export default function NewsArticle() {
     ] : undefined,
   })
 
-  if (!article) {
+  if (loading || !article) {
     return (
       <div style={{ background: PAGE, minHeight: '100vh' }}>
         <NewsStyles /><Nav />
-        <div className="font-condensed" style={{ minHeight: '50vh', display: 'grid', placeItems: 'center', color: MUTE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, fontSize: 13 }}>Article not found.</div>
+        <div className="font-condensed" style={{ minHeight: '50vh', display: 'grid', placeItems: 'center', color: MUTE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, fontSize: 13, textAlign: 'center', padding: 20 }}>
+          {loading ? 'Loading article…' : 'Article not found.'}
+        </div>
         <Footer />
       </div>
     )

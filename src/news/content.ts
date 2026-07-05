@@ -230,15 +230,10 @@ export const ARTICLES: Article[] = [
 // ── Query helpers ───────────────────────────────────────────────────────────
 const byDateDesc = (a: Article, b: Article) => +new Date(b.date) - +new Date(a.date)
 
-// V1 reposition: championship coverage is postponed with the event — its
-// sample articles stay in the model but are excluded from every public feed.
-const SAMPLES = ARTICLES.filter(a => a.category !== 'championship')
-
 // ── Published articles from the AI Publishing pipeline ──────────────────────
-// Fetched once at runtime and merged ahead of the sample content, so real
-// generated + published articles lead every feed. loadPublished() is called on
-// mount by the news pages and the home/league/club news modules; it re-resolves
-// to the same promise so it only fetches once.
+// Public feeds use real published articles only. Sample editorial content remains
+// in this module as local development/reference material, but is not mixed into
+// live public UI.
 let published: Article[] = []
 let loadPromise: Promise<void> | null = null
 
@@ -267,10 +262,19 @@ export function loadPublished(): Promise<void> {
   return loadPromise
 }
 
-/** Combined feed: published (real) first, then sample content, deduped by slug. */
+/** Published feed only — no sample/fallback stories in public UI. */
 function LIVE_ALL(): Article[] {
-  const seen = new Set(published.map(a => a.slug))
-  return [...published, ...SAMPLES.filter(a => !seen.has(a.slug))]
+  return published
+}
+
+export async function loadArticle(slug: string): Promise<Article | null> {
+  await loadPublished()
+  const cached = getArticle(slug)
+  if (cached) return cached
+  return fetch(`/api/news/${encodeURIComponent(slug)}`)
+    .then(r => r.ok ? r.json() : { data: null })
+    .then((j: { data: ApiArticle | null }) => j.data ? toArticle(j.data) : null)
+    .catch(() => null)
 }
 
 export const allArticles = () => [...LIVE_ALL()].sort(byDateDesc)

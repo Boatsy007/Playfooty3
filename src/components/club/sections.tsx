@@ -41,8 +41,6 @@ export function ClubHero({ club }: { club: ClubProfile }) {
   const id = clubIdentity(club)
   const rec = club.record
   const place = [club.town, club.leagueName, club.stateName ?? club.state].filter(Boolean).join(' · ')
-  const claimSubject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
-
   return (
     <header style={{ position: 'relative', overflow: 'hidden', background: INK, borderBottom: `3px solid ${id.accent}` }}>
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: `
@@ -115,10 +113,10 @@ export function ClubHero({ club }: { club: ClubProfile }) {
               <FormPips form={club.recentForm} />
             </span>
           )}
-          <a href={`mailto:hello@gotnetty.com.au?subject=${claimSubject}`} className="font-condensed club-hero-claim"
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: PINK, color: '#fff', padding: '12px 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', boxShadow: '0 14px 34px rgba(255,44,145,0.28)' }}>
-            Claim club <ArrowRight size={14} />
-          </a>
+          <span className="font-condensed club-hero-claim" aria-disabled="true"
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '12px 18px', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', border: '1px solid rgba(255,255,255,0.22)' }}>
+            Claiming coming soon <ArrowRight size={14} />
+          </span>
         </motion.div>
       </div>
       <style>{`
@@ -554,7 +552,6 @@ export function ClubSidebar({ club }: { club: ClubProfile }) {
   const [, bump] = useState(0)
   useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const news = allArticles().filter(a => a.tags.club && (a.tags.club.toLowerCase().includes(club.clubName.toLowerCase()) || club.clubName.toLowerCase().includes(a.tags.club.toLowerCase()))).slice(0, 2)
-  const claimSubject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
   return (
     <aside className="club-sidebar" style={{ position: 'sticky', top: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="gn-card" style={{ padding: 18, borderTop: `3px solid ${id.accent}` }}><SideLabel>Latest ranking</SideLabel><strong className="font-display" style={{ fontSize: 34, color: club.rank != null ? PINK : TEXT }}>{club.rank != null ? `#${club.rank}` : 'Pending'}</strong>{club.rank != null && <div style={{ marginTop: 6 }}><Move delta={club.rankMovement} /></div>}</div>
@@ -563,7 +560,7 @@ export function ClubSidebar({ club }: { club: ClubProfile }) {
       {club.leagueStrengthScore != null && <Link to={club.leagueId ? leaguePath(club.leagueId) : '/leagues'} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>League strength</SideLabel><div style={{ marginTop: 8 }}><StarStrength stars={strengthStars(club.leagueStrengthScore)} size={12} /></div><small style={{ color: MUTE }}>{strengthLabel(strengthStars(club.leagueStrengthScore))}</small></Link>}
       {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest club news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
       <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
-      <a href={`mailto:hello@gotnetty.com.au?subject=${claimSubject}`} className="gn-card gn-card-hover" style={{ padding: 18, background: PINK, color: '#fff', textDecoration: 'none' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Manage this profile</strong></a>
+      <div className="gn-card" aria-disabled="true" style={{ padding: 18, background: PINK, color: '#fff' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Claiming coming soon</strong></div>
       <div className="gn-card" style={{ padding: 18, borderStyle: 'dashed' }}><SideLabel>Sponsor placeholder</SideLabel><strong style={{ color: TEXT }}>Partner with {club.clubName}</strong></div>
       <style>{`@media(max-width:980px){.club-sidebar{position:static!important;margin-top:18px}.club-sidebar .gn-card{width:100%}}`}</style>
     </aside>
