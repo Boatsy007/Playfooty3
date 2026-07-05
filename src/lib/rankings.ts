@@ -55,6 +55,21 @@ export interface ClubProfile {
   weekLabel: string
   season: string
   history: { weekLabel: string; rank: number; powerRating: number; date: string }[]
+  // Club identity + brand
+  town?: string | null
+  region?: string | null
+  stateName?: string | null
+  logoUrl?: string | null
+  primaryColour?: string | null
+  secondaryColour?: string | null
+  websiteUrl?: string | null
+  facebookUrl?: string | null
+  instagramUrl?: string | null
+  // Current league ladder (with this club marked)
+  ladder?: {
+    clubId: string; clubName: string; position: number | null; played: number; wins: number
+    losses: number; draws: number; percentage: number; points: number; isThisClub: boolean
+  }[]
 }
 
 export interface LeagueRankedTeam {
@@ -104,6 +119,13 @@ export const fetchTop = (n: 10 | 25 | 100) => getJson<RankingsResponse>(`/api/to
 export const fetchClub = (id: string) => getJson<{ data: ClubProfile }>(`/api/clubs/${id}`).then(r => r.data)
 export const fetchLeague = (id: string) => getJson<{ data: LeagueDetail }>(`/api/leagues/${id}`).then(r => r.data)
 export const fetchSearch = (q: string) => getJson<{ data: SearchResults }>(`/api/leagues/search/global?q=${encodeURIComponent(q)}`).then(r => r.data)
+
+export interface ClubExplanation {
+  clubId: string; clubName: string; rank: number; powerRating: number; weekLabel: string
+  reasoning: string; componentScores: Record<string, number>
+  league: { name: string; strength: number; confidence: number; reasoning: string | null; calculatedAt: string | null } | null
+}
+export const fetchClubExplain = (id: string) => getJson<{ data: ClubExplanation }>(`/api/rankings/explain/${id}`).then(r => r.data)
 
 // ── generic hook ───────────────────────────────────────────────────────────
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {

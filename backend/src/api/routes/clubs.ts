@@ -71,7 +71,7 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
     // in the directory has a working profile even when it isn't currently ranked.
     const club = await prisma.club.findUnique({
       where:  { id: clubId },
-      include: { state: { select: { code: true } } },
+      include: { state: { select: { code: true, name: true } } },
     })
     if (!currentEntry && !club) return res.status(404).json({ error: 'Club not found' })
 
@@ -84,6 +84,19 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const league = cls?.league
       ?? (currentEntry ? await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }) : null)
+
+    // Current league ladder (for the club page's "current ladder" context), plus
+    // the season stats so we can show each rival's record. Ordered by position.
+    const leagueId = currentEntry?.leagueId ?? league?.id ?? cls?.leagueId ?? null
+    const ladderSeason = season ?? cls?.season ?? undefined
+    const ladderRows = leagueId && ladderSeason
+      ? await prisma.clubLeagueSeason.findMany({
+          where:   { leagueId, season: ladderSeason },
+          orderBy: [{ position: 'asc' }, { points: 'desc' }],
+          select:  { clubId: true, position: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true },
+        })
+      : []
+    const ladderNames = new Map((await prisma.club.findMany({ where: { id: { in: ladderRows.map(r => r.clubId) } }, select: { id: true, name: true } })).map(c => [c.id, c.name]))
 
     const history = await prisma.rankingEntry.findMany({
       where:   { clubId },
@@ -120,6 +133,22 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         weekLabel:   currentEntry?.rankingRun.weekLabel ?? null,
         season:      season ?? cls?.season ?? null,
         history:     history.map(h => ({ weekLabel: h.rankingRun.weekLabel, rank: h.rank, powerRating: h.powerRating, date: h.rankingRun.completedAt })),
+        // Club identity + brand (from the club record; nulls where unset)
+        town:        club?.townName ?? null,
+        region:      club?.region ?? null,
+        stateName:   club?.state?.name ?? null,
+        logoUrl:     club?.logoUrl ?? null,
+        primaryColour:   club?.primaryColour ?? null,
+        secondaryColour: club?.secondaryColour ?? null,
+        websiteUrl:  club?.websiteUrl ?? null,
+        facebookUrl: club?.facebookUrl ?? null,
+        instagramUrl: club?.instagramUrl ?? null,
+        // Current league ladder for context on the club page.
+        ladder:      ladderRows.map(r => ({
+          clubId: r.clubId, clubName: ladderNames.get(r.clubId) ?? 'Unknown', position: r.position,
+          played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, percentage: r.percentage, points: r.points,
+          isThisClub: r.clubId === clubId,
+        })),
       },
     })
   } catch {

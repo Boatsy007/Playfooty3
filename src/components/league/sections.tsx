@@ -32,6 +32,19 @@ export function leagueAccent(name: string): { accent: string; deep: string; wash
   }
 }
 
+// Plain-English reasons a league sits where it does, strictly from real data.
+// Used in the hero and the strength section instead of an abstract confidence %.
+export function whyRankedBullets(_league: LeagueDetail, facts: LeagueFacts): string[] {
+  const out: string[] = []
+  if (facts.top25 > 0) out.push(`${facts.top25} ${facts.top25 === 1 ? 'club' : 'clubs'} in Australia's Top 25`)
+  if (facts.top100 > 0) out.push(`${facts.top100} ${facts.top100 === 1 ? 'club' : 'clubs'} inside the national Top 100`)
+  if (facts.avgRating != null) out.push(`Average club rating ${facts.avgRating.toFixed(1)}`)
+  if (facts.balance != null && facts.balance >= 60 && (facts.depth == null || facts.depth <= 14)) out.push('Even competition top to bottom')
+  else if (facts.depth != null && facts.depth <= 10) out.push('Strong competitive depth')
+  else if (facts.bestClub) out.push(`Led nationally by ${facts.bestClub.clubName}`)
+  return out.slice(0, 4)
+}
+
 // ─── Derived league facts (shared by snapshot, strength, stats, SEO) ─────────
 export interface LeagueFacts {
   nationalRank: number | null      // rank among all leagues by strength
@@ -40,6 +53,7 @@ export interface LeagueFacts {
   avgRating: number | null
   medianRating: number | null
   top100: number
+  top25: number
   bestClub: LeagueRankedTeam | null
   lowestClub: LeagueRankedTeam | null
   leader: LeagueDetail['ladder'][number] | null
@@ -99,6 +113,7 @@ export function deriveFacts(league: LeagueDetail, allLeagues: LeagueRow[]): Leag
     avgRating: mean(ratings),
     medianRating: median(ratings),
     top100: ranked.filter(t => t.rank <= 100).length,
+    top25: ranked.filter(t => t.rank <= 25).length,
     bestClub: ranked[0] ?? null,
     lowestClub: ranked.length ? ranked[ranked.length - 1] : null,
     leader: ladder.find(r => (r.position ?? 99) === 1) ?? ladder[0] ?? null,
@@ -139,8 +154,8 @@ export function LeagueMark({ name, src, accent, size = 76 }: { name: string; src
 export function LeagueHero({ league, facts }: { league: LeagueDetail; facts: LeagueFacts }) {
   const reduced = useReducedMotion()
   const updated = league.lastSyncedAt ?? league.strengthCalculatedAt
-  const conf = league.strengthConfidence
   const id = leagueAccent(league.name)
+  const why = whyRankedBullets(league, facts)
 
   return (
     <header style={{ position: 'relative', overflow: 'hidden', background: INK, borderBottom: `3px solid ${id.accent}` }}>
@@ -224,18 +239,20 @@ export function LeagueHero({ league, facts }: { league: LeagueDetail; facts: Lea
           )}
         </div>
 
-        {/* Confidence meter */}
-        {conf != null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24, maxWidth: 420 }}>
-            <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10.5, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-              Data confidence
-            </span>
-            <span style={{ flex: 1, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }} role="img" aria-label={`Data confidence ${Math.round(conf * 100)} percent`}>
-              <motion.span initial={{ width: 0 }} animate={{ width: `${Math.round(conf * 100)}%` }} transition={{ duration: 1, delay: 0.6, ease: EASE }}
-                style={{ display: 'block', height: '100%', background: conf >= 0.6 ? UP : GOLD, borderRadius: 4 }} />
-            </span>
-            <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 800 }}>{Math.round(conf * 100)}%</span>
+        {/* Why ranked here: real reasons, not an abstract score */}
+        {why.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: reduced ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 26, flexWrap: 'wrap' }}>
+            {facts.nationalRank != null && (
+              <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10.5, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', marginRight: 4 }}>
+                Why #{facts.nationalRank}
+              </span>
+            )}
+            {why.map(b => (
+              <span key={b} className="font-condensed" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: 'rgba(255,255,255,0.82)', fontSize: 12.5, fontWeight: 600, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, padding: '6px 13px' }}>
+                <span style={{ width: 5, height: 5, borderRadius: 999, background: id.accent }} aria-hidden />{b}
+              </span>
+            ))}
           </motion.div>
         )}
       </div>
@@ -273,7 +290,7 @@ export function LeagueSnapshot({ league, facts }: { league: LeagueDetail; facts:
   if (facts.avgRating != null) tiles.push({ label: 'Average club rating', value: facts.avgRating.toFixed(1), sub: facts.medianRating != null ? `median ${facts.medianRating.toFixed(1)}` : undefined })
   if (facts.bestClub) tiles.push({ label: 'Highest ranked club', value: `#${facts.bestClub.rank}`, sub: facts.bestClub.clubName, accent: GOLD_DK })
   if (facts.leader) tiles.push({ label: 'Ladder leader', value: facts.leader.clubName.split(' ').slice(0, 2).join(' '), sub: `${facts.leader.wins}-${facts.leader.losses} this season`, accent: UP })
-  if (league.strengthConfidence != null) tiles.push({ label: 'Confidence', value: `${Math.round(league.strengthConfidence * 100)}%`, sub: 'in the strength model' })
+  if (facts.top100 > 0) tiles.push({ label: 'Top 100 clubs', value: String(facts.top100), sub: facts.top25 > 0 ? `${facts.top25} in the Top 25` : 'nationally ranked', accent: PINK })
   tiles.push({ label: 'Tracked since', value: '2026', sub: league.primarySource === 'MANUAL_IMAGE' ? 'via ladder imagery' : 'live ladder data' })
 
   return (
@@ -323,6 +340,18 @@ export function LeagueStrength({ league, facts }: { league: LeagueDetail; facts:
               <StarStrength stars={facts.stars} size={18} />
             </div>
             <p style={{ color: TEXT, fontSize: 16.5, lineHeight: 1.7, margin: 0, fontWeight: 500 }}>{lead}</p>
+            {whyRankedBullets(league, facts).length > 0 && (
+              <ul style={{ listStyle: 'none', margin: '18px 0 0', padding: 0, display: 'grid', gap: 10 }}>
+                {whyRankedBullets(league, facts).map(b => (
+                  <li key={b} style={{ display: 'flex', alignItems: 'center', gap: 11, color: TEXT, fontSize: 14.5, fontWeight: 600 }}>
+                    <span aria-hidden style={{ width: 22, height: 22, borderRadius: 7, flexShrink: 0, display: 'grid', placeItems: 'center', color: '#16a34a', background: 'rgba(22,163,74,0.1)' }}>
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7.5 L5.5 11 L12 3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            )}
             {league.strengthReasoning && (
               <p style={{ color: MUTE, fontSize: 14, lineHeight: 1.7, margin: '16px 0 0', paddingTop: 16, borderTop: `1px solid ${LINE}` }}>
                 <span className="font-condensed" style={{ display: 'block', fontSize: 10.5, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT, marginBottom: 8 }}>From the rating engine</span>
