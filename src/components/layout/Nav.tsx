@@ -96,7 +96,7 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src="/logo.webp" alt="Got Netty" style={{ height: 34, width: 'auto', objectFit: 'contain' }} />
+            <img src="/logo.webp" alt="Got Netty" style={{ height: 85, width: 'auto', objectFit: 'contain' }} />
           </button>
 
           {/* Desktop links */}
