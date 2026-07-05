@@ -761,11 +761,124 @@ model LadderRow {
   sourceNotes   String?
   createdAt     DateTime @default(now())
 
+  // B10.5 — extended standings metrics (additive; default 0 so old rows stay valid).
+  homeWins         Int   @default(0)
+  homeLosses       Int   @default(0)
+  homeDraws        Int   @default(0)
+  awayWins         Int   @default(0)
+  awayLosses       Int   @default(0)
+  awayDraws        Int   @default(0)
+  avgMargin        Float @default(0)
+  largestWin       Int   @default(0)
+  largestLoss      Int   @default(0)
+  longestWinStreak Int   @default(0)
+  longestLossStreak Int  @default(0)
+
   ladder        Ladder   @relation(fields: [ladderId], references: [id])
 
   @@index([ladderId])
   @@index([clubId])
   @@map("ladder_rows")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE B10.5 — Full Season Ingestion Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Import an entire season (Round 1 → finals) from OCR/CSV/manual/PlayHQ in one
+// operation. Results are the canonical source: committed results reconstruct
+// round-by-round ladders, round summaries and per-club season timelines. Every
+// batch is tracked (SeasonImport) with per-row provenance + fingerprints
+// (SeasonImportRow) for idempotency and audit. Soft-delete only.
+// ═════════════════════════════════════════════════════════════════════════════
+
+model SeasonImport {
+  id                  String   @id @default(uuid())
+  leagueId            String?
+  leagueName          String?
+  season              String?
+  grade               String?
+  source              String   @default("MIXED")   // OCR | CSV | MANUAL | PLAYHQ | MIXED
+  status              String   @default("STAGED")  // STAGED | COMMITTED | PARTIAL | REJECTED
+  fileName            String?
+  batchLabel          String?
+  totalRows           Int      @default(0)
+  committed           Int      @default(0)
+  skipped             Int      @default(0)
+  reviewRaised        Int      @default(0)
+  laddersGenerated    Int      @default(0)
+  roundsReconstructed Int      @default(0)
+  warnings            String?  // JSON string[]
+  stagedRows          String?  // JSON — parsed rows kept for a later commit
+  report              String?  // JSON — preview / commit report
+  createdBy           String?
+  deletedAt           DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  rows                SeasonImportRow[]
+
+  @@index([leagueId, season])
+  @@index([status])
+  @@map("season_imports")
+}
+
+model SeasonImportRow {
+  id           String   @id @default(uuid())
+  importId     String
+  rowIndex     Int
+  sourceFile   String?
+  fingerprint  String   // hash of normalized content — idempotency/provenance
+  dedupeKey    String?
+  leagueId     String?
+  season       String?
+  grade        String?
+  round        Int?
+  homeClubName String?
+  awayClubName String?
+  homeScore    Int?
+  awayScore    Int?
+  status       String   @default("VALID") // VALID | REVIEW | INVALID | DUPLICATE | CORRECTION | COMMITTED
+  issues       String?  // JSON string[]
+  resultId     String?
+  createdAt    DateTime @default(now())
+
+  import       SeasonImport @relation(fields: [importId], references: [id])
+
+  @@index([importId])
+  @@index([fingerprint])
+  @@index([dedupeKey])
+  @@map("season_import_rows")
+}
+
+model ClubSeasonTimeline {
+  id             String   @id @default(uuid())
+  clubId         String
+  clubName       String
+  leagueId       String
+  leagueName     String?
+  season         String
+  grade          String   @default("A Grade")
+  round          Int
+  position       Int?
+  played         Int      @default(0)
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  draws          Int      @default(0)
+  goalsFor       Int      @default(0)
+  goalsAgainst   Int      @default(0)
+  goalDiff       Int      @default(0)
+  percentage     Float    @default(0)
+  points         Int      @default(0)
+  form           String?  // JSON last5 most-recent first
+  currentStreak  Int      @default(0)
+  rankingAtRound Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([clubId, leagueId, season, grade, round])
+  @@index([clubId, season])
+  @@index([leagueId, season, grade, round])
+  @@map("club_season_timeline")
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

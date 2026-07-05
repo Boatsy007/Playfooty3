@@ -27,6 +27,7 @@ import { adminCommercialRouter } from './admin/commercial.js'
 import { adminNotificationsRouter } from './admin/notifications.js'
 import { adminAnalyticsRouter } from './admin/analytics.js'
 import { adminLadderRouter } from './admin/ladder.js'
+import { adminSeasonRouter } from './admin/season.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
@@ -51,6 +52,8 @@ app.use(cors({
 app.use('/admin/ocr', express.json({ limit: '20mb' }))
 // CSV imports (ladders) can be large too.
 app.use('/admin/platform/csv', express.json({ limit: '20mb' }))
+// Full-season imports (many rounds / multiple OCR/CSV payloads) can be large.
+app.use('/admin/season', express.json({ limit: '25mb' }))
 app.use(express.json({ limit: '1mb' }))
 
 // ── API routes ───────────────────────────────────────────────────────────────
@@ -120,6 +123,7 @@ app.use('/admin/commercial', adminCommercialRouter)       // Phase B8 — commer
 app.use('/admin/notifications', adminNotificationsRouter) // Phase B9 — notifications & automation
 app.use('/admin/analytics', adminAnalyticsRouter)         // Phase B11 — analytics & insights
 app.use('/admin/ladder',   adminLadderRouter)             // Ladder Import V2 — ladders + bulk backfill
+app.use('/admin/season',   adminSeasonRouter)             // Phase B10.5 — full season ingestion engine
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

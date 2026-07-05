@@ -31,6 +31,11 @@ export interface StandingRow {
   clubId: string; clubName: string; played: number; wins: number; losses: number; draws: number
   goalsFor: number; goalsAgainst: number; goalDiff: number; percentage: number; points: number
   last5: string[]; currentStreak: number; position: number
+  // B10.5 — extended metrics
+  homeWins: number; homeLosses: number; homeDraws: number
+  awayWins: number; awayLosses: number; awayDraws: number
+  avgMargin: number; largestWin: number; largestLoss: number
+  longestWinStreak: number; longestLossStreak: number
 }
 
 /** Safe percentage: GF/GA×100; GA=0 handled without crashing. */
@@ -41,17 +46,24 @@ export function safePercentage(goalsFor: number, goalsAgainst: number): number {
 
 /** Pure standings computation from result rows. */
 export function computeStandings(results: ResultRow[], cfg: PointsConfig): StandingRow[] {
-  interface Acc { clubId: string; clubName: string; p: number; w: number; l: number; d: number; gf: number; ga: number; timeline: { key: number; outcome: 'W' | 'L' | 'D' }[] }
+  interface Acc {
+    clubId: string; clubName: string; p: number; w: number; l: number; d: number; gf: number; ga: number
+    hw: number; hl: number; hd: number; aw: number; al: number; ad: number
+    margins: number[]  // signed: +win margin, -loss margin, 0 draw
+    timeline: { key: number; outcome: 'W' | 'L' | 'D' }[]
+  }
   const acc = new Map<string, Acc>()
-  const ensure = (id: string, name: string): Acc => { let a = acc.get(id); if (!a) { a = { clubId: id, clubName: name, p: 0, w: 0, l: 0, d: 0, gf: 0, ga: 0, timeline: [] }; acc.set(id, a) } else if (name) a.clubName = name; return a }
+  const ensure = (id: string, name: string): Acc => { let a = acc.get(id); if (!a) { a = { clubId: id, clubName: name, p: 0, w: 0, l: 0, d: 0, gf: 0, ga: 0, hw: 0, hl: 0, hd: 0, aw: 0, al: 0, ad: 0, margins: [], timeline: [] }; acc.set(id, a) } else if (name) a.clubName = name; return a }
 
   for (const r of results) {
     const key = (r.round ?? 0) * 1e10 + (r.matchDate ? r.matchDate.getTime() : 0)
     const home = ensure(r.homeClubId, r.homeClubName), away = ensure(r.awayClubId, r.awayClubName)
     home.p++; away.p++; home.gf += r.homeScore; home.ga += r.awayScore; away.gf += r.awayScore; away.ga += r.homeScore
-    if (r.isDraw || r.homeScore === r.awayScore) { home.d++; away.d++; home.timeline.push({ key, outcome: 'D' }); away.timeline.push({ key, outcome: 'D' }) }
-    else if (r.homeScore > r.awayScore) { home.w++; away.l++; home.timeline.push({ key, outcome: 'W' }); away.timeline.push({ key, outcome: 'L' }) }
-    else { away.w++; home.l++; away.timeline.push({ key, outcome: 'W' }); home.timeline.push({ key, outcome: 'L' }) }
+    const m = r.homeScore - r.awayScore  // home perspective
+    home.margins.push(m); away.margins.push(-m)
+    if (r.isDraw || r.homeScore === r.awayScore) { home.d++; away.d++; home.hd++; away.ad++; home.timeline.push({ key, outcome: 'D' }); away.timeline.push({ key, outcome: 'D' }) }
+    else if (r.homeScore > r.awayScore) { home.w++; away.l++; home.hw++; away.al++; home.timeline.push({ key, outcome: 'W' }); away.timeline.push({ key, outcome: 'L' }) }
+    else { away.w++; home.l++; away.aw++; home.hl++; away.timeline.push({ key, outcome: 'W' }); home.timeline.push({ key, outcome: 'L' }) }
   }
 
   const rows: StandingRow[] = [...acc.values()].map(a => {
@@ -61,11 +73,23 @@ export function computeStandings(results: ResultRow[], cfg: PointsConfig): Stand
     let streak = 0, type: 'W' | 'L' | 'D' | null = null
     for (const o of recent) { if (type == null) { type = o; streak = 1 } else if (o === type) streak++; else break }
     const signed = type === 'W' ? streak : type === 'L' ? -streak : 0
+    // longest win / loss streaks over the full ordered timeline
+    let lw = 0, ll = 0, curW = 0, curL = 0
+    for (const t of a.timeline) {
+      if (t.outcome === 'W') { curW++; curL = 0 } else if (t.outcome === 'L') { curL++; curW = 0 } else { curW = 0; curL = 0 }
+      if (curW > lw) lw = curW; if (curL > ll) ll = curL
+    }
+    const absMargins = a.margins.map(Math.abs)
+    const avgMargin = absMargins.length ? +(absMargins.reduce((x, y) => x + y, 0) / absMargins.length).toFixed(2) : 0
+    const largestWin = a.margins.reduce((mx, v) => (v > mx ? v : mx), 0)
+    const largestLoss = a.margins.reduce((mx, v) => (v < 0 && -v > mx ? -v : mx), 0)
     const points = a.w * cfg.winPoints + a.d * cfg.drawPoints
     return {
       clubId: a.clubId, clubName: a.clubName, played: a.p, wins: a.w, losses: a.l, draws: a.d,
       goalsFor: a.gf, goalsAgainst: a.ga, goalDiff: a.gf - a.ga, percentage: safePercentage(a.gf, a.ga), points,
       last5: recent.slice(0, 5), currentStreak: signed, position: 0,
+      homeWins: a.hw, homeLosses: a.hl, homeDraws: a.hd, awayWins: a.aw, awayLosses: a.al, awayDraws: a.ad,
+      avgMargin, largestWin, largestLoss, longestWinStreak: lw, longestLossStreak: ll,
     }
   })
 
@@ -105,7 +129,7 @@ export async function generateLadderFromResults(leagueId: string, season: string
       roundFrom: opts.roundFrom ?? (rounds.length ? Math.min(...rounds) : null), roundTo: opts.roundTo ?? (rounds.length ? Math.max(...rounds) : null),
       resultsIncluded: results.length, winPoints: cfg.winPoints, drawPoints: cfg.drawPoints,
       confidence: 0.9, warnings: warnings.length ? JSON.stringify(warnings) : null, generatedAt: new Date(), createdBy: opts.createdBy ?? 'admin',
-      rows: { create: standings.map(s => ({ position: s.position, clubId: s.clubId, clubName: s.clubName, played: s.played, wins: s.wins, losses: s.losses, draws: s.draws, goalsFor: s.goalsFor, goalsAgainst: s.goalsAgainst, goalDiff: s.goalDiff, percentage: s.percentage, points: s.points, last5: JSON.stringify(s.last5), currentStreak: s.currentStreak })) },
+      rows: { create: standings.map(s => ({ position: s.position, clubId: s.clubId, clubName: s.clubName, played: s.played, wins: s.wins, losses: s.losses, draws: s.draws, goalsFor: s.goalsFor, goalsAgainst: s.goalsAgainst, goalDiff: s.goalDiff, percentage: s.percentage, points: s.points, last5: JSON.stringify(s.last5), currentStreak: s.currentStreak, homeWins: s.homeWins, homeLosses: s.homeLosses, homeDraws: s.homeDraws, awayWins: s.awayWins, awayLosses: s.awayLosses, awayDraws: s.awayDraws, avgMargin: s.avgMargin, largestWin: s.largestWin, largestLoss: s.largestLoss, longestWinStreak: s.longestWinStreak, longestLossStreak: s.longestLossStreak })) },
     },
   })
 

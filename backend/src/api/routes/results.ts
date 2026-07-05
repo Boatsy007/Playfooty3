@@ -14,8 +14,9 @@ import { getClubResults, getLeagueResults, getClubMatchHistory } from '../../res
 import { getClubFixtures, getLeagueFixtures } from '../../results/fixtures.service.js'
 import { getStatLeaderboards } from '../../results/statistics.js'
 import { getRoundSummary } from '../../results/rounds.js'
-import { getCurrentLadder } from '../../ladder/ladders.service.js'
+import { getCurrentLadder, listLadders } from '../../ladder/ladders.service.js'
 import { clubUpNext } from '../../ladder/up-next.js'
+import { getClubSeasonHistory } from '../../season/timeline.js'
 import { logger } from '../../utils/logger.js'
 
 // ── /api/results ──────────────────────────────────────────────────────────────
@@ -86,6 +87,10 @@ clubMatch.get('/:id/fixtures', publicRateLimit, cachePublic(300), async (req, re
 clubMatch.get('/:id/up-next', publicRateLimit, cachePublic(300), async (req, res) => {
   res.json({ data: await clubUpNext(String(req.params.id), { season: req.query.season as string | undefined }) })
 })
+// B10.5 — GET /api/clubs/:id/season-history (round-by-round timeline + highlights)
+clubMatch.get('/:id/season-history', publicRateLimit, cachePublic(300), async (req, res) => {
+  res.json({ data: await getClubSeasonHistory(String(req.params.id), { season: req.query.season as string | undefined, leagueId: req.query.league as string | undefined, grade: req.query.grade as string | undefined }) })
+})
 
 const leagueMatch = Router()
 leagueMatch.get('/:id/results', publicRateLimit, cachePublic(300), async (req, res) => {
@@ -105,6 +110,16 @@ leagueMatch.get('/:id/ladder', publicRateLimit, cachePublic(300), async (req, re
   const ladder = await getCurrentLadder(String(req.params.id), { season: req.query.season as string | undefined, grade: req.query.grade as string | undefined })
   if (!ladder) return res.status(404).json({ error: 'no current ladder' })
   res.json({ data: ladder })
+})
+// B10.5 — GET /api/leagues/:id/ladders (all stored ladders for the league)
+leagueMatch.get('/:id/ladders', publicRateLimit, cachePublic(300), async (req, res) => {
+  res.json({ data: await listLadders(String(req.params.id), { season: req.query.season as string | undefined, grade: req.query.grade as string | undefined }) })
+})
+// B10.5 — GET /api/leagues/:id/rounds (round summaries the league has)
+leagueMatch.get('/:id/rounds', publicRateLimit, cachePublic(300), async (req, res) => {
+  const where = { leagueId: String(req.params.id), ...(req.query.season ? { season: String(req.query.season) } : {}), ...(req.query.grade ? { grade: String(req.query.grade) } : {}) }
+  const rounds = await prisma.roundSummary.findMany({ where, orderBy: { round: 'asc' }, select: { round: true, season: true, grade: true, matchesPlayed: true, averageMargin: true, biggestMargin: true, closestMargin: true, upsetDetected: true, generatedAt: true } })
+  res.json({ data: rounds, meta: { total: rounds.length } })
 })
 
 export { results as resultsRouter, fixtures as fixturesRouter, clubMatch as clubMatchRouter, leagueMatch as leagueMatchRouter }
