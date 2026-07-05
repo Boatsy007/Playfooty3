@@ -1,7 +1,7 @@
 /**
  * League page (Phase 3): the definitive digital home for a competition.
  * Hero with league identity, snapshot, ladder, national club rankings,
- * strength explainer, league highlights, statistics, news and related
+ * strength explainer, statistics, news and related
  * leagues. Every number is derived from live API data.
  */
 import { lazy, Suspense, useState } from 'react'
@@ -19,7 +19,6 @@ import {
 import { LeagueLadder, ClubRankingCards } from '../components/league/ladder'
 import type { LeagueRow } from '../components/home/useHomeData'
 
-const LeagueHighlights = lazy(() => import('../components/league/sections').then(m => ({ default: m.LeagueHighlights })))
 const LeagueStats = lazy(() => import('../components/league/sections').then(m => ({ default: m.LeagueStats })))
 
 const fetchLeagues = () =>
@@ -77,9 +76,6 @@ export default function LeagueProfile() {
                   <LeagueStats league={data} facts={facts} />
                 </Suspense>
                 <RelatedLeagues league={data} allLeagues={leagues.data ?? []} />
-                <Suspense fallback={<div style={{ minHeight: 320 }} aria-hidden />}>
-                  <LeagueHighlights league={data} facts={facts} />
-                </Suspense>
               </div>
               <LeagueSidebar league={data} facts={facts} />
             </div>

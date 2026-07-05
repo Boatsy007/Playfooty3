@@ -317,6 +317,7 @@ export function LeagueSnapshot({ league, facts }: { league: LeagueDetail; facts:
   if (facts.avgRating != null) tiles.push({ label: 'Average club rating', value: facts.avgRating.toFixed(1), sub: facts.medianRating != null ? `median ${facts.medianRating.toFixed(1)}` : undefined })
   if (facts.bestClub) tiles.push({ label: 'Highest ranked club', value: `#${facts.bestClub.rank}`, sub: facts.bestClub.clubName, accent: GOLD_DK })
   if (facts.leader) tiles.push({ label: 'Ladder leader', value: facts.leader.clubName.split(' ').slice(0, 2).join(' '), sub: `${facts.leader.wins}-${facts.leader.losses} this season`, accent: UP })
+  if (facts.top25 > 0) tiles.push({ label: 'Top 25 clubs', value: String(facts.top25), sub: 'national elite', accent: PINK })
   if (facts.top100 > 0) tiles.push({ label: 'Top 100 clubs', value: String(facts.top100), sub: facts.top25 > 0 ? `${facts.top25} in the Top 25` : 'nationally ranked', accent: PINK })
   if (updated) tiles.push({ label: 'Recently updated', value: new Date(updated).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }), sub: league.primarySource === 'MANUAL_IMAGE' ? 'via ladder imagery' : 'live ladder data' })
 
@@ -358,8 +359,9 @@ export function LeagueStrength({ league, facts }: { league: LeagueDetail; facts:
   return (
     <Section id="strength" band>
       <SectionHead
-        kicker="Why this rating"
-        title={<>LEAGUE <span style={{ color: PINK }}>STRENGTH</span></>}
+        kicker="Why this league is ranked here"
+        title={<>RANKED <span style={{ color: PINK }}>HERE</span></>}
+        sub="Strength distribution, depth and nationally ranked clubs from the current data."
       />
       <div className="str-grid" style={{ display: 'grid', gap: 18 }}>
         <Reveal>
@@ -698,8 +700,9 @@ export function LeagueStats({ league, facts }: { league: LeagueDetail; facts: Le
   if (facts.bestClub) rows.push({ label: 'Strongest club', value: facts.bestClub.clubName, sub: `#${facts.bestClub.rank} nationally` })
   if (facts.leader) rows.push({ label: 'Ladder leader', value: facts.leader.clubName, sub: `${facts.leader.points} points` })
   if (facts.avgRating != null) rows.push({ label: 'Average club rating', value: facts.avgRating.toFixed(1) })
-  if (facts.bestClub) rows.push({ label: 'Highest ranked club', value: `#${facts.bestClub.rank}`, sub: `rating ${facts.bestClub.powerRating.toFixed(1)}` })
-  if (facts.biggestClimber) rows.push({ label: 'Biggest mover', value: facts.biggestClimber.clubName, sub: `up ${facts.biggestClimber.rankMovement} places` })
+  if (facts.bestClub) rows.push({ label: 'Highest rating', value: facts.bestClub.powerRating.toFixed(1), sub: facts.bestClub.clubName })
+  if (facts.lowestClub && facts.lowestClub.clubId !== facts.bestClub?.clubId) rows.push({ label: 'Lowest rating', value: facts.lowestClub.powerRating.toFixed(1), sub: facts.lowestClub.clubName })
+  if (facts.biggestClimber) rows.push({ label: 'Most improved club', value: facts.biggestClimber.clubName, sub: `up ${facts.biggestClimber.rankMovement} places` })
   if (facts.bestForm) rows.push({ label: 'Best form', value: facts.bestForm.clubName, sub: `${winStreak(facts.bestForm.recentForm)} straight wins` })
   if (facts.depth != null) rows.push({ label: 'League depth', value: `${facts.depth.toFixed(1)} pts`, sub: 'gap between halves, lower is deeper' })
   rows.push({ label: 'Clubs tracked', value: String(league.ladder.length || league.rankedTeams.length), sub: league.currentSeason ?? undefined })
