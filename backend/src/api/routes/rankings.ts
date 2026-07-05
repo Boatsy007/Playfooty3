@@ -37,7 +37,7 @@ async function getEntries(runId: string, limit?: number, state?: string) {
 /** Shape a ranking entry for public API response. */
 function formatEntry(
   entry: Awaited<ReturnType<typeof getEntries>>[number],
-  stats?: { played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number },
+  stats?: { played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number; points: number },
 ) {
   let recentForm: unknown = []
   let componentScores: unknown = {}
@@ -58,6 +58,7 @@ function formatEntry(
     goalsFor:     stats?.goalsFor ?? 0,
     goalsAgainst: stats?.goalsAgainst ?? 0,
     percentage:   stats?.percentage ?? 0,
+    points:       stats?.points ?? 0,
     recentForm,
     componentScores,
     calculatedAt: entry.calculatedAt,
@@ -72,9 +73,9 @@ async function formatEntries(
   const clubIds = entries.map(e => e.clubId)
   const seasons = await prisma.clubLeagueSeason.findMany({
     where:  { clubId: { in: clubIds }, season },
-    select: { clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true },
+    select: { clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true },
   })
-  type SeasonStats = { clubId: string; leagueId: string; played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number }
+  type SeasonStats = { clubId: string; leagueId: string; played: number; wins: number; losses: number; draws: number; goalsFor: number; goalsAgainst: number; percentage: number; points: number }
   const byClubLeague = new Map<string, SeasonStats>(seasons.map((s: SeasonStats) => [`${s.clubId}:${s.leagueId}`, s]))
   const byClub       = new Map<string, SeasonStats>(seasons.map((s: SeasonStats) => [s.clubId, s]))
 
