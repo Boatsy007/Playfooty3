@@ -703,6 +703,72 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// LADDER IMPORT V2 — stored ladders (uploaded/OCR/CSV/manual OR generated from
+// results) + editable rows. Manual/uploaded ladders are protected; a generated
+// ladder that disagrees raises a comparison review item. Additive; feeds
+// rankings/profiles/articles/summaries via safe input hooks. Soft-delete only.
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Ladder {
+  id              String    @id @default(uuid())
+  leagueId        String
+  leagueName      String?
+  season          String
+  grade           String    @default("A Grade")
+  source          String    @default("MANUAL") // PLAYHQ | OCR | CSV | MANUAL | GENERATED_FROM_RESULTS
+  status          String    @default("DRAFT")   // DRAFT | CURRENT | SUPERSEDED | REVIEW
+  isCurrent       Boolean   @default(false)
+  manualOverride  Boolean   @default(false)     // uploaded/manual ladders are protected
+  roundFrom       Int?
+  roundTo         Int?
+  resultsIncluded Int       @default(0)
+  winPoints       Int       @default(4)
+  drawPoints      Int       @default(2)
+  confidence      Float?
+  warnings        String?   // JSON string[]
+  notes           String?
+  generatedAt     DateTime?
+  createdBy       String?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  rows            LadderRow[]
+
+  @@index([leagueId, season, grade])
+  @@index([leagueId, isCurrent])
+  @@index([source])
+  @@map("ladders")
+}
+
+model LadderRow {
+  id            String   @id @default(uuid())
+  ladderId      String
+  position      Int?
+  clubId        String?
+  clubName      String
+  played        Int      @default(0)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  draws         Int      @default(0)
+  goalsFor      Int      @default(0)
+  goalsAgainst  Int      @default(0)
+  goalDiff      Int      @default(0)
+  percentage    Float    @default(0)
+  points        Int      @default(0)
+  last5         String?  // JSON: ["W","L",…] most-recent first
+  currentStreak Int      @default(0)
+  sourceNotes   String?
+  createdAt     DateTime @default(now())
+
+  ladder        Ladder   @relation(fields: [ladderId], references: [id])
+
+  @@index([ladderId])
+  @@index([clubId])
+  @@map("ladder_rows")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B11 — Analytics & Insights Engine (ADDITIVE, PRIVACY-CONSCIOUS)
 // ─────────────────────────────────────────────────────────────────────────────
 // Go Netty's own lightweight analytics: anonymous event tracking + search logs,

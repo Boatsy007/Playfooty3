@@ -14,6 +14,8 @@ import { getClubResults, getLeagueResults, getClubMatchHistory } from '../../res
 import { getClubFixtures, getLeagueFixtures } from '../../results/fixtures.service.js'
 import { getStatLeaderboards } from '../../results/statistics.js'
 import { getRoundSummary } from '../../results/rounds.js'
+import { getCurrentLadder } from '../../ladder/ladders.service.js'
+import { clubUpNext } from '../../ladder/up-next.js'
 import { logger } from '../../utils/logger.js'
 
 // ── /api/results ──────────────────────────────────────────────────────────────
@@ -80,6 +82,10 @@ clubMatch.get('/:id/results', publicRateLimit, cachePublic(300), async (req, res
 clubMatch.get('/:id/fixtures', publicRateLimit, cachePublic(300), async (req, res) => {
   res.json({ data: await getClubFixtures(String(req.params.id), { season: req.query.season as string | undefined, upcomingOnly: req.query.upcoming === 'true' }) })
 })
+// Ladder V2 — GET /api/clubs/:id/up-next (next fixture + upcoming)
+clubMatch.get('/:id/up-next', publicRateLimit, cachePublic(300), async (req, res) => {
+  res.json({ data: await clubUpNext(String(req.params.id), { season: req.query.season as string | undefined }) })
+})
 
 const leagueMatch = Router()
 leagueMatch.get('/:id/results', publicRateLimit, cachePublic(300), async (req, res) => {
@@ -93,6 +99,12 @@ leagueMatch.get('/:id/rounds/:round/summary', publicRateLimit, cachePublic(600),
   const summary = await getRoundSummary(String(req.params.id), parseInt(String(req.params.round), 10), { season: req.query.season as string | undefined, grade: req.query.grade as string | undefined })
   if (!summary) return res.status(404).json({ error: 'no summary for this round' })
   res.json({ data: summary })
+})
+// Ladder V2 — GET /api/leagues/:id/ladder (current ladder, uploaded or generated)
+leagueMatch.get('/:id/ladder', publicRateLimit, cachePublic(300), async (req, res) => {
+  const ladder = await getCurrentLadder(String(req.params.id), { season: req.query.season as string | undefined, grade: req.query.grade as string | undefined })
+  if (!ladder) return res.status(404).json({ error: 'no current ladder' })
+  res.json({ data: ladder })
 })
 
 export { results as resultsRouter, fixtures as fixturesRouter, clubMatch as clubMatchRouter, leagueMatch as leagueMatchRouter }

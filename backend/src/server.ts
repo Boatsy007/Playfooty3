@@ -26,6 +26,7 @@ import { adminChampionshipsRouter } from './admin/championships.js'
 import { adminCommercialRouter } from './admin/commercial.js'
 import { adminNotificationsRouter } from './admin/notifications.js'
 import { adminAnalyticsRouter } from './admin/analytics.js'
+import { adminLadderRouter } from './admin/ladder.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
@@ -118,6 +119,7 @@ app.use('/admin/championships', adminChampionshipsRouter) // Phase B7 — champi
 app.use('/admin/commercial', adminCommercialRouter)       // Phase B8 — commercial platform
 app.use('/admin/notifications', adminNotificationsRouter) // Phase B9 — notifications & automation
 app.use('/admin/analytics', adminAnalyticsRouter)         // Phase B11 — analytics & insights
+app.use('/admin/ladder',   adminLadderRouter)             // Ladder Import V2 — ladders + bulk backfill
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {
