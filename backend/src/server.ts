@@ -24,10 +24,12 @@ import { adminResultsRouter }   from './admin/results.js'
 import { adminHistoryRouter }   from './admin/history.js'
 import { adminChampionshipsRouter } from './admin/championships.js'
 import { adminCommercialRouter } from './admin/commercial.js'
+import { adminNotificationsRouter } from './admin/notifications.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
 import { sponsorsRouter, commercialRouter, commercialClubRouter, commercialLeagueRouter } from './api/routes/sponsors.js'
+import { notificationsRouter } from './api/routes/notifications.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -76,6 +78,9 @@ app.use('/api/commercial',  commercialRouter)
 app.use('/api/clubs',       commercialClubRouter)   // GET /api/clubs/:id/sponsors
 app.use('/api/leagues',     commercialLeagueRouter) // GET /api/leagues/:id/sponsors
 
+// Phase B9 — notifications & automation (public reads; admin-gated writes)
+app.use('/api/notifications', notificationsRouter)
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -106,6 +111,7 @@ app.use('/admin/results',  adminResultsRouter)    // Phase B5 — results & fixt
 app.use('/admin/history',  adminHistoryRouter)    // Phase B6 — historical rankings & records engine
 app.use('/admin/championships', adminChampionshipsRouter) // Phase B7 — championship engine
 app.use('/admin/commercial', adminCommercialRouter)       // Phase B8 — commercial platform
+app.use('/admin/notifications', adminNotificationsRouter) // Phase B9 — notifications & automation
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

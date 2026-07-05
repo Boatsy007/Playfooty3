@@ -1,0 +1,45 @@
+name: Notifications Automation Scan
+
+# Phase B9: seed notification rules (idempotent) and run the automation scan —
+# emit deduplicated alerts for rankings, movements, articles, claims, sponsor
+# expiry, championship invitations, data quality and failed syncs. Serverless-
+# safe (no browser). Read-only over existing data; nothing is auto-sent.
+on:
+  schedule:
+    # 09:30 UTC daily (Monday runs after the weekly update chain).
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+    inputs:
+      sections:
+        description: 'Comma-separated sections (blank = FULL): RANKINGS,CONTENT,CLAIMS,COMMERCIAL,CHAMPIONSHIP,QUALITY,SYSTEM'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  notifications:
+    name: Notifications automation scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run notifications scan
+        working-directory: backend
+        env:
+          SECTIONS: ${{ inputs.sections }}
+        run: |
+          ARGS=""
+          [ -n "$SECTIONS" ] && ARGS="$ARGS --sections=$SECTIONS"
+          echo "Running: tsx src/jobs/notifications-trigger.ts $ARGS"
+          npx tsx src/jobs/notifications-trigger.ts $ARGS

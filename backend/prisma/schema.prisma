@@ -703,6 +703,92 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B9 — Notifications & Automation Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend alerting: an event-driven notification store + delivery status, per-
+// recipient preferences, type rules, and an automation-scan audit. The scanner
+// reads existing data (rankings, articles, claims, sponsors, championships,
+// review queue, syncs) READ-ONLY and emits deduplicated notifications. New
+// tables only; distinct from the B2 platform_notifications table.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A single notification (in-app by default; email/webhook are future channels).
+model Notification {
+  id            String    @id @default(uuid())
+  recipientScope String   @default("ADMIN") // ADMIN | CLUB | LEAGUE | USER | PLATFORM
+  recipientId   String?                      // clubId / leagueId / userId; null = broadcast to scope
+  type          String                       // RANKINGS_UPDATED | CLUB_MOVED_UP | …
+  category      String?                      // RANKINGS | CLUB | LEAGUE | CONTENT | CLAIMS | COMMERCIAL | CHAMPIONSHIP | QUALITY | SYSTEM
+  severity      String    @default("INFO")   // INFO | SUCCESS | WARNING | CRITICAL
+  title         String
+  body          String?
+  entityType    String?
+  entityId      String?
+  data          String?                       // JSON payload
+  channel       String    @default("IN_APP")  // IN_APP | EMAIL | WEBHOOK
+  status        String    @default("PENDING")  // PENDING | QUEUED | SENT | DELIVERED | READ | FAILED | SUPPRESSED
+  dedupeKey     String    @unique
+  readAt        DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([recipientScope, recipientId])
+  @@index([type])
+  @@index([status])
+  @@index([category])
+  @@map("notifications")
+}
+
+// Per-recipient opt-in/out for a notification type + channel.
+model NotificationPreference {
+  id             String   @id @default(uuid())
+  recipientScope String
+  recipientId    String
+  type           String
+  channel        String   @default("IN_APP")
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([recipientScope, recipientId, type, channel])
+  @@index([recipientScope, recipientId])
+  @@map("notification_preferences")
+}
+
+// Rule/template for a notification type (default channels, recipients, copy).
+model NotificationRule {
+  id              String   @id @default(uuid())
+  type            String   @unique
+  label           String
+  category        String?
+  severity        String   @default("INFO")
+  recipientScope  String   @default("ADMIN")
+  defaultChannels String   @default("[\"IN_APP\"]") // JSON string[]
+  subjectTemplate String?
+  bodyTemplate    String?
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("notification_rules")
+}
+
+// Audit of automation scans (what was emitted / deduped).
+model AutomationRun {
+  id        String   @id @default(uuid())
+  scanKey   String   // FULL | RANKINGS | CLAIMS | …
+  status    String   @default("SUCCESS") // SUCCESS | PARTIAL | FAILED
+  created   Int      @default(0)
+  deduped   Int      @default(0)
+  detail    String?  // JSON
+  ranAt     DateTime @default(now())
+
+  @@index([scanKey])
+  @@index([ranAt])
+  @@map("automation_runs")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B8 — Sponsorship & Commercial Platform (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Commercial backend: sponsor businesses, sponsorship deals, tiers, ad inventory,
