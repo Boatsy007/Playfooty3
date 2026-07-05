@@ -12,7 +12,7 @@ import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import { fetchClub, fetchClubExplain, useAsync, strengthLabel, strengthStars, type ClubProfile, type ClubExplanation } from '../lib/rankings'
 import { Skel, MUTE } from '../components/home/ui'
-import { ClubHero, ClubSnapshot, ClubLadder, ClubClaim, ordinal } from '../components/club/sections'
+import { ClubHero, ClubSnapshot, ClubLadder, ClubClaim, ClubInfo, ClubGallery, ClubSponsors, RelatedClubs, ClubSidebar, ordinal } from '../components/club/sections'
 
 const ClubWhy = lazy(() => import('../components/club/sections').then(m => ({ default: m.ClubWhy })))
 const ClubJourney = lazy(() => import('../components/club/sections').then(m => ({ default: m.ClubJourney })))
@@ -49,17 +49,32 @@ export default function TeamProfile() {
           <>
             <ClubHero club={data} />
             <ClubSnapshot club={data} />
-            <ClubLadder club={data} />
-            <Suspense fallback={<div style={{ minHeight: 320 }} aria-hidden />}>
-              <ClubJourney club={data} />
-            </Suspense>
-            <Suspense fallback={<div style={{ minHeight: 300 }} aria-hidden />}>
-              <ClubWhy club={data} reasoning={explain.data?.reasoning} />
-            </Suspense>
-            <Suspense fallback={<div style={{ minHeight: 360 }} aria-hidden />}>
-              <ClubNews club={data} />
-            </Suspense>
-            <ClubClaim club={data} />
+            <div className="club-profile-shell">
+              <div className="club-profile-main">
+                <Suspense fallback={<div style={{ minHeight: 320 }} aria-hidden />}>
+                  <ClubJourney club={data} />
+                </Suspense>
+                <Suspense fallback={<div style={{ minHeight: 300 }} aria-hidden />}>
+                  <ClubWhy club={data} reasoning={explain.data?.reasoning} />
+                </Suspense>
+                <ClubLadder club={data} />
+                <Suspense fallback={<div style={{ minHeight: 360 }} aria-hidden />}>
+                  <ClubNews club={data} />
+                </Suspense>
+                <ClubInfo club={data} />
+                <ClubGallery club={data} />
+                <ClubSponsors club={data} />
+                <RelatedClubs club={data} />
+                <ClubClaim club={data} />
+              </div>
+              <ClubSidebar club={data} />
+            </div>
+            <style>{`
+              .club-profile-shell{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start;padding:0 20px 48px}
+              .club-profile-main > section{padding-left:0!important;padding-right:0!important}
+              .club-profile-main > section > div{max-width:none!important}
+              @media (max-width:980px){.club-profile-shell{display:block;padding:0 14px 36px}.club-profile-main > section{padding-top:22px!important;padding-bottom:22px!important}}
+            `}</style>
           </>
         )}
       </main>

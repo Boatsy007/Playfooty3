@@ -459,6 +459,96 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
   )
 }
 
+
+// ─── Club information / placeholders / related / sidebar ─────────────────────
+export function ClubInfo({ club }: { club: ClubProfile }) {
+  const id = clubIdentity(club)
+  const facts = [
+    club.leagueName && { label: 'League', value: club.leagueName, to: club.leagueId ? leaguePath(club.leagueId) : undefined },
+    club.town && { label: 'Town', value: club.town },
+    (club.stateName ?? club.state) && { label: 'State', value: club.stateName ?? club.state },
+    club.websiteUrl && { label: 'Website', value: 'Official website', href: club.websiteUrl },
+    club.facebookUrl && { label: 'Facebook', value: 'Club Facebook', href: club.facebookUrl },
+    club.instagramUrl && { label: 'Instagram', value: 'Club Instagram', href: club.instagramUrl },
+  ].filter(Boolean) as { label: string; value: string; to?: string; href?: string }[]
+  const hasColours = club.primaryColour || club.secondaryColour
+  if (!facts.length && !hasColours) return null
+  return (
+    <Section>
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Verified profile details currently available on Go Netty." />
+      <div className="club-info-grid" style={{ display: 'grid', gap: 14 }}>
+        {facts.map(f => {
+          const body = <><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{f.label}</span><strong style={{ color: TEXT, display: 'block', marginTop: 7, lineHeight: 1.1 }}>{f.value}</strong></>
+          if (f.to) return <Link key={f.label} to={f.to} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none' }}>{body}</Link>
+          if (f.href) return <a key={f.label} href={f.href} target="_blank" rel="noreferrer" className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none' }}>{body}</a>
+          return <div key={f.label} className="gn-card" style={{ padding: 18 }}>{body}</div>
+        })}
+        {hasColours && <div className="gn-card" style={{ padding: 18 }}><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Club colours</span><div style={{ display: 'flex', gap: 8, marginTop: 10 }}>{[club.primaryColour, club.secondaryColour].filter(Boolean).map(c => <span key={c!} title={c!} style={{ width: 42, height: 42, borderRadius: 12, border: `1px solid ${LINE}`, background: c!.startsWith('#') ? c! : `#${c}` }} />)}<span style={{ width: 42, height: 42, borderRadius: 12, background: id.accent, border: `1px solid ${LINE}` }} /></div></div>}
+      </div>
+      <style>{`.club-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:760px){.club-info-grid{grid-template-columns:1fr}.club-info-grid .gn-card{min-height:76px}}`}</style>
+    </Section>
+  )
+}
+
+export function ClubGallery({ club }: { club: ClubProfile }) {
+  return (
+    <Section band>
+      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for official ${club.clubName} match-day photos.`} />
+      <div className="gn-card" style={{ padding: 'clamp(24px,4vw,38px)', borderStyle: 'dashed', textAlign: 'center' }}>
+        <div className="font-display" style={{ color: 'rgba(17,17,17,0.14)', fontSize: 'clamp(3rem,9vw,6rem)', lineHeight: .85 }}>PHOTOS</div>
+        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No official gallery has been added yet. Club officials can claim this profile to add photos and media.</p>
+      </div>
+    </Section>
+  )
+}
+
+export function ClubSponsors({ club }: { club: ClubProfile }) {
+  return (
+    <Section>
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>SPONSORS</span></>} sub="Premium partner placements can appear here once the profile is claimed." />
+      <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
+        <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sponsor-ready space</div>
+        <h3 className="font-display" style={{ color: TEXT, fontSize: 'clamp(1.5rem,3vw,2.3rem)', margin: '10px 0 8px', lineHeight: .95 }}>SUPPORT {club.clubName.toUpperCase()}</h3>
+        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for official club partners without displaying fake sponsors.</p>
+      </div>
+    </Section>
+  )
+}
+
+export function RelatedClubs({ club }: { club: ClubProfile }) {
+  const rows = (club.ladder ?? []).filter(r => r.clubId !== club.clubId).slice(0, 6)
+  if (!rows.length) return null
+  return (
+    <Section band>
+      <SectionHead title={<>RELATED <span style={{ color: PINK }}>CLUBS</span></>} sub={club.leagueName ? `Other clubs in ${club.leagueName}.` : 'Clubs nearby on the current ladder.'} />
+      <div className="related-club-grid" style={{ display: 'grid', gap: 12 }}>
+        {rows.map(r => <Link key={r.clubId} to={teamPath(r.clubId)} className="gn-card gn-card-hover" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 14, textDecoration: 'none', color: TEXT }}><TeamLogo name={r.clubName} size={34} /><span style={{ minWidth: 0, flex: 1 }}><strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.clubName}</strong><small className="font-condensed" style={{ color: MUTE }}>{r.wins}-{r.losses}{r.draws ? `-${r.draws}` : ''} · {r.percentage ? `${r.percentage.toFixed(0)}%` : 'percentage pending'}</small></span><span className="font-display" style={{ color: PINK }}>#{r.position ?? '·'}</span></Link>)}
+      </div>
+      <style>{`.related-club-grid{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:720px){.related-club-grid{grid-template-columns:1fr}}`}</style>
+    </Section>
+  )
+}
+
+export function ClubSidebar({ club }: { club: ClubProfile }) {
+  const id = clubIdentity(club)
+  const news = allArticles().filter(a => a.tags.club && (a.tags.club.toLowerCase().includes(club.clubName.toLowerCase()) || club.clubName.toLowerCase().includes(a.tags.club.toLowerCase()))).slice(0, 2)
+  return (
+    <aside className="club-sidebar" style={{ position: 'sticky', top: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="gn-card" style={{ padding: 18, borderTop: `3px solid ${id.accent}` }}><SideLabel>Latest ranking</SideLabel><strong className="font-display" style={{ fontSize: 34, color: club.rank != null ? PINK : TEXT }}>{club.rank != null ? `#${club.rank}` : 'Pending'}</strong>{club.rank != null && <div style={{ marginTop: 6 }}><Move delta={club.rankMovement} /></div>}</div>
+      {club.ladderPosition != null && <div className="gn-card" style={{ padding: 18 }}><SideLabel>League position</SideLabel><strong className="font-display" style={{ fontSize: 30 }}>{ordinal(club.ladderPosition)}</strong></div>}
+      {club.recentForm.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Recent form</SideLabel><div style={{ marginTop: 10 }}><FormPips form={club.recentForm} /></div></div>}
+      {club.leagueStrengthScore != null && <Link to={club.leagueId ? leaguePath(club.leagueId) : '/leagues'} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>League strength</SideLabel><div style={{ marginTop: 8 }}><StarStrength stars={strengthStars(club.leagueStrengthScore)} size={12} /></div><small style={{ color: MUTE }}>{strengthLabel(strengthStars(club.leagueStrengthScore))}</small></Link>}
+      {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest club news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
+      <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
+      <div className="gn-card" style={{ padding: 18, borderStyle: 'dashed' }}><SideLabel>Sponsor placeholder</SideLabel><strong style={{ color: TEXT }}>Partner with {club.clubName}</strong></div>
+      <style>{`@media(max-width:980px){.club-sidebar{position:static!important;margin-top:18px}.club-sidebar .gn-card{width:100%}}`}</style>
+    </aside>
+  )
+}
+function SideLabel({ children, color = FAINT }: { children: React.ReactNode; color?: string }) {
+  return <div className="font-condensed" style={{ color, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>{children}</div>
+}
+
 // shared
 function ordinal(n: number) {
   const s = ['th', 'st', 'nd', 'rd'], v = n % 100
