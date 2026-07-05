@@ -17,6 +17,9 @@ import { adminSettingsRouter }  from './admin/settings.js'
 import { adminManageRouter }    from './admin/manage.js'
 import { adminOcrRouter }       from './admin/ocr.js'
 import { adminPlatformRouter }  from './admin/platform.js'
+import { adminClaimingRouter }  from './admin/claiming.js'
+import { claimsRouter }         from './api/routes/claims.js'
+import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
 
 const app  = express()
@@ -42,6 +45,10 @@ app.use('/api/leagues',   leaguesRouter)    // /api/leagues, /api/leagues/:id
 app.use('/api/directory', directoryRouter)  // /api/directory — clubs by state → league
 app.use('/api/news',      newsRouter)       // /api/news, /api/news/:slug — published articles
 
+// Phase B2 — claiming platform (additive; nothing exposed in the UI yet)
+app.use('/api/claims',    claimsRouter)     // POST /club, /league; GET /; PATCH /:id
+app.use('/api/portal',    portalRouter)     // /api/portal/clubs/:id/{claim,invite,audit,media,sponsors,members}
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -59,6 +66,7 @@ app.use('/admin/settings', adminSettingsRouter)
 app.use('/admin/manage',   adminManageRouter)
 app.use('/admin/ocr',      adminOcrRouter)
 app.use('/admin/platform', adminPlatformRouter)
+app.use('/admin/claiming', adminClaimingRouter)   // Phase B2 — profile mgmt + verification
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

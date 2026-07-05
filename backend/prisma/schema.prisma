@@ -563,3 +563,338 @@ model Setting {
 
   @@map("settings")
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE B2 — Club & League Claiming Platform (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend infrastructure so verified clubs/leagues can manage their own presence
+// in future phases. NONE of this is exposed in the UI yet. Every model is a NEW
+// table. To keep existing tables (clubs/leagues/ranking) LITERALLY untouched,
+// these models reference clubId/leagueId/userId as plain indexed columns with NO
+// Prisma relation into existing models — so no back-relation field is added to
+// any existing model, and no existing column/table is altered.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// End-user accounts (distinct from internal AdminUser). Designed for 100k+ rows.
+model PlatformUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String?
+  phone        String?
+  passwordHash String?   // future auth; null until they set a password
+  emailVerified Boolean  @default(false)
+  lastLoginAt  DateTime?
+  deletedAt    DateTime? // soft delete only
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([deletedAt])
+  @@map("platform_users")
+}
+
+// Club claim workflow. A Club is UNCLAIMED until a claim reaches VERIFIED.
+// Claim record lifecycle: PENDING → VERIFIED | REJECTED.
+model ClubClaim {
+  id            String    @id @default(uuid())
+  clubId        String
+  clubName      String    // snapshot at submission
+  applicantName String
+  email         String
+  phone         String?
+  role          String    // President | Secretary | Coach | Committee | Other
+  reason        String
+  status        String    @default("PENDING") // PENDING | VERIFIED | REJECTED
+  submittedAt   DateTime  @default(now())
+  reviewedBy    String?   // AdminUser id
+  reviewNotes   String?
+  approvedAt    DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clubId])
+  @@index([status])
+  @@index([email])
+  @@map("club_claims")
+}
+
+// League claim workflow — mirrors ClubClaim.
+model LeagueClaim {
+  id            String    @id @default(uuid())
+  leagueId      String
+  leagueName    String
+  applicantName String
+  email         String
+  phone         String?
+  role          String
+  reason        String
+  status        String    @default("PENDING") // PENDING | VERIFIED | REJECTED
+  submittedAt   DateTime  @default(now())
+  reviewedBy    String?
+  reviewNotes   String?
+  approvedAt    DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([leagueId])
+  @@index([status])
+  @@index([email])
+  @@map("league_claims")
+}
+
+// A user's membership of a club, with a role. Multiple users per club; a user
+// may belong to many clubs. Unique(clubId,userId) prevents duplicate owners.
+model ClubMembership {
+  id        String    @id @default(uuid())
+  clubId    String
+  userId    String
+  role      String    @default("VIEWER") // OWNER | ADMINISTRATOR | EDITOR | CONTRIBUTOR | VIEWER
+  status    String    @default("ACTIVE") // ACTIVE | INVITED | REVOKED
+  invitedBy String?   // PlatformUser id who invited them
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([clubId, userId])
+  @@index([userId])
+  @@index([clubId])
+  @@map("club_memberships")
+}
+
+// Extended, editable club profile (1:1 with a club by clubId). Holds all the
+// self-managed content, verification, feature flags and billing fields so the
+// existing "clubs" table is never modified.
+model ClubProfile {
+  id             String    @id @default(uuid())
+  clubId         String    @unique
+
+  // Location / contact
+  ground         String?
+  address        String?
+  googleMapsUrl  String?
+  websiteUrl     String?
+  facebookUrl    String?
+  instagramUrl   String?
+  tiktokUrl      String?
+  youtubeUrl     String?
+  email          String?
+  phone          String?
+
+  // Club details
+  trainingNights String?
+  homeCourt      String?
+  clubColours    String?
+  history        String?
+  foundedYear    Int?
+
+  // Committee (structured people)
+  committee      String?   // JSON array of { name, role }
+  president      String?
+  secretary      String?
+  coach          String?
+  assistantCoach String?
+
+  // Media references (JSON arrays of MediaAsset ids or urls)
+  uniformPhotos  String?
+  gallery        String?
+  partnerLogos   String?
+
+  // Links
+  membershipLink String?
+  volunteerLink  String?
+
+  // Verification
+  verified          Boolean   @default(false)
+  verifiedAt        DateTime?
+  verifiedBy        String?   // AdminUser id
+  verificationNotes String?
+
+  // Feature flags
+  premium       Boolean @default(false)
+  featured      Boolean @default(false)
+  hidden        Boolean @default(false)
+  suspended     Boolean @default(false)
+  archived      Boolean @default(false)
+  imported      Boolean @default(false)
+  playhqManaged Boolean @default(false)
+  manualOverride Boolean @default(false)
+
+  // Billing (preparation only — no Stripe yet)
+  plan           String?   // free | starter | pro
+  trialStatus    String?   // none | active | expired
+  billingStatus  String?   // none | active | past_due | canceled
+  renewalDate    DateTime?
+  customerId     String?    // future Stripe customer id
+  subscriptionId String?    // future Stripe subscription id
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("club_profiles")
+}
+
+// Extended, editable league profile (1:1 with a league by leagueId).
+model LeagueProfile {
+  id           String    @id @default(uuid())
+  leagueId     String    @unique
+
+  history          String?
+  headOffice       String?
+  websiteUrl       String?
+  facebookUrl      String?
+  instagramUrl     String?
+  tiktokUrl        String?
+  youtubeUrl       String?
+  committee        String?   // JSON array
+  president        String?
+  secretary        String?
+  operationsManager String?
+  logoUrl          String?
+  heroImageUrl     String?
+  contactEmail     String?
+  phone            String?
+  region           String?
+
+  // Verification
+  verified          Boolean   @default(false)
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  verificationNotes String?
+
+  // Feature flags
+  premium       Boolean @default(false)
+  featured      Boolean @default(false)
+  hidden        Boolean @default(false)
+  suspended     Boolean @default(false)
+  archived      Boolean @default(false)
+  imported      Boolean @default(false)
+  playhqManaged Boolean @default(false)
+  manualOverride Boolean @default(false)
+
+  // Billing
+  plan           String?
+  trialStatus    String?
+  billingStatus  String?
+  renewalDate    DateTime?
+  customerId     String?
+  subscriptionId String?
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("league_profiles")
+}
+
+// Sponsor platform — attaches to a club, a league, or the whole platform.
+model Sponsor {
+  id           String    @id @default(uuid())
+  scope        String    @default("CLUB") // CLUB | LEAGUE | PLATFORM
+  clubId       String?
+  leagueId     String?
+  name         String
+  websiteUrl   String?
+  logoUrl      String?
+  description  String?
+  tier         String?   // platinum | gold | silver | bronze | partner
+  startDate    DateTime?
+  endDate      DateTime?
+  active       Boolean   @default(true)
+  displayOrder Int       @default(0)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([clubId])
+  @@index([leagueId])
+  @@index([scope])
+  @@map("sponsors")
+}
+
+// Media library — stores references (URLs) only. No uploader UI.
+model MediaAsset {
+  id           String    @id @default(uuid())
+  scope        String    @default("CLUB") // CLUB | LEAGUE | PLATFORM
+  clubId       String?
+  leagueId     String?
+  kind         String    // IMAGE | VIDEO | DOCUMENT | HERO | GALLERY | SPONSOR | PDF
+  url          String
+  title        String?
+  mimeType     String?
+  sizeBytes    Int?
+  width        Int?
+  height       Int?
+  uploadedBy   String?   // PlatformUser id
+  displayOrder Int       @default(0)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([clubId])
+  @@index([leagueId])
+  @@index([kind])
+  @@map("media_assets")
+}
+
+// Pending invitations for club administrators / editors / contributors.
+model ClubInvitation {
+  id        String    @id @default(uuid())
+  clubId    String
+  email     String
+  role      String    @default("CONTRIBUTOR") // ADMINISTRATOR | EDITOR | CONTRIBUTOR
+  token     String    @unique
+  status    String    @default("PENDING") // PENDING | ACCEPTED | EXPIRED | REVOKED
+  invitedBy String?   // PlatformUser id
+  expiresAt DateTime?
+  acceptedAt DateTime?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([clubId])
+  @@index([email])
+  @@index([status])
+  @@map("club_invitations")
+}
+
+// Notifications (backend only — no delivery yet).
+model PlatformNotification {
+  id         String    @id @default(uuid())
+  userId     String?   // PlatformUser id; null = broadcast/admin
+  type       String    // CLUB_CLAIMED | LEAGUE_CLAIMED | CLAIM_APPROVED | CLAIM_REJECTED | SPONSOR_EXPIRED | VERIFICATION_REQUIRED | ADMIN_INVITED
+  title      String
+  body       String?
+  entityType String?
+  entityId   String?
+  read       Boolean   @default(false)
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@map("platform_notifications")
+}
+
+// Field-level change log for self-managed edits. Separate from the ranking
+// AuditLog so the existing audit table is untouched. Designed for millions of
+// rows. IP / user-agent kept for the future.
+model ProfileChangeLog {
+  id            String   @id @default(uuid())
+  actorType     String   @default("USER") // USER | ADMIN | SYSTEM
+  actorId       String?
+  entityType    String   // Club | League | Sponsor | Media | Membership
+  entityId      String
+  field         String
+  previousValue String?
+  newValue      String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("profile_change_logs")
+}
