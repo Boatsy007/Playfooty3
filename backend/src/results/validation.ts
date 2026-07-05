@@ -11,15 +11,15 @@ import { prisma } from '../db/client.js'
 import { logger } from '../utils/logger.js'
 
 export interface ResultInput {
-  sourceMatchId?: string
-  leagueId: string; leagueName?: string; season: string; round?: number; matchDate?: Date | string
+  sourceMatchId?: string; fixtureId?: string
+  leagueId: string; leagueName?: string; season: string; grade?: string; round?: number; matchDate?: Date | string
   homeClubId: string; homeClubName?: string; awayClubId: string; awayClubName?: string
-  homeScore: number | string; awayScore: number | string; status?: string
+  homeScore: number | string; awayScore: number | string; status?: string; sourceUrl?: string
 }
 
 export interface FixtureInput {
-  leagueId: string; leagueName?: string; season: string; round?: number
-  matchDate?: Date | string; matchTime?: string; venue?: string
+  leagueId: string; leagueName?: string; season: string; grade?: string; round?: number
+  matchDate?: Date | string; matchTime?: string; venue?: string; sourceUrl?: string
   homeClubId: string; homeClubName?: string; awayClubId: string; awayClubName?: string; status?: string
 }
 

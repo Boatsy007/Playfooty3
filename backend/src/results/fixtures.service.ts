@@ -28,9 +28,9 @@ export async function upsertFixture(input: FixtureInput, source: ImportSource = 
   const dedupeKey = fixtureDedupeKey(f.leagueId, f.season, f.round, f.homeClubId, f.awayClubId)
   const existing = await prisma.fixture.findUnique({ where: { dedupeKey } })
   const data = {
-    leagueId: f.leagueId, leagueName: f.leagueName, season: f.season, round: f.round ?? null, matchDate: f.matchDate ?? null,
+    leagueId: f.leagueId, leagueName: f.leagueName, season: f.season, grade: input.grade ?? 'A Grade', round: f.round ?? null, matchDate: f.matchDate ?? null,
     matchTime: f.matchTime ?? null, venue: f.venue ?? null, homeClubId: f.homeClubId, homeClubName: f.homeClubName,
-    awayClubId: f.awayClubId, awayClubName: f.awayClubName, status: f.status, importSource: source,
+    awayClubId: f.awayClubId, awayClubName: f.awayClubName, status: f.status, importSource: source, sourceUrl: input.sourceUrl ?? null, importedAt: new Date(),
   }
   if (existing) {
     if (existing.manualOverride && source !== 'MANUAL') return { ok: true, status: 'skipped', id: existing.id }

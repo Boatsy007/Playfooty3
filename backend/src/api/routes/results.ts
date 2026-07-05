@@ -13,6 +13,7 @@ import { cachePublic } from '../middleware/cache-middleware.js'
 import { getClubResults, getLeagueResults, getClubMatchHistory } from '../../results/results.service.js'
 import { getClubFixtures, getLeagueFixtures } from '../../results/fixtures.service.js'
 import { getStatLeaderboards } from '../../results/statistics.js'
+import { getRoundSummary } from '../../results/rounds.js'
 import { logger } from '../../utils/logger.js'
 
 // ── /api/results ──────────────────────────────────────────────────────────────
@@ -86,6 +87,12 @@ leagueMatch.get('/:id/results', publicRateLimit, cachePublic(300), async (req, r
 })
 leagueMatch.get('/:id/fixtures', publicRateLimit, cachePublic(300), async (req, res) => {
   res.json({ data: await getLeagueFixtures(String(req.params.id), { season: req.query.season as string | undefined, round: req.query.round ? parseInt(String(req.query.round), 10) : undefined }) })
+})
+// B10 — GET /api/leagues/:id/rounds/:round/summary
+leagueMatch.get('/:id/rounds/:round/summary', publicRateLimit, cachePublic(600), async (req, res) => {
+  const summary = await getRoundSummary(String(req.params.id), parseInt(String(req.params.round), 10), { season: req.query.season as string | undefined, grade: req.query.grade as string | undefined })
+  if (!summary) return res.status(404).json({ error: 'no summary for this round' })
+  res.json({ data: summary })
 })
 
 export { results as resultsRouter, fixtures as fixturesRouter, clubMatch as clubMatchRouter, leagueMatch as leagueMatchRouter }

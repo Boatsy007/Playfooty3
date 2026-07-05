@@ -1366,11 +1366,15 @@ model HistoryCorrection {
 model MatchResult {
   id            String    @id @default(uuid())
   sourceMatchId String?   // optional link to a legacy matches.id it was bridged from
+  fixtureId     String?   // B10: link to the Fixture this result belongs to
   leagueId      String
   leagueName    String
   season        String
+  grade         String    @default("A Grade") // B10
   round         Int?
   matchDate     DateTime?
+  sourceUrl     String?   // B10: provenance URL
+  importedAt    DateTime? // B10: when this result was imported
   homeClubId    String
   homeClubName  String
   awayClubId    String
@@ -1393,6 +1397,9 @@ model MatchResult {
   @@index([homeClubId])
   @@index([awayClubId])
   @@index([season, round])
+  @@index([leagueId, season, grade, round])
+  @@index([fixtureId])
+  @@index([matchDate])
   @@map("match_results")
 }
 
@@ -1402,10 +1409,13 @@ model Fixture {
   leagueId      String
   leagueName    String
   season        String
+  grade         String    @default("A Grade") // B10
   round         Int?
   matchDate     DateTime?
   matchTime     String?
   venue         String?
+  sourceUrl     String?   // B10: provenance URL
+  importedAt    DateTime? // B10: when this fixture was imported
   homeClubId    String
   homeClubName  String
   awayClubId    String
@@ -1424,7 +1434,38 @@ model Fixture {
   @@index([homeClubId])
   @@index([awayClubId])
   @@index([status])
+  @@index([leagueId, season, grade, round])
+  @@index([matchDate])
   @@map("fixtures")
+}
+
+// Round-by-round league summary (B10). Derived from MatchResult; one row per
+// (league, season, grade, round). ladderImpact / rankingImpact are JSON outputs
+// prepared for future ladder + ranking integration (data only).
+model RoundSummary {
+  id            String   @id @default(uuid())
+  leagueId      String
+  leagueName    String?
+  season        String
+  grade         String   @default("A Grade")
+  round         Int
+  matchesPlayed Int      @default(0)
+  highestScore  Int      @default(0)
+  lowestScore   Int      @default(0)
+  closestMargin Int      @default(0)
+  biggestMargin Int      @default(0)
+  averageMargin Float    @default(0)
+  upsetDetected Boolean  @default(false)
+  ladderImpact  String?  // JSON
+  rankingImpact String?  // JSON
+  articleData   String?  // JSON — round-wrap / biggest-win / upset outputs for the article engine
+  generatedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([leagueId, season, grade, round])
+  @@index([leagueId, season])
+  @@index([round])
+  @@map("round_summaries")
 }
 
 // Stored match intelligence (biggest win, upset, match of the round, …).

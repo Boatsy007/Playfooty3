@@ -35,9 +35,10 @@ export async function upsertResult(input: ResultInput, source: ImportSource, opt
 
   const existing = await prisma.matchResult.findUnique({ where: { dedupeKey } })
   const data = {
-    sourceMatchId: sourceMatchId ?? null, leagueId, leagueName, season, round: round ?? null, matchDate: matchDate ?? null,
+    sourceMatchId: sourceMatchId ?? null, fixtureId: input.fixtureId ?? null, leagueId, leagueName, season,
+    grade: input.grade ?? 'A Grade', round: round ?? null, matchDate: matchDate ?? null,
     homeClubId, homeClubName, awayClubId, awayClubName, homeScore, awayScore, winnerClubId, isDraw, margin,
-    status: status ?? 'FINAL', importSource: source,
+    status: status ?? 'FINAL', importSource: source, sourceUrl: input.sourceUrl ?? null, importedAt: new Date(),
   }
 
   if (existing) {
