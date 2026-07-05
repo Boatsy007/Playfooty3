@@ -21,7 +21,9 @@ import { adminClaimingRouter }  from './admin/claiming.js'
 import { adminNewsroomRouter }  from './admin/newsroom.js'
 import { adminQualityRouter }   from './admin/quality.js'
 import { adminResultsRouter }   from './admin/results.js'
+import { adminHistoryRouter }   from './admin/history.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
+import { historyRouter }        from './api/routes/history.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -66,6 +68,12 @@ app.use('/api/leagues',   leagueMatchRouter)
 // /api/rankings all resolve without the /rankings prefix.
 app.use('/api', rankingsRouter)
 
+// Phase B6 — historical rankings & records (additive, read-only). Mounted BEFORE
+// the legacy delegation below: it only handles multi-segment paths (/clubs/:id,
+// /leagues/:id, /weeks, /records, /compare, /timeline/...), so a bare
+// /api/history/:clubId request falls through untouched to the legacy handler.
+app.use('/api/history', historyRouter)
+
 // /api/history/:clubId → delegate to clubsRouter's /history/:clubId handler
 app.use('/api/history', (req, res, next) => {
   req.url = `/history${req.url}`   // rewrite /api/history/abc → /history/abc for clubsRouter
@@ -82,6 +90,7 @@ app.use('/admin/claiming', adminClaimingRouter)   // Phase B2 — profile mgmt +
 app.use('/admin/newsroom', adminNewsroomRouter)   // Phase B3 — intelligence layer (backend only)
 app.use('/admin/quality',  adminQualityRouter)    // Phase B4 — data quality & integrity engine
 app.use('/admin/results',  adminResultsRouter)    // Phase B5 — results & fixtures engine
+app.use('/admin/history',  adminHistoryRouter)    // Phase B6 — historical rankings & records engine
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

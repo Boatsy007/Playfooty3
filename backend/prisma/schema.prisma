@@ -703,6 +703,159 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B6 — Historical Rankings & Records Engine (ADDITIVE, IMMUTABLE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Permanent, append-only archive of every weekly ranking run + derived club and
+// league histories + a computed record book. History rows are never overwritten
+// (unique per week+entity, writes skip if present). Existing ranking tables are
+// read-only sources; nothing existing is modified.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// Immutable per-club, per-week ranking archive. One row per (weekLabel, clubId),
+// written once and never overwritten.
+model RankingHistory {
+  id            String   @id @default(uuid())
+  runId         String
+  weekLabel     String
+  season        String
+  snapshotDate  DateTime @default(now())
+  clubId        String
+  clubName      String
+  leagueId      String?
+  leagueName    String?
+  state         String?
+  rank          Int
+  previousRank  Int?
+  rankMovement  Int      @default(0)
+  powerRating   Float
+  leagueStrength Float?
+  reasoning     String?
+  engineVersion String   @default("v2")
+  calcVersion   String   @default("default")
+  createdAt     DateTime @default(now())
+
+  @@unique([weekLabel, clubId])
+  @@index([clubId])
+  @@index([weekLabel])
+  @@index([season])
+  @@index([clubId, weekLabel])
+  @@map("ranking_history")
+}
+
+// Immutable per-league, per-week ranking archive.
+model LeagueRankingHistory {
+  id            String   @id @default(uuid())
+  runId         String?
+  weekLabel     String
+  season        String
+  snapshotDate  DateTime @default(now())
+  leagueId      String
+  leagueName    String
+  state         String?
+  leagueRank    Int?     // position among leagues by strength that week
+  strengthScore Float
+  strengthTier  Int
+  rankedClubs   Int      @default(0)
+  top25Clubs    Int      @default(0)
+  top100Clubs   Int      @default(0)
+  reasoning     String?
+  engineVersion String   @default("v2")
+  createdAt     DateTime @default(now())
+
+  @@unique([weekLabel, leagueId])
+  @@index([leagueId])
+  @@index([weekLabel])
+  @@index([season])
+  @@map("league_ranking_history")
+}
+
+// Derived per-club career aggregates (a rebuildable cache over ranking_history).
+model ClubHistory {
+  id                      String   @id @default(uuid())
+  clubId                  String   @unique
+  clubName                String
+  highestRank             Int?
+  lowestRank              Int?
+  avgRank                 Float?
+  weeksRanked             Int      @default(0)
+  weeksTop10              Int      @default(0)
+  weeksTop25              Int      @default(0)
+  weeksTop50              Int      @default(0)
+  weeksTop100             Int      @default(0)
+  longestConsecutiveWeeks Int      @default(0)
+  longestTop10Run         Int      @default(0)
+  largestWeeklyRise       Int?
+  largestWeeklyFall       Int?
+  highestRating           Float?
+  avgRating               Float?
+  firstWeek               String?
+  lastWeek                String?
+  timeline                String?  // JSON: [{ week, rank, rating, movement }]
+  updatedAt               DateTime @updatedAt
+  createdAt               DateTime @default(now())
+
+  @@map("club_history")
+}
+
+// Derived per-league history aggregates.
+model LeagueHistory {
+  id             String   @id @default(uuid())
+  leagueId       String   @unique
+  leagueName     String
+  highestRank    Int?
+  lowestRank     Int?
+  avgStrength    Float?
+  highestStrength Float?
+  weeksRanked    Int      @default(0)
+  maxRankedClubs Int      @default(0)
+  maxTop25       Int      @default(0)
+  maxTop100      Int      @default(0)
+  timeline       String?  // JSON: [{ week, rank, strength, rankedClubs }]
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@map("league_history")
+}
+
+// Computed record book. One row per record kind (upserted each run).
+model RecordBookEntry {
+  id         String   @id @default(uuid())
+  kind       String   @unique
+  title      String
+  entityType String   // CLUB | LEAGUE
+  entityId   String?
+  entityName String?
+  value      Float?
+  valueLabel String?
+  weekLabel  String?
+  season     String?
+  metrics    String?  // JSON
+  computedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@map("record_book_entries")
+}
+
+// Correction ledger — history is immutable, so a correction is a NEW record that
+// documents the change; the original archive row is never rewritten.
+model HistoryCorrection {
+  id          String   @id @default(uuid())
+  weekLabel   String
+  entityType  String   // CLUB | LEAGUE
+  entityId    String
+  field       String
+  oldValue    String?
+  newValue    String?
+  reason      String?
+  performedBy String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([weekLabel])
+  @@map("history_corrections")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B5 — Results & Fixtures Engine (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // A dedicated results/fixtures store that all import sources (PlayHQ, OCR, CSV,

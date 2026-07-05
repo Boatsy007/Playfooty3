@@ -1,0 +1,44 @@
+name: History Engine (archive + records)
+
+# Phase B6: permanently archive the latest ranking run (immutable) and rebuild
+# the derived club/league histories and record book. Serverless-safe (no
+# browser). Runs after the Monday weekly update so each week is preserved.
+on:
+  schedule:
+    # 08:30 UTC Monday — after weekly update + newsroom + results + quality.
+    - cron: '30 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Specific ranking run id to archive (blank = latest completed).'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  history:
+    name: History engine — archive + histories + records
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run history engine
+        working-directory: backend
+        env:
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          ARGS=""
+          [ -n "$RUN_ID" ] && ARGS="$ARGS --run=$RUN_ID"
+          echo "Running: tsx src/jobs/history-trigger.ts $ARGS"
+          npx tsx src/jobs/history-trigger.ts $ARGS
