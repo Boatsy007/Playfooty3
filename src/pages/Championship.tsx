@@ -1,83 +1,129 @@
 /**
- * Championship — bright championship/event style. Explains: Top 32 qualify,
- * rankings from ladder data, Gold Coast host, wildcards, and the winner's star
- * (delivered as a premium dark feature block).
+ * Championship Hub UI.
+ * Future-facing public teaser only — no registrations, draws, payments or tournament systems.
  */
 import { Link } from 'react-router-dom'
-import { Trophy, Star, MapPin, ListOrdered, Ticket, RefreshCw } from 'lucide-react'
+import { ArrowRight, CalendarDays, HelpCircle, ListOrdered, MapPinned, Megaphone, Sparkles, Trophy, Users } from 'lucide-react'
 import Nav from '../components/layout/Nav'
-import ProductSearch from '../components/rankings/ProductSearch'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
-import { PAGE, PAGE_ALT, TEXT, LINE, GOLD_DK, PINK, MUTE, DARK, Eyebrow } from '../components/rankings/bits'
 
-const PILLARS = [
-  { icon: ListOrdered, title: 'Top 32 Qualify', body: 'The 32 highest-ranked country netball A Grade teams in Australia earn a place at the national Championship. Where you sit on the national leaderboard is where you stand for qualification.' },
-  { icon: RefreshCw, title: 'Ranked From Real Ladder Data', body: 'Rankings are built from live league ladder data — wins, losses, goals and percentage — weighted by the strength of the competition each team plays in. As ladders move, so do the rankings.' },
-  { icon: MapPin, title: 'Hosted On The Gold Coast', body: 'Qualified teams travel to the Gold Coast to compete for the national title — the definitive meeting of the country’s strongest netball clubs on one court.' },
-  { icon: Ticket, title: 'Wildcard Spots', body: 'If a qualified team declines its place, the spot opens to the next eligible team — a wildcard into the Championship for clubs on the edge of the cut-off.' },
+const NAVY = '#062a5f'
+const NAVY_2 = '#0b3f86'
+const PINK = '#ff2c91'
+const GOLD = '#f4c14d'
+const TEXT = '#111827'
+const MUTED = '#65758b'
+const LINE = '#dbe3ee'
+
+const FORMAT_CARDS = [
+  { icon: ListOrdered, title: 'National rankings pathway', body: 'The long-term concept is for rankings to help identify leading country netball clubs when a championship model is ready.' },
+  { icon: Trophy, title: 'Invited clubs', body: 'Future invitations would be based on transparent criteria. No invitation process is currently open.' },
+  { icon: Sparkles, title: 'Wildcards', body: 'Wildcard ideas may help recognise clubs on the edge of the national picture, but no wildcard system is live.' },
+  { icon: Users, title: 'Regional representation', body: 'The future event concept is built around giving country and regional competitions national visibility.' },
+  { icon: MapPinned, title: 'National event concept', body: 'A destination-style national event remains a future concept, not a confirmed fixture or travel package.' },
+]
+
+const PATHWAYS = [
+  { title: 'National Rankings', body: 'See the current national ladder that Go Netty is focused on now.', to: '/rankings' },
+  { title: 'League Rankings', body: 'Explore competition strength and league hubs around Australia.', to: '/leagues' },
+  { title: 'Clubs', body: 'Browse club profiles, form and ranking movement.', to: '/directory' },
+  { title: 'News', body: 'Follow ranking updates, league stories and country netball coverage.', to: '/news' },
+]
+
+const FAQS = [
+  { q: 'Is the championship live yet?', a: 'No. The Championship Hub is a future-facing public teaser. Registrations, fixtures, draws and tournament operations are not currently live.' },
+  { q: 'How will teams qualify?', a: 'Qualification rules have not been launched. Go Netty is rankings-first now, and any future pathway would be announced clearly before clubs are asked to act.' },
+  { q: 'Will rankings matter?', a: 'The intention is that national rankings help identify leading country netball clubs over time, but no live qualification logic is currently operating.' },
+  { q: 'Can clubs register now?', a: 'No. Club registration is not open. There are no payments, nomination forms or tournament management tools connected to this hub.' },
 ]
 
 export default function Championship() {
   useSeo({
-    title: 'The Country Netball Championship — Top 32 on the Gold Coast | CNCA',
-    description: 'How the CNCA Championship works: the top 32 country netball A Grade teams qualify from the national rankings and compete on the Gold Coast. Rankings update from live ladder data; wildcards open when teams decline; the winner earns a star above their crest.',
+    title: 'Country Netball Championship — Coming Soon | Go Netty',
+    description: 'A future-facing public hub for the Country Netball Championship concept. Go Netty is rankings-first now; championship registrations, fixtures and qualification are not live.',
     path: '/championship',
-    jsonLd: { '@context': 'https://schema.org', '@type': 'SportsEvent', sport: 'Netball', name: 'CNCA Country Netball Championship', location: { '@type': 'Place', name: 'Gold Coast, Australia' }, description: 'National championship for the top 32 country netball A Grade teams in Australia.' },
+    jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Country Netball Championship — Coming Soon', description: 'Future-facing championship teaser for Australian country netball.' },
   })
 
   return (
-    <div style={{ background: PAGE, minHeight: '100vh' }}>
-      <Nav /><ProductSearch />
-
-      {/* Hero */}
-      <section style={{ position: 'relative', overflow: 'hidden', background: PAGE_ALT, borderBottom: `1px solid ${LINE}` }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(760px 380px at 50% -10%, rgba(244,193,77,0.22), transparent 60%), radial-gradient(600px 300px at 12% 0%, rgba(255,44,145,0.10), transparent 60%)' }} />
-        <div style={{ position: 'relative', maxWidth: 900, margin: '0 auto', padding: '56px 20px 52px', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex' }}><Eyebrow accent={GOLD_DK}>The National Championship</Eyebrow></div>
-          <h1 className="font-display" style={{ fontSize: 'clamp(3rem,10vw,7rem)', color: TEXT, lineHeight: 0.86, margin: '16px 0 16px' }}>
-            32 TEAMS.<br /><span style={{ color: PINK }}>ONE NATIONAL TITLE.</span>
-          </h1>
-          <p style={{ color: MUTE, fontSize: 17, lineHeight: 1.6, maxWidth: 600, margin: '0 auto 26px' }}>
-            The best country netball clubs in Australia, ranked from real ladder data and brought together
-            on the Gold Coast to decide a single national champion.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/rankings" className="btn-pink" style={{ padding: '15px 30px', fontSize: 14, letterSpacing: '0.04em' }}>View the Rankings</Link>
-            <Link to="/" className="font-condensed" style={{ padding: '15px 30px', borderRadius: 999, border: `1px solid ${TEXT}`, color: TEXT, textDecoration: 'none', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', fontSize: 13 }}>The Event</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Pillars */}
-      <section style={{ maxWidth: 980, margin: '0 auto', padding: '20px 20px 30px' }}>
-        {PILLARS.map((p, i) => (
-          <div key={p.title} style={{ display: 'flex', gap: 22, alignItems: 'flex-start', padding: '30px 0', borderBottom: `1px solid ${LINE}` }}>
-            <div className="font-display" style={{ fontSize: 40, color: 'rgba(17,17,17,0.14)', minWidth: 54, lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</div>
-            <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, display: 'grid', placeItems: 'center', background: PAGE_ALT, border: `1px solid ${LINE}` }}>
-              <p.icon size={22} color={PINK} />
+    <div className="champ-page">
+      <Nav />
+      <main>
+        <section className="champ-hero">
+          <div className="champ-hero-copy">
+            <span className="champ-live"><CalendarDays size={15} /> Coming soon</span>
+            <h1>Country Netball Championship</h1>
+            <p className="hero-lead">A future national country netball championship concept, built around the rankings-first platform Go Netty is creating today.</p>
+            <div className="hero-actions">
+              <button className="btn-primary" type="button" aria-disabled="true">Join updates · coming soon</button>
+              <Link className="btn-secondary" to="/rankings">View rankings <ArrowRight size={16} /></Link>
             </div>
+          </div>
+          <div className="countdown-card" aria-label="Championship status">
+            <span>Countdown</span>
+            <strong>TBA</strong>
+            <p>No event date has been announced. This hub will update when real championship details exist.</p>
+          </div>
+        </section>
+
+        <section className="champ-section why-section">
+          <div className="section-kicker">Why it exists</div>
+          <div className="why-grid">
+            <h2>Rankings first. Championship later.</h2>
             <div>
-              <h2 className="font-display" style={{ fontSize: 30, color: TEXT, margin: '0 0 8px', lineHeight: 1 }}>{p.title.toUpperCase()}</h2>
-              <p style={{ color: MUTE, fontSize: 15.5, lineHeight: 1.65, margin: 0 }}>{p.body}</p>
+              <p>Go Netty is focused on building the most credible national picture of country netball through rankings, league strength, club profiles and weekly movement.</p>
+              <p>The Championship is a future-facing idea: a way for that rankings ecosystem to eventually support a national event without pretending the event infrastructure is live today.</p>
             </div>
           </div>
-        ))}
-      </section>
+        </section>
 
-      {/* Champion feature block — premium dark */}
-      <section style={{ background: DARK, padding: '70px 20px' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center' }}>
-          <Trophy size={40} color="#f4c14d" style={{ margin: '0 auto 16px' }} />
-          <div className="font-condensed" style={{ color: '#f4c14d', fontWeight: 800, letterSpacing: '0.28em', textTransform: 'uppercase', fontSize: 11, marginBottom: 10 }}>The Champion’s Mark</div>
-          <h2 className="font-display" style={{ fontSize: 'clamp(2.4rem,6vw,4rem)', color: '#fff', margin: '0 0 12px', lineHeight: 0.9 }}>WEAR THE STAR</h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16, lineHeight: 1.6, maxWidth: 520, margin: '0 auto 24px' }}>
-            Win the Championship and your club carries a <Star size={15} color="#f4c14d" fill="#f4c14d" style={{ verticalAlign: '-2px' }} /> star above its crest — the mark of a national title, for good.
-          </p>
-          <Link to="/rankings" className="btn-pink" style={{ padding: '15px 30px', fontSize: 14, letterSpacing: '0.04em' }}>See Who’s Qualifying</Link>
-        </div>
-      </section>
+        <section className="champ-section">
+          <SectionHead eyebrow="Future format" title="Concept cards" text="These are placeholders for possible future championship concepts only — not live systems." />
+          <div className="format-grid">
+            {FORMAT_CARDS.map(card => <FormatCard key={card.title} {...card} />)}
+          </div>
+        </section>
+
+        <section className="champ-section pathway-section">
+          <SectionHead eyebrow="Current pathway" title="Follow the live platform now" text="Until championship details are real, the best pathway is to follow rankings, leagues, clubs and news." />
+          <div className="pathway-grid">
+            {PATHWAYS.map(item => <Link key={item.title} to={item.to} className="pathway-card"><strong>{item.title}</strong><p>{item.body}</p><span>Open <ArrowRight size={14} /></span></Link>)}
+          </div>
+        </section>
+
+        <section className="partner-section">
+          <div>
+            <span>Partner placeholder</span>
+            <h2>Future championship partners</h2>
+            <p>Commercial opportunities are not open yet. This section simply marks where future sponsor and partner information can live when the championship becomes active.</p>
+          </div>
+          <Megaphone size={42} />
+        </section>
+
+        <section className="champ-section faq-section">
+          <SectionHead eyebrow="FAQ" title="What clubs need to know" text="Clear answers for a future-facing championship hub." />
+          <div className="faq-grid">
+            {FAQS.map(item => <article key={item.q} className="faq-card"><HelpCircle size={20} /><h3>{item.q}</h3><p>{item.a}</p></article>)}
+          </div>
+        </section>
+      </main>
       <Footer />
+      <ChampionshipStyles />
     </div>
   )
+}
+
+function SectionHead({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
+  return <header className="section-head"><span>{eyebrow}</span><h2>{title}</h2><p>{text}</p></header>
+}
+
+function FormatCard({ icon: Icon, title, body }: { icon: React.ElementType; title: string; body: string }) {
+  return <article className="format-card"><div><Icon size={24} /></div><h3>{title}</h3><p>{body}</p></article>
+}
+
+function ChampionshipStyles() {
+  return <style>{`
+    .champ-page{background:#fff;color:${TEXT};min-height:100vh}.champ-hero{max-width:1180px;margin:0 auto;padding:34px 20px 30px;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:stretch}.champ-hero-copy{position:relative;overflow:hidden;border:1px solid ${LINE};border-radius:28px;padding:clamp(28px,5vw,54px);background:linear-gradient(135deg,#fff,#f7faff);box-shadow:0 18px 48px rgba(6,42,95,.1)}.champ-hero-copy:after{content:"";position:absolute;right:-70px;bottom:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,44,145,.14),transparent 68%)}.champ-live{display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:${NAVY};color:#fff;padding:8px 12px;text-transform:uppercase;letter-spacing:.16em;font:900 11px/1 var(--font-condensed,inherit)}.champ-hero h1{position:relative;margin:18px 0 15px;color:${NAVY};font:950 clamp(3.3rem,8.5vw,7.2rem)/.82 var(--font-display,inherit);letter-spacing:-.075em;text-transform:uppercase;max-width:820px}.hero-lead{position:relative;margin:0;color:#42526a;font-size:clamp(1rem,1.8vw,1.25rem);line-height:1.6;max-width:660px}.hero-actions{position:relative;display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}.btn-primary,.btn-secondary{min-height:46px;border-radius:999px;padding:0 18px;display:inline-flex;align-items:center;gap:8px;font-weight:950;text-transform:uppercase;letter-spacing:.1em;font-size:12px;text-decoration:none}.btn-primary{border:0;background:${PINK};color:#fff;cursor:not-allowed}.btn-secondary{border:1px solid ${NAVY};color:${NAVY};background:#fff}.countdown-card{border-radius:28px;padding:24px;background:linear-gradient(135deg,#071832,${NAVY_2});color:#fff;display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;box-shadow:0 18px 48px rgba(6,42,95,.16)}.countdown-card span,.section-kicker,.section-head span,.partner-section span{color:${PINK};font:950 11px/1 var(--font-condensed,inherit);letter-spacing:.18em;text-transform:uppercase}.countdown-card strong{display:block;margin:16px 0 12px;font:950 clamp(4rem,9vw,7rem)/.8 var(--font-display,inherit);letter-spacing:-.08em;color:${GOLD}}.countdown-card p{margin:0;color:#bfd0e5;line-height:1.55}.champ-section{max-width:1180px;margin:0 auto;padding:28px 20px}.why-section{border-top:1px solid ${LINE};border-bottom:1px solid ${LINE}}.why-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:24px;align-items:start}.why-grid h2,.section-head h2,.partner-section h2{margin:10px 0 0;color:${NAVY};font:950 clamp(2.3rem,5vw,4.8rem)/.86 var(--font-display,inherit);letter-spacing:-.06em;text-transform:uppercase}.why-grid p{margin:0 0 14px;color:#42526a;font-size:17px;line-height:1.65}.section-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:16px}.section-head p{margin:0;color:${MUTED};max-width:540px;line-height:1.55}.format-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.format-card{border:1px solid ${LINE};border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(6,42,95,.07);padding:18px;min-height:230px}.format-card div{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:rgba(255,44,145,.1);color:${PINK};margin-bottom:18px}.format-card h3{margin:0 0 10px;color:${NAVY};font-size:22px;line-height:.95;text-transform:uppercase;letter-spacing:-.04em}.format-card p,.pathway-card p,.partner-section p,.faq-card p{margin:0;color:${MUTED};line-height:1.55;font-size:14px}.pathway-section{padding-top:18px}.pathway-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.pathway-card{border:1px solid ${LINE};border-radius:20px;background:#fff;color:${TEXT};box-shadow:0 14px 34px rgba(6,42,95,.07);padding:18px;text-decoration:none;display:flex;flex-direction:column;gap:10px;min-height:180px;transition:transform .18s ease,box-shadow .18s ease}.pathway-card:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(6,42,95,.12)}.pathway-card strong{color:${NAVY};font:950 24px/.95 var(--font-display,inherit);text-transform:uppercase}.pathway-card span{margin-top:auto;display:inline-flex;align-items:center;gap:7px;color:${PINK};font-weight:950;text-transform:uppercase;font-size:12px;letter-spacing:.1em}.partner-section{max-width:1140px;margin:22px auto;padding:26px;display:flex;justify-content:space-between;gap:20px;align-items:center;border-radius:28px;background:linear-gradient(135deg,#071832,${NAVY});color:#fff}.partner-section h2{color:#fff;margin-bottom:12px}.partner-section p{color:#bfd0e5;max-width:700px}.partner-section svg{color:${GOLD};flex-shrink:0}.faq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.faq-card{border:1px solid ${LINE};border-radius:20px;background:#fff;box-shadow:0 14px 34px rgba(6,42,95,.07);padding:18px}.faq-card svg{color:${PINK};margin-bottom:10px}.faq-card h3{margin:0 0 8px;color:${NAVY};font-size:21px;line-height:1;text-transform:uppercase}@media(max-width:980px){.champ-hero,.why-grid{grid-template-columns:1fr}.countdown-card{min-height:240px}.section-head{display:block}.format-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pathway-grid,.faq-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.champ-hero,.champ-section{padding-left:14px;padding-right:14px}.champ-hero-copy,.countdown-card,.partner-section{border-radius:20px}.format-grid,.pathway-grid,.faq-grid{grid-template-columns:1fr}.partner-section{margin:18px 14px;display:block}.partner-section svg{margin-top:18px}.btn-primary,.btn-secondary{width:100%;justify-content:center}.champ-hero h1{font-size:clamp(3.2rem,18vw,5.8rem)}}
+  `}</style>
 }
