@@ -57,6 +57,11 @@ export interface ClubProfile {
   history: { weekLabel: string; rank: number; powerRating: number; date: string }[]
 }
 
+export interface LeagueRankedTeam {
+  clubId: string; clubName: string; rank: number; previousRank?: number | null; rankMovement?: number
+  powerRating: number; state: string; recentForm?: FormResult[]; qualified: boolean
+}
+
 export interface LeagueDetail {
   id: string
   name: string
@@ -65,7 +70,17 @@ export interface LeagueDetail {
   association?: string
   strengthScore: number
   strengthTier?: number
-  rankedTeams: { clubId: string; clubName: string; rank: number; powerRating: number; state: string; qualified: boolean }[]
+  strengthConfidence?: number | null
+  strengthReasoning?: string | null
+  strengthCalculatedAt?: string | null
+  regionName?: string | null
+  currentSeason?: string | null
+  lastSyncedAt?: string | null
+  logoUrl?: string | null
+  primarySource?: string | null
+  weekLabel?: string | null
+  totalRanked?: number
+  rankedTeams: LeagueRankedTeam[]
   ladder: {
     clubId: string; clubName: string; position: number | null; played: number; wins: number; losses: number
     draws: number; goalsFor: number; goalsAgainst: number; percentage: number; points: number

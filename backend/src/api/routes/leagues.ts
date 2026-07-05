@@ -67,9 +67,11 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
       ? await prisma.rankingEntry.findMany({
           where:   { runId: run.id, leagueName: league.name },
           orderBy: { rank: 'asc' },
-          select:  { clubId: true, clubName: true, rank: true, powerRating: true, state: true },
+          select:  { clubId: true, clubName: true, rank: true, previousRank: true, rankMovement: true, powerRating: true, state: true, recentForm: true },
         })
       : []
+    // How many clubs were ranked nationally in this run (for "top X of N" context).
+    const totalRanked = run ? await prisma.rankingEntry.count({ where: { runId: run.id } }) : 0
 
     // League ladder from season stats (ladder position order)
     const season = run?.season
@@ -91,7 +93,21 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
         association:   league.association?.name,
         strengthScore: league.strengthScore,
         strengthTier:  league.strengthTier,
-        rankedTeams:   rankedTeams.map(t => ({ clubId: t.clubId, clubName: t.clubName, rank: t.rank, powerRating: t.powerRating, state: t.state, qualified: t.rank <= 32 })),
+        strengthConfidence:   league.strengthConfidence,
+        strengthReasoning:    league.strengthReasoning,
+        strengthCalculatedAt: league.strengthCalculatedAt,
+        regionName:    league.regionName,
+        currentSeason: league.currentSeason,
+        lastSyncedAt:  league.lastSyncedAt,
+        logoUrl:       league.logoUrl,
+        primarySource: league.primarySource,
+        weekLabel:     run?.weekLabel ?? null,
+        totalRanked,
+        rankedTeams:   rankedTeams.map(t => {
+          let recentForm: string[] = []
+          try { recentForm = JSON.parse(t.recentForm || '[]') } catch { /* keep [] */ }
+          return { clubId: t.clubId, clubName: t.clubName, rank: t.rank, previousRank: t.previousRank, rankMovement: t.rankMovement, powerRating: t.powerRating, state: t.state, recentForm, qualified: t.rank <= 32 }
+        }),
         ladder:        ladderRows.map(r => ({
           clubId: r.clubId, clubName: clubNames.get(r.clubId) ?? 'Unknown',
           position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws,
