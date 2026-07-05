@@ -36,9 +36,11 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
           <div className="font-condensed lad-grid" style={{ display: 'grid', gap: 10, alignItems: 'center', padding: '12px clamp(12px, 2vw, 22px)', borderBottom: `2px solid ${TEXT}`, fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: FAINT }}>
             <span>Pos</span><span>Club</span>
             <span className="hide-sm" style={{ textAlign: 'center' }}>P</span>
-            <span style={{ textAlign: 'center' }}>W-L{league.ladder.some(r => r.draws > 0) ? '-D' : ''}</span>
-            <span className="hide-sm" style={{ textAlign: 'center' }}>GF / GA</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>W</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>L</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>D</span>
             <span className="hide-sm" style={{ textAlign: 'right' }}>%</span>
+            <span className="hide-sm" style={{ textAlign: 'right' }}>Nat.</span>
             <span className="hide-sm" style={{ textAlign: 'center' }}>Form</span>
             <span style={{ textAlign: 'right' }}>Pts</span>
           </div>
@@ -82,11 +84,13 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
                   </span>
                 </span>
                 <span className="hide-sm" style={{ textAlign: 'center', color: MUTE, fontSize: 13 }}>{r.played}</span>
-                <span className="font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.wins}-{r.losses}{r.draws > 0 ? `-${r.draws}` : ''}</span>
-                <span className="hide-sm" style={{ textAlign: 'center', fontSize: 12.5, color: TEXT }}>{r.goalsFor}<span style={{ color: FAINT }}> / {r.goalsAgainst}</span></span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.wins}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.losses}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.draws}</span>
                 <span className="hide-sm" style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: r.percentage >= 100 ? TEXT : MUTE }}>{r.percentage ? r.percentage.toFixed(0) : '·'}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'right', fontSize: 15.5, color: ranked ? PINK : FAINT }}>{ranked ? `#${ranked.rank}` : '·'}</span>
                 <span className="hide-sm" style={{ display: 'flex', justifyContent: 'center' }}>{ranked?.recentForm?.length ? <FormPips form={ranked.recentForm} /> : <span style={{ color: FAINT }}>·</span>}</span>
-                <span className="font-display" style={{ textAlign: 'right', fontSize: 19, color: isLeader ? GOLD_DK : TEXT }}>{r.points}</span>
+                <span className="font-display" style={{ textAlign: 'right', fontSize: 19, color: isLeader ? GOLD_DK : TEXT }}>{r.points}<small className="show-sm" style={{ display: 'none', color: MUTE, fontSize: 11, marginLeft: 6 }}>{r.wins}-{r.losses}{r.draws > 0 ? `-${r.draws}` : ''}</small></span>
               </button>
             )
           })}
@@ -101,8 +105,8 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
         </div>
       </Reveal>
       <style>{`
-        .lad-grid { grid-template-columns: 44px minmax(0,1fr) 40px 72px 88px 52px 118px 52px; }
-        @media (max-width: 820px) { .lad-grid { grid-template-columns: 34px minmax(0,1fr) 64px 46px; } }
+        .lad-grid { grid-template-columns: 44px minmax(0,1fr) 40px 38px 38px 38px 52px 58px 118px 52px; }
+        @media (max-width: 820px) { .lad-grid { grid-template-columns: 34px minmax(0,1fr) 64px; } .show-sm{display:inline!important} }
       `}</style>
     </Section>
   )

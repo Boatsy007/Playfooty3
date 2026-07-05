@@ -14,7 +14,7 @@ import { fetchLeague, useAsync, strengthStars, strengthLabel, type LeagueDetail 
 import { Skel, MUTE } from '../components/home/ui'
 import {
   deriveFacts, weeklyStory, LeagueHero, LeagueSubnav, LeagueSnapshot,
-  LeagueStrength, LeagueNews, RelatedLeagues,
+  LeagueStrength, LeagueNews, RelatedLeagues, LeagueSidebar,
 } from '../components/league/sections'
 import { LeagueLadder, ClubRankingCards } from '../components/league/ladder'
 import type { LeagueRow } from '../components/home/useHomeData'
@@ -67,17 +67,28 @@ export default function LeagueProfile() {
             <LeagueHero league={data} facts={facts} />
             <LeagueSubnav />
             <LeagueSnapshot league={data} facts={facts} />
-            <LeagueLadder league={data} query={query} onQuery={setQuery} />
-            <ClubRankingCards league={data} query={query} totalRanked={data.totalRanked} />
-            <LeagueStrength league={data} facts={facts} />
-            <Suspense fallback={<div style={{ minHeight: 320 }} aria-hidden />}>
-              <LeagueHighlights league={data} facts={facts} />
-            </Suspense>
-            <Suspense fallback={<div style={{ minHeight: 280 }} aria-hidden />}>
-              <LeagueStats league={data} facts={facts} />
-            </Suspense>
-            <LeagueNews leagueName={data.name} />
-            <RelatedLeagues league={data} allLeagues={leagues.data ?? []} />
+            <div className="league-profile-shell">
+              <div className="league-profile-main">
+                <LeagueLadder league={data} query={query} onQuery={setQuery} />
+                <ClubRankingCards league={data} query={query} totalRanked={data.totalRanked} />
+                <LeagueStrength league={data} facts={facts} />
+                <LeagueNews leagueName={data.name} />
+                <Suspense fallback={<div style={{ minHeight: 280 }} aria-hidden />}>
+                  <LeagueStats league={data} facts={facts} />
+                </Suspense>
+                <RelatedLeagues league={data} allLeagues={leagues.data ?? []} />
+                <Suspense fallback={<div style={{ minHeight: 320 }} aria-hidden />}>
+                  <LeagueHighlights league={data} facts={facts} />
+                </Suspense>
+              </div>
+              <LeagueSidebar league={data} facts={facts} />
+            </div>
+            <style>{`
+              .league-profile-shell{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start;padding:0 20px 48px}
+              .league-profile-main > section{padding-left:0!important;padding-right:0!important}
+              .league-profile-main > section > div{max-width:none!important}
+              @media (max-width:980px){.league-profile-shell{display:block;padding:0 14px 36px}.league-profile-main > section{padding-top:22px!important;padding-bottom:22px!important}.league-sidebar{display:none!important}}
+            `}</style>
           </>
         )}
       </main>
