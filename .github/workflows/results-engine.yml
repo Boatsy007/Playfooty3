@@ -1,0 +1,51 @@
+name: Results & Fixtures Engine
+
+# Phase B5: bridge legacy scraped matches into the results store, recompute
+# per-club statistics, detect match insights and generate match-based DRAFT
+# articles. Serverless-safe (no browser). Additive; nothing auto-publishes.
+on:
+  schedule:
+    # 07:30 UTC Monday — between the weekly update and the newsroom.
+    - cron: '30 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'Season to process (blank = current/latest).'
+        required: false
+        default: ''
+        type: string
+      no_bridge:
+        description: 'Skip bridging the legacy matches table.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  results:
+    name: Results engine — bridge + stats + insights + drafts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run results engine
+        working-directory: backend
+        env:
+          SEASON:    ${{ inputs.season }}
+          NO_BRIDGE: ${{ inputs.no_bridge }}
+        run: |
+          ARGS=""
+          [ -n "$SEASON" ]        && ARGS="$ARGS --season=$SEASON"
+          [ "$NO_BRIDGE" = "true" ] && ARGS="$ARGS --no-bridge"
+          echo "Running: tsx src/jobs/results-trigger.ts $ARGS"
+          npx tsx src/jobs/results-trigger.ts $ARGS

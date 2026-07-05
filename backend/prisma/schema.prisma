@@ -703,6 +703,134 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B5 — Results & Fixtures Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// A dedicated results/fixtures store that all import sources (PlayHQ, OCR, CSV,
+// manual) feed. New tables only — the existing `matches` table and every ranking
+// table are left untouched. Club/league are referenced by plain indexed columns
+// (no relation into existing models), so nothing existing changes.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A completed match result. Deduped by (league, season, round, home, away).
+model MatchResult {
+  id            String    @id @default(uuid())
+  sourceMatchId String?   // optional link to a legacy matches.id it was bridged from
+  leagueId      String
+  leagueName    String
+  season        String
+  round         Int?
+  matchDate     DateTime?
+  homeClubId    String
+  homeClubName  String
+  awayClubId    String
+  awayClubName  String
+  homeScore     Int
+  awayScore     Int
+  winnerClubId  String?   // null when a draw
+  isDraw        Boolean   @default(false)
+  margin        Int       @default(0)
+  status        String    @default("FINAL")   // FINAL | PROVISIONAL | FORFEIT | VOID
+  importSource  String    @default("MANUAL")  // PLAYHQ | OCR | CSV | MANUAL | MATCH_BRIDGE
+  verified      Boolean   @default(false)
+  manualOverride Boolean  @default(false)      // protect from auto re-imports
+  notes         String?
+  dedupeKey     String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([leagueId, season])
+  @@index([homeClubId])
+  @@index([awayClubId])
+  @@index([season, round])
+  @@map("match_results")
+}
+
+// A scheduled fixture (stored independently from results; supports live scores).
+model Fixture {
+  id            String    @id @default(uuid())
+  leagueId      String
+  leagueName    String
+  season        String
+  round         Int?
+  matchDate     DateTime?
+  matchTime     String?
+  venue         String?
+  homeClubId    String
+  homeClubName  String
+  awayClubId    String
+  awayClubName  String
+  status        String    @default("SCHEDULED") // SCHEDULED | LIVE | COMPLETED | POSTPONED | CANCELLED
+  homeScore     Int?      // populated for live/completed
+  awayScore     Int?
+  resultId      String?   // link to the MatchResult once played
+  importSource  String    @default("MANUAL")
+  manualOverride Boolean  @default(false)
+  dedupeKey     String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([leagueId, season])
+  @@index([homeClubId])
+  @@index([awayClubId])
+  @@index([status])
+  @@map("fixtures")
+}
+
+// Stored match intelligence (biggest win, upset, match of the round, …).
+model MatchInsight {
+  id        String   @id @default(uuid())
+  season    String
+  leagueId  String?
+  round     Int?
+  kind      String   // BIGGEST_WIN | CLOSEST_MATCH | HIGHEST_SCORING | LOWEST_SCORING | MATCH_OF_ROUND | UPSET | DRAW
+  resultId  String?
+  headline  String
+  metrics   String?  // JSON
+  dedupeKey String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([season])
+  @@index([kind])
+  @@map("match_insights")
+}
+
+// Per-club per-season match statistics (derived from MatchResult). Backend only.
+model ClubMatchStat {
+  id                  String   @id @default(uuid())
+  clubId              String
+  clubName            String
+  season              String
+  played              Int      @default(0)
+  wins                Int      @default(0)
+  losses              Int      @default(0)
+  draws               Int      @default(0)
+  goalsFor            Int      @default(0)
+  goalsAgainst        Int      @default(0)
+  goalDiff            Int      @default(0)
+  percentage          Float    @default(0)
+  avgWinningMargin    Float    @default(0)
+  largestWinningMargin Int     @default(0)
+  homeWins            Int      @default(0)
+  homeLosses          Int      @default(0)
+  homeDraws           Int      @default(0)
+  awayWins            Int      @default(0)
+  awayLosses          Int      @default(0)
+  awayDraws           Int      @default(0)
+  currentStreak       Int      @default(0)   // +ve = win streak, -ve = loss streak
+  currentStreakType   String?                // W | L | D
+  longestWinStreak    Int      @default(0)
+  longestLossStreak   Int      @default(0)
+  last5               String?  // JSON: ["W","L",…] most-recent first
+  last10              String?  // JSON
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
+
+  @@unique([clubId, season])
+  @@index([season])
+  @@map("club_match_stats")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B4 — Data Quality & Integrity Engine (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend tools to keep the database clean as more leagues/clubs are imported.

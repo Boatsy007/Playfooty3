@@ -20,6 +20,8 @@ import { adminPlatformRouter }  from './admin/platform.js'
 import { adminClaimingRouter }  from './admin/claiming.js'
 import { adminNewsroomRouter }  from './admin/newsroom.js'
 import { adminQualityRouter }   from './admin/quality.js'
+import { adminResultsRouter }   from './admin/results.js'
+import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -51,6 +53,14 @@ app.use('/api/news',      newsRouter)       // /api/news, /api/news/:slug — pu
 app.use('/api/claims',    claimsRouter)     // POST /club, /league; GET /; PATCH /:id
 app.use('/api/portal',    portalRouter)     // /api/portal/clubs/:id/{claim,invite,audit,media,sponsors,members}
 
+// Phase B5 — results & fixtures (additive, read-only public surface)
+app.use('/api/results',   resultsRouter)    // /api/results, /api/results/:id, /club/:id, /league/:id, /leaderboards, /insights
+app.use('/api/fixtures',  fixturesRouter)   // /api/fixtures, /api/fixtures/:id, /club/:id, /league/:id
+// Append match sub-routes to clubs/leagues WITHOUT touching the existing routers
+// (they only match /:id/results and /:id/fixtures, which the originals 404).
+app.use('/api/clubs',     clubMatchRouter)
+app.use('/api/leagues',   leagueMatchRouter)
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -71,6 +81,7 @@ app.use('/admin/platform', adminPlatformRouter)
 app.use('/admin/claiming', adminClaimingRouter)   // Phase B2 — profile mgmt + verification
 app.use('/admin/newsroom', adminNewsroomRouter)   // Phase B3 — intelligence layer (backend only)
 app.use('/admin/quality',  adminQualityRouter)    // Phase B4 — data quality & integrity engine
+app.use('/admin/results',  adminResultsRouter)    // Phase B5 — results & fixtures engine
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {
