@@ -1,0 +1,44 @@
+name: Commercial Sweep
+
+# Phase B8: seed default sponsor tiers + ad inventory (idempotent) and run the
+# sponsorship expiry / renewal-due sweep. Serverless-safe (no browser). Never
+# deletes — the sweep only transitions status.
+on:
+  schedule:
+    # 09:00 UTC daily.
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      no_seed:
+        description: 'Sweep only — skip seeding defaults.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  commercial:
+    name: Commercial expiry/renewal sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run commercial sweep
+        working-directory: backend
+        env:
+          NO_SEED: ${{ inputs.no_seed }}
+        run: |
+          ARGS=""
+          [ "$NO_SEED" = "true" ] && ARGS="$ARGS --no-seed"
+          echo "Running: tsx src/jobs/commercial-trigger.ts $ARGS"
+          npx tsx src/jobs/commercial-trigger.ts $ARGS

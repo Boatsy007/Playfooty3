@@ -23,9 +23,11 @@ import { adminQualityRouter }   from './admin/quality.js'
 import { adminResultsRouter }   from './admin/results.js'
 import { adminHistoryRouter }   from './admin/history.js'
 import { adminChampionshipsRouter } from './admin/championships.js'
+import { adminCommercialRouter } from './admin/commercial.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
+import { sponsorsRouter, commercialRouter, commercialClubRouter, commercialLeagueRouter } from './api/routes/sponsors.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -68,6 +70,12 @@ app.use('/api/leagues',   leagueMatchRouter)
 // Phase B7 — championships (public reads; admin-gated writes)
 app.use('/api/championships', championshipsRouter)
 
+// Phase B8 — sponsorship & commercial platform (public reads; admin-gated writes)
+app.use('/api/sponsors',    sponsorsRouter)
+app.use('/api/commercial',  commercialRouter)
+app.use('/api/clubs',       commercialClubRouter)   // GET /api/clubs/:id/sponsors
+app.use('/api/leagues',     commercialLeagueRouter) // GET /api/leagues/:id/sponsors
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -97,6 +105,7 @@ app.use('/admin/quality',  adminQualityRouter)    // Phase B4 — data quality &
 app.use('/admin/results',  adminResultsRouter)    // Phase B5 — results & fixtures engine
 app.use('/admin/history',  adminHistoryRouter)    // Phase B6 — historical rankings & records engine
 app.use('/admin/championships', adminChampionshipsRouter) // Phase B7 — championship engine
+app.use('/admin/commercial', adminCommercialRouter)       // Phase B8 — commercial platform
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

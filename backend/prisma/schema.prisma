@@ -703,6 +703,164 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B8 — Sponsorship & Commercial Platform (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Commercial backend: sponsor businesses, sponsorship deals, tiers, ad inventory,
+// premium memberships and a workflow event ledger. New tables only; nothing
+// affects rankings. Distinct names from the B2 `sponsors` table (no collision).
+// Soft-delete only — sponsorship history is never removed. Commercial actions
+// are logged to the existing AuditLog (source = COMMERCIAL).
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A sponsor business entity (the advertiser). Media are stored as references.
+model CommercialSponsor {
+  id           String    @id @default(uuid())
+  name         String
+  businessName String?
+  logoUrl      String?
+  heroImageUrl String?
+  bannerUrl    String?
+  squareLogoUrl String?
+  websiteUrl   String?
+  email        String?
+  phone        String?
+  description  String?
+  industry     String?
+  state        String?
+  tier         String?   // references SponsorTier.key (or free text)
+  status       String    @default("ACTIVE") // ACTIVE | INACTIVE | ARCHIVED
+  // Brand + social (references only)
+  facebookUrl  String?
+  instagramUrl String?
+  linkedinUrl  String?
+  brandPrimary   String?
+  brandSecondary String?
+  notes        String?
+  deletedAt    DateTime? // soft delete only
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+  @@index([state])
+  @@index([industry])
+  @@map("commercial_sponsors")
+}
+
+// A sponsorship deal linking a sponsor to a club / league / championship / platform.
+model Sponsorship {
+  id             String    @id @default(uuid())
+  sponsorId      String
+  scope          String    @default("CLUB") // CLUB | LEAGUE | CHAMPIONSHIP | PLATFORM
+  clubId         String?
+  leagueId       String?
+  championshipId String?
+  package        String?   // package/tier name for this deal
+  tier           String?
+  status         String    @default("PENDING") // PENDING | APPROVED | REJECTED | ACTIVE | EXPIRED | RENEWAL_DUE | VERIFICATION_REQUIRED | AWAITING_PAYMENT | PAYMENT_COMPLETE | CANCELLED
+  startDate      DateTime?
+  endDate        DateTime?
+  displayPriority Int      @default(0)
+  bannerPosition String?   // future banner slot
+  ctaLabel       String?   // future call-to-action
+  ctaUrl         String?
+  trackingId     String?   // future impression/click tracking
+  amount         Float?    // deal value (commercial reporting)
+  currency       String    @default("AUD")
+  approvedBy     String?
+  createdBy      String?
+  notes          String?
+  deletedAt      DateTime? // soft delete only — history is never removed
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([sponsorId])
+  @@index([scope, status])
+  @@index([clubId])
+  @@index([leagueId])
+  @@index([championshipId])
+  @@index([endDate])
+  @@map("sponsorships")
+}
+
+// Sponsor tier definitions (seeded defaults + custom tiers).
+model SponsorTier {
+  id           String   @id @default(uuid())
+  key          String   @unique // BRONZE | SILVER | GOLD | PLATINUM | FOUNDING_PARTNER | NAMING_RIGHTS | custom…
+  label        String
+  rank         Int      @default(0) // display/importance order
+  description  String?
+  benefits     String?  // JSON
+  isCustom     Boolean  @default(false)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sponsor_tiers")
+}
+
+// Advertising inventory location (a bookable slot).
+model AdInventory {
+  id             String    @id @default(uuid())
+  placement      String    // HOMEPAGE_HERO | HOMEPAGE_SIDEBAR | RANKINGS_SIDEBAR | LEAGUE_PAGE | CLUB_PAGE | NEWS_PAGE | CHAMPIONSHIP_PAGE | SEARCH_PAGE | STATISTICS_PAGE
+  label          String
+  priority       Int       @default(0)
+  available      Boolean   @default(true)
+  bookingStart   DateTime?
+  bookingEnd     DateTime?
+  activeSponsorshipId String?
+  rotationGroup  String?   // future rotation bucket
+  maxRotation    Int       @default(1)
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([placement])
+  @@index([available])
+  @@map("ad_inventory")
+}
+
+// Premium membership / subscription layer for a club or league (additive to the
+// B2 ClubProfile flags — this holds the subscription + benefits detail).
+model PremiumMembership {
+  id               String    @id @default(uuid())
+  scope            String    // CLUB | LEAGUE
+  entityId         String    // clubId or leagueId
+  entityName       String?
+  premiumStatus    String    @default("NONE") // NONE | TRIAL | ACTIVE | PAST_DUE | CANCELLED
+  verified         Boolean   @default(false)
+  claimed          Boolean   @default(false)
+  featured         Boolean   @default(false)
+  subscriptionPlan String?   // free | starter | pro | elite
+  startedAt        DateTime?
+  expiresAt        DateTime?
+  renewalDate      DateTime?
+  autoRenew        Boolean   @default(false)
+  benefits         String?   // JSON
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([scope, entityId])
+  @@index([premiumStatus])
+  @@map("premium_memberships")
+}
+
+// Workflow event ledger for a sponsorship (status transitions, future-ready).
+model SponsorshipEvent {
+  id            String   @id @default(uuid())
+  sponsorshipId String
+  fromStatus    String?
+  toStatus      String
+  note          String?
+  actor         String?
+  createdAt     DateTime @default(now())
+
+  @@index([sponsorshipId])
+  @@map("sponsorship_events")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B7 — Championship Qualification & Tournament Engine (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend foundation for future Go Netty championships. No live tournament is
