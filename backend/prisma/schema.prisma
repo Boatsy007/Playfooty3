@@ -703,6 +703,87 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B4 — Data Quality & Integrity Engine (ADDITIVE)
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend tools to keep the database clean as more leagues/clubs are imported.
+// New tables only; ranking tables are read-only for validation. Merges are
+// non-destructive (source is archived + aliased, history preserved).
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A non-destructive merge of one duplicate into another. The source is archived
+// (never deleted) and a snapshot is kept so the merge is reversible/auditable.
+model MergeRecord {
+  id          String    @id @default(uuid())
+  entityType  String    // CLUB | LEAGUE
+  sourceId    String
+  sourceName  String
+  targetId    String
+  targetName  String
+  reason      String?
+  movedCounts String?   // JSON — what was repointed (seasons, matches, variants…)
+  snapshot    String?   // JSON — the source record pre-merge (for reversal)
+  performedBy String?
+  reversedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([entityType])
+  @@index([sourceId])
+  @@index([targetId])
+  @@map("merge_records")
+}
+
+// Persistent alias / abbreviation → canonical club. Populated by the identity
+// resolver, by merges (old name → surviving club) and by admins.
+model ClubAlias {
+  id              String   @id @default(uuid())
+  alias           String
+  normalizedAlias String   @unique
+  clubId          String
+  source          String   @default("MANUAL") // MANUAL | MERGE | IMPORT | RESOLVER
+  confidence      Float    @default(1)
+  createdAt       DateTime @default(now())
+
+  @@index([clubId])
+  @@map("club_aliases")
+}
+
+// League eligibility validation result (1:1 with a league by leagueId). Flags a
+// competition that may not belong in a country A-Grade national ranking.
+model LeagueEligibility {
+  id              String   @id @default(uuid())
+  leagueId        String   @unique
+  leagueName      String
+  verdict         String   @default("ELIGIBLE") // ELIGIBLE | REVIEW | INELIGIBLE
+  isMetro         Boolean  @default(false)
+  isJunior        Boolean  @default(false)
+  isSocial        Boolean  @default(false)
+  isIndoor        Boolean  @default(false)
+  isLowerDivision Boolean  @default(false)
+  isNonTown       Boolean  @default(false)
+  hasGenericTeams Boolean  @default(false)
+  reasons         String?  // JSON string[]
+  confidence      Float    @default(0.5)
+  checkedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([verdict])
+  @@map("league_eligibility")
+}
+
+// Stored data-health report snapshots (history of the database's cleanliness).
+model DataHealthSnapshot {
+  id          String   @id @default(uuid())
+  counts      String   // JSON — headline counts
+  report      String   // JSON — full detailed report
+  generatedBy String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("data_health_snapshots")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B2 — Club & League Claiming Platform (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend infrastructure so verified clubs/leagues can manage their own presence

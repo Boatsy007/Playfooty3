@@ -19,6 +19,7 @@ import { adminOcrRouter }       from './admin/ocr.js'
 import { adminPlatformRouter }  from './admin/platform.js'
 import { adminClaimingRouter }  from './admin/claiming.js'
 import { adminNewsroomRouter }  from './admin/newsroom.js'
+import { adminQualityRouter }   from './admin/quality.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -69,6 +70,7 @@ app.use('/admin/ocr',      adminOcrRouter)
 app.use('/admin/platform', adminPlatformRouter)
 app.use('/admin/claiming', adminClaimingRouter)   // Phase B2 — profile mgmt + verification
 app.use('/admin/newsroom', adminNewsroomRouter)   // Phase B3 — intelligence layer (backend only)
+app.use('/admin/quality',  adminQualityRouter)    // Phase B4 — data quality & integrity engine
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

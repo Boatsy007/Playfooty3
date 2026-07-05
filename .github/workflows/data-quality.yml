@@ -1,0 +1,45 @@
+name: Data Quality Engine
+
+# Phase B4: run the data quality & integrity engine — data-quality sweep,
+# duplicate detection, league-eligibility validation and the data-health report.
+# Serverless-safe (no browser). Detection is read-only; it only raises review
+# items, records eligibility/health and audit logs. Merges are admin-triggered.
+on:
+  schedule:
+    # 08:00 UTC Monday — after the weekly update + newsroom.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      no_raise:
+        description: 'Detect only — do not raise review items.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  quality:
+    name: Data quality sweep + duplicate/eligibility/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Run data quality engine
+        working-directory: backend
+        env:
+          NO_RAISE: ${{ inputs.no_raise }}
+        run: |
+          ARGS=""
+          [ "$NO_RAISE" = "true" ] && ARGS="$ARGS --no-raise"
+          echo "Running: tsx src/jobs/quality-trigger.ts $ARGS"
+          npx tsx src/jobs/quality-trigger.ts $ARGS
