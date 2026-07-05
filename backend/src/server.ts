@@ -25,11 +25,13 @@ import { adminHistoryRouter }   from './admin/history.js'
 import { adminChampionshipsRouter } from './admin/championships.js'
 import { adminCommercialRouter } from './admin/commercial.js'
 import { adminNotificationsRouter } from './admin/notifications.js'
+import { adminAnalyticsRouter } from './admin/analytics.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
 import { sponsorsRouter, commercialRouter, commercialClubRouter, commercialLeagueRouter } from './api/routes/sponsors.js'
 import { notificationsRouter } from './api/routes/notifications.js'
+import { analyticsRouter } from './api/routes/analytics.js'
 import { claimsRouter }         from './api/routes/claims.js'
 import { portalRouter }         from './api/routes/portal.js'
 import { logger }              from './utils/logger.js'
@@ -81,6 +83,9 @@ app.use('/api/leagues',     commercialLeagueRouter) // GET /api/leagues/:id/spon
 // Phase B9 — notifications & automation (public reads; admin-gated writes)
 app.use('/api/notifications', notificationsRouter)
 
+// Phase B11 — analytics (public rate-limited ingest; admin-gated reports)
+app.use('/api/analytics', analyticsRouter)
+
 // ── Shortcut aliases (public API surface expected by consumers) ───────────────
 // Mount rankingsRouter at /api as well so /api/top10, /api/top25, /api/top100,
 // /api/rankings all resolve without the /rankings prefix.
@@ -112,6 +117,7 @@ app.use('/admin/history',  adminHistoryRouter)    // Phase B6 — historical ran
 app.use('/admin/championships', adminChampionshipsRouter) // Phase B7 — championship engine
 app.use('/admin/commercial', adminCommercialRouter)       // Phase B8 — commercial platform
 app.use('/admin/notifications', adminNotificationsRouter) // Phase B9 — notifications & automation
+app.use('/admin/analytics', adminAnalyticsRouter)         // Phase B11 — analytics & insights
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {

@@ -703,6 +703,129 @@ model Setting {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// PHASE B11 — Analytics & Insights Engine (ADDITIVE, PRIVACY-CONSCIOUS)
+// ─────────────────────────────────────────────────────────────────────────────
+// Go Netty's own lightweight analytics: anonymous event tracking + search logs,
+// aggregated into per-entity popularity, search-term stats and daily visitor
+// rollups. No PII — no passwords, admin keys, emails or raw IPs are stored; the
+// visitor id is an anonymous (salted-hash or client-supplied) token. New tables
+// only; nothing existing is modified.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// A raw, anonymous interaction event.
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  eventType  String   // CLUB_VIEW | LEAGUE_VIEW | ARTICLE_VIEW | SEARCH | SPONSOR_CLICK | …
+  entityType String?  // CLUB | LEAGUE | ARTICLE | SPONSOR | RANKINGS | …
+  entityId   String?
+  sessionId  String?  // anonymous session token
+  visitorId  String?  // anonymous visitor token (salted hash / client id)
+  referrer   String?
+  path       String?
+  deviceType String?  // MOBILE | TABLET | DESKTOP | BOT | UNKNOWN
+  browser    String?  // coarse UA family
+  country    String?  // future
+  state      String?  // future
+  meta       String?  // JSON — small, non-PII context
+  createdAt  DateTime @default(now())
+
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@map("analytics_events")
+}
+
+// A raw search query log (anonymous).
+model SearchQuery {
+  id             String   @id @default(uuid())
+  term           String
+  normalizedTerm String
+  scope          String?  // ALL | CLUB | LEAGUE
+  resultCount    Int      @default(0)
+  zeroResult     Boolean  @default(false)
+  sessionId      String?
+  visitorId      String?
+  createdAt      DateTime @default(now())
+
+  @@index([normalizedTerm])
+  @@index([createdAt])
+  @@index([zeroResult])
+  @@map("search_queries")
+}
+
+// Aggregated popularity per entity per time window (rebuildable cache).
+model EntityPopularity {
+  id            String   @id @default(uuid())
+  entityType    String   // CLUB | LEAGUE | ARTICLE
+  entityId      String
+  entityName    String?
+  windowKey     String   // ALL | ROLL7 | ROLL30
+  views         Int      @default(0)
+  uniqueVisitors Int     @default(0)
+  searches      Int      @default(0)
+  sponsorClicks Int      @default(0)
+  score         Float    @default(0)   // weighted popularity
+  trendScore    Float    @default(0)   // growth vs previous window
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@unique([entityType, entityId, windowKey])
+  @@index([entityType, windowKey])
+  @@map("entity_popularity")
+}
+
+// Aggregated search-term stats per window (rebuildable cache).
+model SearchTermStat {
+  id             String   @id @default(uuid())
+  normalizedTerm String
+  term           String
+  windowKey      String   // ALL | ROLL7 | ROLL30
+  searches       Int      @default(0)
+  zeroResults    Int      @default(0)
+  uniqueVisitors Int      @default(0)
+  trendScore     Float    @default(0)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+
+  @@unique([normalizedTerm, windowKey])
+  @@index([windowKey])
+  @@map("search_term_stats")
+}
+
+// Daily visitor rollup.
+model AnalyticsDaily {
+  id             String   @id @default(uuid())
+  day            String   @unique // YYYY-MM-DD
+  visitors       Int      @default(0)
+  sessions       Int      @default(0)
+  events         Int      @default(0)
+  searches       Int      @default(0)
+  returningVisitors Int   @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([day])
+  @@map("analytics_daily")
+}
+
+// Audit of aggregation runs.
+model AnalyticsRun {
+  id        String   @id @default(uuid())
+  kind      String   @default("AGGREGATE")
+  events    Int      @default(0)
+  entities  Int      @default(0)
+  terms     Int      @default(0)
+  days      Int      @default(0)
+  detail    String?
+  ranAt     DateTime @default(now())
+
+  @@index([ranAt])
+  @@map("analytics_runs")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // PHASE B9 — Notifications & Automation Engine (ADDITIVE)
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend alerting: an event-driven notification store + delivery status, per-
