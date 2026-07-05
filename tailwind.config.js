@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         pink: {
-          DEFAULT: '#ff2c91',
+          DEFAULT: '#e30f5a',
           light: '#ff6bb5',
           dark: '#cc1f6e',
           muted: '#ffe0f1',
