@@ -4,13 +4,14 @@
  * stories and "more from league / club". Full SEO (Article + Breadcrumb JSON-LD,
  * OG/Twitter, canonical). Isolated feature — reuses only shared Nav/Footer/useSeo.
  */
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Link2, Clock } from 'lucide-react'
 import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import {
-  getArticle, relatedArticles, moreFromLeague, moreFromClub, formatDate, categoryOf, type Block,
+  loadPublished, getArticle, relatedArticles, moreFromLeague, moreFromClub, formatDate, categoryOf, type Block,
 } from '../news/content'
 import {
   NewsStyles, EditorialImage, ArticleCard, CategoryTag, SectionHead,
@@ -20,6 +21,9 @@ import {
 export default function NewsArticle() {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
+  const [ready, setReady] = useState(false)
+  useEffect(() => { loadPublished().then(() => setReady(true)) }, [])
+  void ready
   const article = getArticle(slug)
   const cat = article ? categoryOf(article.category) : null
   const url = `https://gotnetty.com.au/news/${slug}`

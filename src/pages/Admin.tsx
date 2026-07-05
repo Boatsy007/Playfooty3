@@ -4,7 +4,7 @@
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -24,7 +24,7 @@ function useToast() {
 
 const TABS = [
   ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
-  ['ocr', 'Image Import'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
+  ['ocr', 'Image Import'], ['publishing', 'AI Publishing'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
   ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
 ] as const
 type Tab = typeof TABS[number][0]
@@ -59,6 +59,7 @@ export default function Admin() {
         {tab === 'leagues' && <Leagues toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
         {tab === 'ocr' && <ImageImport toast={t.show} />}
+        {tab === 'publishing' && <Publishing toast={t.show} />}
         {tab === 'reviews' && <Reviews toast={t.show} />}
         {tab === 'rankings' && <Rankings toast={t.show} />}
         {tab === 'audit' && <AuditLog toast={t.show} />}
@@ -288,6 +289,131 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
       </div>
 
       <RunList runs={runs} title="Recent import / sync runs" />
+    </div>
+  )
+}
+
+// ─── AI Publishing ────────────────────────────────────────────────────────────
+const ART_STATUS_COLOUR: Record<string, string> = { DRAFT: C.gold, APPROVED: '#4dd9f4', PUBLISHED: C.green, ARCHIVED: C.mute }
+function Publishing({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [items, setItems] = useState<ArticleRow[]>([])
+  const [counts, setCounts] = useState<{ status: string; count: number }[]>([])
+  const [status, setStatus] = useState('ALL')
+  const [busy, setBusy] = useState(false)
+  const [sel, setSel] = useState<Set<string>>(new Set())
+  const [editing, setEditing] = useState<ArticleFull | null>(null)
+  const load = () => admin.listArticles(status).then(r => { setItems(r.data); setCounts(r.meta.counts); setSel(new Set()) }).catch(e => toast(e.message, false))
+  useEffect(() => { load() }, [status])
+
+  const generate = async () => {
+    setBusy(true)
+    try { const r = await admin.genArticles(); toast(`Generated ${r.created} new + ${r.updated} refreshed draft(s) for ${r.weekLabel ?? 'latest'}${r.skipped ? `, ${r.skipped} left (approved/published)` : ''}`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const setStatusOne = async (id: string, s: string) => { try { await admin.setArticleStatus(id, s); toast(s === 'PUBLISHED' ? 'Published' : s.toLowerCase()); await load() } catch (e) { toast((e as Error).message, false) } }
+  const bulk = async (s: string) => { if (sel.size === 0) return toast('select articles first', false); setBusy(true); try { const r = await admin.bulkArticles([...sel], s); toast(`${r.updated} article(s) ${s.toLowerCase()}`); await load() } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
+  const toggle = (id: string) => setSel(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const countOf = (s: string) => counts.find(c => c.status === s)?.count ?? 0
+
+  if (editing) return <ArticleEditor article={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load() }} toast={toast} />
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <b>AI Publishing</b>
+            <p style={{ color: C.mute, fontSize: 13, margin: '4px 0 0' }}>Every Monday: import results and ladders, then generate drafts here. Each article is written from real ranking data. Review, edit, approve and publish.</p>
+          </div>
+          <button disabled={busy} style={btn(C.pink)} onClick={generate}>{busy ? 'Generating…' : '✎ Generate weekly drafts'}</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
+          {['ALL', 'DRAFT', 'APPROVED', 'PUBLISHED', 'ARCHIVED'].map(s => (
+            <button key={s} onClick={() => setStatus(s)} style={{ ...btn(status === s ? C.pink : '#1b2233'), color: status === s ? '#fff' : C.mute, padding: '5px 11px', fontSize: 12 }}>
+              {s[0] + s.slice(1).toLowerCase()}{s !== 'ALL' && countOf(s) > 0 && <span style={{ marginLeft: 6, background: ART_STATUS_COLOUR[s], color: '#111', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{countOf(s)}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {sel.size > 0 && (
+        <div style={{ ...box, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ color: C.mute, fontSize: 13 }}>{sel.size} selected</span>
+          <button disabled={busy} style={btn('#4dd9f4')} onClick={() => bulk('APPROVED')}>Approve all</button>
+          <button disabled={busy} style={btn(C.green)} onClick={() => bulk('PUBLISHED')}>Publish all</button>
+          <button disabled={busy} style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => bulk('ARCHIVED')}>Archive all</button>
+        </div>
+      )}
+
+      <div style={box}>
+        {items.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No articles yet. Click “Generate weekly drafts” after importing this week's results.</p>}
+        <div style={{ display: 'grid', gap: 8 }}>
+          {items.map(a => (
+            <div key={a.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: '#0d1220', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <input type="checkbox" checked={sel.has(a.id)} onChange={() => toggle(a.id)} style={{ marginTop: 5 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#1b2233', color: ART_STATUS_COLOUR[a.status], padding: '2px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em' }}>{a.status}</span>
+                  <span style={{ color: C.mute, fontSize: 11 }}>{a.kind.replace(/_/g, ' ').toLowerCase()}{a.weekLabel ? ` · ${a.weekLabel}` : ''}</span>
+                </div>
+                <div style={{ fontSize: 14.5, fontWeight: 700, marginTop: 5 }}>{a.title}</div>
+                <div style={{ color: C.mute, fontSize: 12.5, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{a.summary}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 260 }}>
+                <button style={{ ...btn('#2a3145'), color: C.text }} onClick={async () => { try { setEditing(await admin.getArticle(a.id)) } catch (e) { toast((e as Error).message, false) } }}>Edit</button>
+                {a.status !== 'PUBLISHED' && <button style={btn(C.green)} onClick={() => setStatusOne(a.id, 'PUBLISHED')}>Publish</button>}
+                {a.status === 'PUBLISHED' && <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setStatusOne(a.id, 'DRAFT')}>Unpublish</button>}
+                {a.status === 'DRAFT' && <button style={btn('#4dd9f4')} onClick={() => setStatusOne(a.id, 'APPROVED')}>Approve</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface Blk { type: string; text: string }
+function ArticleEditor({ article, onClose, onSaved, toast }: { article: ArticleFull; onClose: () => void; onSaved: () => void; toast: (t: string, ok?: boolean) => void }) {
+  const [title, setTitle] = useState(article.title)
+  const [summary, setSummary] = useState(article.summary)
+  const [blocks, setBlocks] = useState<Blk[]>(() => { try { return JSON.parse(article.body) } catch { return [] } })
+  const [busy, setBusy] = useState(false)
+  const save = async (thenPublish?: boolean) => {
+    setBusy(true)
+    try {
+      await admin.editArticle(article.id, { title, summary, body: blocks })
+      if (thenPublish) await admin.setArticleStatus(article.id, 'PUBLISHED')
+      toast(thenPublish ? 'Saved & published' : 'Saved'); onSaved()
+    } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const setBlk = (i: number, text: string) => setBlocks(bs => bs.map((b, j) => j === i ? { ...b, text } : b))
+
+  return (
+    <div style={{ display: 'grid', gap: 14 }}>
+      <div style={{ ...box, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <b>Edit article <span style={{ color: C.mute, fontWeight: 400, fontSize: 12 }}>· {article.kind.replace(/_/g, ' ').toLowerCase()}</span></b>
+        <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={onClose}>← Back</button>
+      </div>
+      <div style={box}>
+        <label style={{ color: C.mute, fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Headline</label>
+        <input style={{ ...input, marginTop: 6, fontSize: 16 }} value={title} onChange={e => setTitle(e.target.value)} />
+        <label style={{ color: C.mute, fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginTop: 14 }}>Summary</label>
+        <textarea style={{ ...input, marginTop: 6, minHeight: 60 }} value={summary} onChange={e => setSummary(e.target.value)} />
+        <label style={{ color: C.mute, fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginTop: 14 }}>Body</label>
+        <div style={{ display: 'grid', gap: 8, marginTop: 6 }}>
+          {blocks.map((b, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8 }}>
+              <span style={{ color: C.mute, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', width: 46, paddingTop: 9 }}>{b.type === 'h' ? 'Head' : b.type === 'quote' ? 'Quote' : 'Para'}</span>
+              <textarea style={{ ...input, minHeight: b.type === 'h' ? 36 : 60, fontWeight: b.type === 'h' ? 700 : 400 }} value={b.text} onChange={e => setBlk(i, e.target.value)} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ ...box, display: 'flex', gap: 8 }}>
+        <button disabled={busy} style={btn()} onClick={() => save(false)}>Save draft</button>
+        <button disabled={busy} style={btn(C.green)} onClick={() => save(true)}>Save &amp; publish</button>
+      </div>
     </div>
   )
 }

@@ -5,12 +5,13 @@
  * via "claim", never faked.
  */
 import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Globe, ArrowRight } from 'lucide-react'
 import { teamPath, leaguePath, strengthStars, strengthLabel, type ClubProfile } from '../../lib/rankings'
 import { TeamLogo, FormPips, StarStrength } from '../rankings/bits'
 import { Section, SectionHead, Reveal, Move, Tag, EASE, TEXT, MUTE, FAINT, LINE, PINK, GOLD, GOLD_DK, UP, DOWN, CYANISH } from '../home/ui'
-import { allArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
+import { loadPublished, allArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
 import { EditorialImage } from '../../news/components'
 
 const INK = '#0c0e13'
@@ -364,6 +365,8 @@ export function ClubLadder({ club }: { club: ClubProfile }) {
 
 // ─── Club news ────────────────────────────────────────────────────────────────
 export function ClubNews({ club }: { club: ClubProfile }) {
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const norm = (s: string) => s.toLowerCase().trim()
   const key = norm(club.clubName)
   const mine = allArticles().filter(a => a.tags.club && (norm(a.tags.club).includes(key) || key.includes(norm(a.tags.club))))

@@ -59,6 +59,11 @@ export interface AuditRow {
   user?: { email: string; name: string | null } | null
 }
 export interface SettingRow { key: string; value: string }
+export interface ArticleRow {
+  id: string; slug: string; kind: string; category: string; title: string; subtitle: string | null
+  summary: string; status: string; weekLabel: string | null; updatedAt: string; publishedAt: string | null
+}
+export interface ArticleFull extends ArticleRow { body: string; heroSeed: string; tags: string | null; seoTitle: string | null; seoDescription: string | null; author: string }
 export interface ParsedUrl {
   ok: boolean; kind: string; tenant: string | null; orgSlug: string | null
   competitionSlug: string | null; gradeSlug: string | null; gradeId: string | null
@@ -146,6 +151,13 @@ export const admin = {
   resolveReview: (id: string, action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => req<{ data: ReviewItem }>('POST', `/admin/platform/reviews/${id}/resolve`, { action }),
   resolveReviewsBulk: (ids: string[], action: 'APPROVED' | 'REJECTED' | 'MERGED' | 'IGNORED') => req<{ data: { resolved: number } }>('POST', '/admin/platform/reviews/bulk', { ids, action }),
   qualitySweep: () => req<{ data: { duplicateClubs: number; missingLogos: number; orphanClubs: number; staleLeagues: number; raised: number; skippedExisting: number } }>('POST', '/admin/platform/quality/sweep').then(r => r.data),
+  // AI Publishing (Phase 4)
+  genArticles: () => req<{ data: { weekLabel: string | null; created: number; updated: number; skipped: number; drafts: { kind: string; title: string; slug: string }[] } }>('POST', '/admin/platform/articles/generate').then(r => r.data),
+  listArticles: (status = 'ALL') => req<{ data: ArticleRow[]; meta: { counts: { status: string; count: number }[] } }>('GET', `/admin/platform/articles?status=${status}`),
+  getArticle: (id: string) => req<{ data: ArticleFull }>('GET', `/admin/platform/articles/${id}`).then(r => r.data),
+  editArticle: (id: string, b: Partial<{ title: string; subtitle: string; summary: string; body: unknown; category: string; seoTitle: string; seoDescription: string }>) => req<{ data: ArticleFull }>('PATCH', `/admin/platform/articles/${id}`, b).then(r => r.data),
+  setArticleStatus: (id: string, status: string) => req<{ data: { id: string; status: string } }>('POST', `/admin/platform/articles/${id}/status`, { status }).then(r => r.data),
+  bulkArticles: (ids: string[], status: string) => req<{ data: { updated: number } }>('POST', '/admin/platform/articles/bulk', { ids, status }).then(r => r.data),
   listBackups: () => req<{ data: BackupRow[] }>('GET', '/admin/platform/backups').then(r => r.data),
   createBackup: (label?: string) => req<{ data: { id: string; counts: Record<string, number> } }>('POST', '/admin/platform/backups', { label }),
   restoreBackup: (id: string) => req<{ data: { restored: boolean; from: string } }>('POST', `/admin/platform/backups/${id}/restore`),

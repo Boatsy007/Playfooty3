@@ -92,14 +92,11 @@ export default function Nav() {
           {/* Logo */}
           <button
             onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }) }}
-            aria-label="Back to top"
+            aria-label="Got Netty home"
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <span className="flex items-baseline gap-1.5">
-              <span className="font-display leading-none" style={{ fontSize: '1.9rem', color: '#111111', letterSpacing: '0.01em' }}>GOT</span>
-              <span className="font-display leading-none" style={{ fontSize: '1.9rem', color: '#ff2c91', letterSpacing: '0.01em' }}>NETTY</span>
-            </span>
+            <img src="/logo.webp" alt="Got Netty" style={{ height: 34, width: 'auto', objectFit: 'contain' }} />
           </button>
 
           {/* Desktop links */}

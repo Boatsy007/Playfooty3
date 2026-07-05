@@ -3,14 +3,14 @@
  * Isolated feature: reuses only the shared Nav/Footer/useSeo; all news UI and
  * styling live in the self-contained src/news module.
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ArrowRight, TrendingUp, Flame, X } from 'lucide-react'
 import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
 import {
-  CATEGORIES, featuredArticles, latestArticles, trendingArticles, mostReadArticles,
+  loadPublished, CATEGORIES, featuredArticles, latestArticles, trendingArticles, mostReadArticles,
   breakingHeadlines, articlesInCategory, searchArticles, uniqueStates, uniqueLeagues, uniqueClubs,
   formatDate, newsPath, categoryOf, type CategoryId, type NewsFilters,
 } from '../news/content'
@@ -22,6 +22,8 @@ import {
 const RAIL_CATEGORIES: CategoryId[] = ['rankings', 'club-news', 'league-news', 'transfers', 'player-spotlight', 'community', 'opinion', 'history']
 
 export default function News() {
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const featured = featuredArticles()
   const hero = featured[0]
   const moreFeatured = featured.slice(1, 4).length ? featured.slice(1, 4) : latestArticles(4).slice(1, 4)

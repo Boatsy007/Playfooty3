@@ -3,14 +3,14 @@
  * system: one card, one section rhythm, one motion vocabulary. Every module
  * derives its numbers from live API data; nothing is invented.
  */
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Search, ChevronRight, Trophy, Flame, Zap, ShieldCheck, Percent } from 'lucide-react'
 import { teamPath, leaguePath, strengthStars, strengthLabel, type LeagueDetail, type LeagueRankedTeam, type FormResult } from '../../lib/rankings'
 import { TeamLogo, FormPips, StarStrength } from '../rankings/bits'
 import { Section, SectionHead, Reveal, Tag, EASE, TEXT, MUTE, FAINT, LINE, PINK, GOLD, GOLD_DK, UP, CYANISH } from '../home/ui'
-import { allArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
+import { loadPublished, allArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
 import { EditorialImage } from '../../news/components'
 import type { LeagueRow } from '../home/useHomeData'
 
@@ -404,6 +404,8 @@ function FactCard({ icon, accent, label, value, sub }: { icon: React.ReactNode; 
 
 // ─── News ─────────────────────────────────────────────────────────────────────
 export function LeagueNews({ leagueName }: { leagueName: string }) {
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const norm = (s: string) => s.toLowerCase().replace(/\s*-\s*a grade.*$/i, '').trim()
   const key = norm(leagueName)
   const mine = allArticles().filter(a => a.tags.league && norm(a.tags.league).includes(key))

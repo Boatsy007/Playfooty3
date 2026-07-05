@@ -526,6 +526,35 @@ model OcrImport {
   @@map("ocr_imports")
 }
 
+// AI Publishing: generated article drafts. Body is built from real ranking data
+// (templated prose over actual numbers), reviewed in the admin portal, then
+// published. Status flows DRAFT → APPROVED → PUBLISHED (never destroyed).
+model GeneratedArticle {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  kind        String                       // NATIONAL_ROUNDUP | BIGGEST_MOVERS | STRONGEST_LEAGUES | LEAGUE_ROUNDUP | CLUB_UPDATE
+  category    String    @default("rankings")
+  title       String
+  subtitle    String?
+  summary     String
+  body        String                       // JSON: Block[] (p/h/quote), same shape as the news model
+  heroSeed    String    @default("rankings")
+  tags        String?                      // JSON: { state?, league?, leagueId?, club?, clubId? }
+  status      String    @default("DRAFT")  // DRAFT | APPROVED | PUBLISHED | ARCHIVED
+  runId       String?                      // ranking run this was generated from
+  weekLabel   String?
+  seoTitle    String?
+  seoDescription String?
+  author      String    @default("Got Netty")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@index([status, publishedAt])
+  @@index([kind])
+  @@map("generated_articles")
+}
+
 // Global key/value settings (e.g. rankingsLocked, currentSeason).
 model Setting {
   key       String   @id

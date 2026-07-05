@@ -232,10 +232,49 @@ const byDateDesc = (a: Article, b: Article) => +new Date(b.date) - +new Date(a.d
 
 // V1 reposition: championship coverage is postponed with the event — its
 // sample articles stay in the model but are excluded from every public feed.
-const LIVE = ARTICLES.filter(a => a.category !== 'championship')
+const SAMPLES = ARTICLES.filter(a => a.category !== 'championship')
 
-export const allArticles = () => [...LIVE].sort(byDateDesc)
-export const getArticle = (slug: string) => LIVE.find(a => a.slug === slug) ?? null
+// ── Published articles from the AI Publishing pipeline ──────────────────────
+// Fetched once at runtime and merged ahead of the sample content, so real
+// generated + published articles lead every feed. loadPublished() is called on
+// mount by the news pages and the home/league/club news modules; it re-resolves
+// to the same promise so it only fetches once.
+let published: Article[] = []
+let loadPromise: Promise<void> | null = null
+
+interface ApiArticle { slug: string; title: string; subtitle?: string; summary: string; category: string; heroSeed: string; author: string; date: string; body: { type: string; text: string }[]; tags?: Record<string, string> }
+
+function toArticle(a: ApiArticle): Article {
+  const words = a.body.reduce((n, b) => n + (b.text?.split(/\s+/).length ?? 0), 0)
+  const cat = (CATEGORIES.some(c => c.id === a.category) ? a.category : 'rankings') as CategoryId
+  return {
+    slug: a.slug, title: a.title, subtitle: a.subtitle ?? '', category: cat,
+    author: { name: a.author || 'Got Netty', role: 'Got Netty' }, date: a.date,
+    readingTime: Math.max(1, Math.round(words / 200)), summary: a.summary,
+    heroSeed: a.heroSeed || a.slug, heroCredit: 'Got Netty',
+    body: a.body.map(b => ({ type: (b.type === 'h' || b.type === 'quote' ? b.type : 'p') as 'p' | 'h' | 'quote', text: b.text })),
+    tags: { state: a.tags?.state, league: a.tags?.league, leagueId: a.tags?.leagueId, club: a.tags?.club, clubId: a.tags?.clubId },
+    featured: true, trending: true, mostRead: true, breaking: false,
+  }
+}
+
+export function loadPublished(): Promise<void> {
+  if (loadPromise) return loadPromise
+  loadPromise = fetch('/api/news')
+    .then(r => r.ok ? r.json() : { data: [] })
+    .then((j: { data: ApiArticle[] }) => { published = (j.data ?? []).map(toArticle) })
+    .catch(() => { published = [] })
+  return loadPromise
+}
+
+/** Combined feed: published (real) first, then sample content, deduped by slug. */
+function LIVE_ALL(): Article[] {
+  const seen = new Set(published.map(a => a.slug))
+  return [...published, ...SAMPLES.filter(a => !seen.has(a.slug))]
+}
+
+export const allArticles = () => [...LIVE_ALL()].sort(byDateDesc)
+export const getArticle = (slug: string) => LIVE_ALL().find(a => a.slug === slug) ?? null
 export const featuredArticles = () => allArticles().filter(a => a.featured)
 export const latestArticles = (n = 8) => allArticles().slice(0, n)
 export const trendingArticles = (n = 6) => allArticles().filter(a => a.trending).slice(0, n)
@@ -278,9 +317,9 @@ export function searchArticles(f: NewsFilters) {
   })
 }
 
-export const uniqueStates = () => [...new Set(LIVE.map(a => a.tags.state).filter(Boolean) as string[])].sort()
-export const uniqueLeagues = () => [...new Set(LIVE.map(a => a.tags.league).filter(Boolean) as string[])].sort()
-export const uniqueClubs = () => [...new Set(LIVE.map(a => a.tags.club).filter(Boolean) as string[])].sort()
+export const uniqueStates = () => [...new Set(allArticles().map(a => a.tags.state).filter(Boolean) as string[])].sort()
+export const uniqueLeagues = () => [...new Set(allArticles().map(a => a.tags.league).filter(Boolean) as string[])].sort()
+export const uniqueClubs = () => [...new Set(allArticles().map(a => a.tags.club).filter(Boolean) as string[])].sort()
 
 export function formatDate(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })

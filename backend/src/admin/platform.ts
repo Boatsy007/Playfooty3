@@ -12,6 +12,7 @@ import { dispatchWorkflow, listRuns, getRun, githubConfig } from '../integration
 import { previewCsv, commitCsv, type CsvEntity, type PreviewRow } from '../jobs/csv-import.js'
 import { createBackup } from '../jobs/backup.js'
 import { sweepDataQuality } from '../jobs/data-quality.js'
+import { generateWeeklyDrafts } from '../jobs/generate-articles.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -161,6 +162,61 @@ router.post('/csv/commit', async (req, res) => {
     await audit('CSV_IMPORT', entity, null, { created: result.created, updated: result.updated, skipped: result.skipped }, 'CSV')
     res.json({ data: result })
   } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'commit failed' }) }
+})
+
+// ─── AI Publishing (Phase 4) ──────────────────────────────────────────────────
+// Generate weekly drafts from the latest ranking run (real data, templated).
+router.post('/articles/generate', async (_req, res) => {
+  try {
+    const report = await generateWeeklyDrafts()
+    await audit('GENERATE_ARTICLES', 'GeneratedArticle', null, { created: report.created, updated: report.updated, week: report.weekLabel }, 'SYSTEM')
+    res.json({ data: report })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'generation failed' }) }
+})
+// List drafts/articles by status.
+router.get('/articles', async (req, res) => {
+  const status = (req.query.status as string) || 'ALL'
+  const items = await prisma.generatedArticle.findMany({
+    where: status === 'ALL' ? {} : { status },
+    orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }], take: 200,
+    select: { id: true, slug: true, kind: true, category: true, title: true, subtitle: true, summary: true, status: true, weekLabel: true, updatedAt: true, publishedAt: true },
+  })
+  const counts = await prisma.generatedArticle.groupBy({ by: ['status'], _count: { status: true } })
+  res.json({ data: items, meta: { counts: counts.map(c => ({ status: c.status, count: c._count.status })) } })
+})
+router.get('/articles/:id', async (req, res) => {
+  const a = await prisma.generatedArticle.findUnique({ where: { id: req.params.id } })
+  if (!a) return res.status(404).json({ error: 'not found' })
+  res.json({ data: a })
+})
+// Edit any field (operator polish before publish).
+router.patch('/articles/:id', async (req, res) => {
+  const b = req.body as Partial<{ title: string; subtitle: string; summary: string; body: unknown; category: string; seoTitle: string; seoDescription: string; heroSeed: string }>
+  const data: Record<string, unknown> = {}
+  for (const k of ['title', 'subtitle', 'summary', 'category', 'seoTitle', 'seoDescription', 'heroSeed'] as const) if (b[k] != null) data[k] = b[k]
+  if (b.body != null) data.body = typeof b.body === 'string' ? b.body : JSON.stringify(b.body)
+  const a = await prisma.generatedArticle.update({ where: { id: req.params.id }, data })
+  await audit('EDIT_ARTICLE', 'GeneratedArticle', a.id, { title: a.title })
+  res.json({ data: a })
+})
+// Approve / publish / unpublish / archive.
+router.post('/articles/:id/status', async (req, res) => {
+  const { status } = req.body as { status: 'DRAFT' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED' }
+  if (!['DRAFT', 'APPROVED', 'PUBLISHED', 'ARCHIVED'].includes(status)) return res.status(400).json({ error: 'invalid status' })
+  const a = await prisma.generatedArticle.update({
+    where: { id: req.params.id },
+    data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined },
+  })
+  await audit(`ARTICLE_${status}`, 'GeneratedArticle', a.id, { title: a.title })
+  res.json({ data: { id: a.id, status: a.status, publishedAt: a.publishedAt } })
+})
+// Bulk publish/approve.
+router.post('/articles/bulk', async (req, res) => {
+  const { ids, status } = req.body as { ids?: string[]; status?: string }
+  if (!Array.isArray(ids) || ids.length === 0 || !['APPROVED', 'PUBLISHED', 'ARCHIVED', 'DRAFT'].includes(status ?? '')) return res.status(400).json({ error: 'ids and valid status required' })
+  const r = await prisma.generatedArticle.updateMany({ where: { id: { in: ids } }, data: { status: status!, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } })
+  await audit('ARTICLES_BULK', 'GeneratedArticle', null, { status, count: r.count })
+  res.json({ data: { updated: r.count, status } })
 })
 
 // ─── National recalculation ──────────────────────────────────────────────────

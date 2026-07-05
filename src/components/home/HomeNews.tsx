@@ -1,13 +1,16 @@
+import { useState, useEffect } from 'react'
 /**
  * Latest News: publication-style split. One large feature story, a stack of
  * side stories, category tags, bylines, dates and reading time.
  */
 import { Link } from 'react-router-dom'
-import { featuredArticles, latestArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
+import { loadPublished, featuredArticles, latestArticles, categoryOf, formatDate, newsPath, type Article } from '../../news/content'
 import { EditorialImage } from '../../news/components'
 import { Section, SectionHead, Reveal, Tag, TEXT, MUTE, FAINT, LINE, PINK } from './ui'
 
 export default function HomeNews() {
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const feature = featuredArticles()[0] ?? latestArticles(1)[0]
   if (!feature) return null
   const side = latestArticles(5).filter(a => a.slug !== feature.slug).slice(0, 4)
