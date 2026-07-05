@@ -13,11 +13,13 @@ import { previewCsv, commitCsv, type CsvEntity, type PreviewRow } from '../jobs/
 import { createBackup } from '../jobs/backup.js'
 import { sweepDataQuality } from '../jobs/data-quality.js'
 import { generateWeeklyDrafts } from '../jobs/generate-articles.js'
+import { runWeeklyUpdate } from '../jobs/weekly-update-engine.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
-const WF_URL_IMPORT = 'playhq-url-import.yml'
-const WF_DISCOVER   = 'discover-import.yml'
+const WF_URL_IMPORT   = 'playhq-url-import.yml'
+const WF_DISCOVER     = 'discover-import.yml'
+const WF_WEEKLY_UPDATE = 'weekly-update.yml'
 
 const router = Router()
 router.use(requireAdminKey)
@@ -228,6 +230,44 @@ router.post('/recalculate', async (_req, res) => {
     await audit('RECALCULATE_NATIONAL', 'Ranking', null, { clubsRanked: report.clubsRanked, leagues: report.leagues.length }, 'SYSTEM')
     res.json({ data: report })
   } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'recalc failed' }) }
+})
+
+// ─── Weekly Update Engine (Backend Phase B1) ──────────────────────────────────
+// Serverless-safe run: recalc → sweep → drafts (+ optional pre-run backup), all
+// browser-free. The ladder sync step needs Playwright, so for a full run
+// (sync=true) we dispatch the browser-backed weekly-update.yml workflow instead.
+router.post('/weekly-update', async (req, res) => {
+  const b = (req.body ?? {}) as {
+    sync?: boolean; leagueId?: string; backupFirst?: boolean
+    recalculate?: boolean; sweep?: boolean; generateDrafts?: boolean; dryRun?: boolean
+  }
+  try {
+    // Full run with ladder sync → hand off to GitHub Actions (browser required).
+    if (b.sync) {
+      const out = await dispatchWorkflow(WF_WEEKLY_UPDATE, {
+        ...(b.leagueId ? { league_id: b.leagueId } : {}),
+        ...(b.backupFirst === false ? { no_backup: 'true' } : {}),
+        ...(b.dryRun ? { dry_run: 'true' } : {}),
+      })
+      await audit('WEEKLY_UPDATE_DISPATCH', 'System', null, { runId: out.run?.id ?? null, leagueId: b.leagueId ?? null }, 'WEEKLY_ENGINE')
+      return res.json({ data: { dispatched: true, run: out.run, htmlUrl: out.htmlUrl } })
+    }
+
+    // Serverless-safe steps only (no browser). Runs inline and returns the report.
+    const rankingsLocked = (await prisma.setting.findUnique({ where: { key: 'rankingsLocked' } }).catch(() => null))?.value === 'true'
+    const report = await runWeeklyUpdate({
+      sync: false,
+      leagueId: b.leagueId,
+      backupFirst: b.backupFirst ?? true,
+      recalculate: rankingsLocked ? false : (b.recalculate ?? true),
+      sweep: b.sweep ?? true,
+      generateDrafts: b.generateDrafts ?? true,
+      dryRun: b.dryRun ?? false,
+      source: 'ADMIN',
+    })
+    // The engine writes its own summary AuditLog; nothing more to add here.
+    res.json({ data: report })
+  } catch (err) { res.status(500).json({ error: err instanceof Error ? err.message : 'weekly update failed' }) }
 })
 
 // ─── Review queue ─────────────────────────────────────────────────────────────

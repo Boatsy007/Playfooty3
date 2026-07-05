@@ -1,0 +1,71 @@
+name: Weekly Update Engine
+
+# Backend Phase B1: the Monday weekly update. Browser-backed (Playwright/Chromium)
+# so it runs in Actions, not Vercel. Orchestrates: pre-run backup → sync ladders
+# from PlayHQ → recalculate national rankings + league strength → data-quality
+# sweep (review queue) → generate article DRAFTS. Manual overrides always win;
+# nothing is auto-published.
+on:
+  schedule:
+    # 06:00 UTC every Monday (~16:00–17:00 AEST/AEDT) — after weekend rounds settle.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      league_id:
+        description: 'Sync a single league by id. Blank = sync every league with a stored URL.'
+        required: false
+        default: ''
+        type: string
+      no_sync:
+        description: 'Skip the ladder sync (recalc + sweep + drafts only).'
+        required: false
+        default: false
+        type: boolean
+      no_backup:
+        description: 'Skip the pre-run backup.'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Plan only — write nothing.'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  weekly-update:
+    name: Weekly update — sync + recalc + sweep + drafts
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install chromium --with-deps
+      - name: Run weekly update
+        working-directory: backend
+        env:
+          LEAGUE_ID: ${{ inputs.league_id }}
+          NO_SYNC:   ${{ inputs.no_sync }}
+          NO_BACKUP: ${{ inputs.no_backup }}
+          DRY_RUN:   ${{ inputs.dry_run }}
+        run: |
+          ARGS=""
+          [ -n "$LEAGUE_ID" ] && ARGS="$ARGS --league=$LEAGUE_ID"
+          [ "$NO_SYNC" = "true" ]   && ARGS="$ARGS --no-sync"
+          [ "$NO_BACKUP" = "true" ] && ARGS="$ARGS --no-backup"
+          [ "$DRY_RUN" = "true" ]   && ARGS="$ARGS --dry-run"
+          echo "Running: tsx src/jobs/weekly-update-trigger.ts $ARGS"
+          npx tsx src/jobs/weekly-update-trigger.ts $ARGS
