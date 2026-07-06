@@ -5,15 +5,15 @@ interface TickerProps {
 }
 
 const defaults = [
-  'Community Football CHAMPIONSHIPS AUSTRALIA',
-  'GOLD COAST 2027',
-  'A GRADE PREMIERS ONLY',
-  'INVITATION ONLY',
-  'OCTOBER 2027',
-  'ONE NATIONAL TITLE',
+  'PLAYFOOTY COMMUNITY FOOTBALL',
+  'FUTURE SHOWCASE',
+  'SENIOR CLUBS',
+  'DATE TBC',
+  'MANUAL LEAGUE READY',
+  'RANKINGS RESULTS LADDERS',
 ]
 
-export default function Ticker({ items = defaults, bg = '#ff2c91', textColor = '#ffffff' }: TickerProps) {
+export default function Ticker({ items = defaults, bg = '#d71920', textColor = '#ffffff' }: TickerProps) {
   const text = items.join('  ✦  ')
   return (
     <div className="overflow-hidden py-3.5 select-none" style={{ backgroundColor: bg }}>

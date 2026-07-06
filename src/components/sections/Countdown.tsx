@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
-// PlayFooty 2027 opens Thursday 7 October 2027, 08:00 AEST (UTC+10)
-const TARGET_MS = new Date('2027-10-07T08:00:00+10:00').getTime()
+// PlayFooty future showcase date is TBC
+const TARGET_MS = new Date('future-10-07T08:00:00+10:00').getTime()
 
 function getTimeLeft() {
   const diff = Math.max(0, TARGET_MS - Date.now())
@@ -39,7 +39,7 @@ function FlipDigit({ value, label, accent }: FlipDigitProps) {
         style={{
           background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: accent ? '0 0 40px rgba(255,44,145,0.08)' : 'none',
+          boxShadow: accent ? '0 0 40px rgba(215,25,32,0.08)' : 'none',
           aspectRatio: '1 / 1.1',
         }}
       >
@@ -67,7 +67,7 @@ function FlipDigit({ value, label, accent }: FlipDigitProps) {
             style={{
               fontSize: 'clamp(2.2rem, 7vw, 5.5rem)',
               lineHeight: 1,
-              color: accent ? '#ff2c91' : '#ffffff',
+              color: accent ? '#d71920' : '#ffffff',
             }}
           >
             {value}
@@ -116,13 +116,13 @@ export default function Countdown() {
           className="text-center mb-10 lg:mb-14"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-[10px] uppercase mb-4" style={{ color: '#f4c14d' }}>
-            October 2027 &nbsp;·&nbsp; Gold Coast, Queensland
+            Date TBC &nbsp;·&nbsp; future host city, Queensland
           </p>
           <h2 className="font-display text-white leading-none mb-3" style={{ fontSize: 'clamp(2.2rem, 6vw, 5rem)' }}>
-            THE COUNTDOWN<br />IS <span style={{ color: '#ff2c91' }}>ON.</span>
+            THE COUNTDOWN<br />IS <span style={{ color: '#d71920' }}>ON.</span>
           </h2>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.02em' }}>
-            Australia's national Community Football championship
+            Australia's national community football championship
           </p>
         </motion.div>
 

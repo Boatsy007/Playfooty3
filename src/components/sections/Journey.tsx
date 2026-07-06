@@ -4,8 +4,8 @@ const steps = [
   {
     num: '01',
     heading: 'THE SEASON BEGINS',
-    body: 'Across country and regional leagues in every state and territory, clubs lace up for another A Grade season. Every match, every point, every win building toward the ultimate goal.',
-    accent: '#ff2c91',
+    body: 'Across country and regional leagues in every state and territory, clubs lace up for another Senior season. Every match, every point, every win building toward the ultimate goal.',
+    accent: '#d71920',
   },
   {
     num: '02',
@@ -22,8 +22,8 @@ const steps = [
   {
     num: '04',
     heading: 'PREMIERS CROWNED',
-    body: "The trophy is raised. The photos are taken. An A Grade premiership — and an invitation to Australia's national championship is within reach.",
-    accent: '#ff2c91',
+    body: "The trophy is raised. The photos are taken. A strong community football season — and an update to Australia's national championship is within reach.",
+    accent: '#d71920',
   },
   {
     num: '05',
@@ -34,12 +34,12 @@ const steps = [
   {
     num: '06',
     heading: 'THE CLUB TRIP BEGINS',
-    body: 'Players. Coaches. Families. Supporters. Everyone books tickets. The Gold Coast is calling and the whole club is going.',
-    accent: '#ff2c91',
+    body: 'Players. Coaches. Families. Supporters. Everyone books tickets. The future host city is calling and the whole club is going.',
+    accent: '#d71920',
   },
   {
     num: '07',
-    heading: 'GOLD COAST, QUEENSLAND',
+    heading: 'HOST CITY TBC',
     body: 'Four days. The sun, the surf, the atmosphere, the camaraderie — and the national championship that brings it all together.',
     accent: '#4dd9f4',
   },
@@ -72,7 +72,7 @@ export default function Journey() {
             The Road to PlayFooty
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3.2rem, 9vw, 9rem)' }}>
-            EVERY SEASON<br />LEADS <span style={{ color: '#ff2c91' }}>HERE.</span>
+            EVERY SEASON<br />LEADS <span style={{ color: '#d71920' }}>HERE.</span>
           </h2>
         </motion.div>
 
@@ -200,9 +200,9 @@ export default function Journey() {
           className="mt-16 lg:mt-20 text-center"
         >
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#ff2c91' }} />
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#d71920' }} />
             <span className="font-condensed font-bold text-[10px] tracking-[0.28em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              Gold Coast · Queensland · October 2027
+              future host city · Queensland · Date TBC
             </span>
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#f4c14d' }} />
           </div>

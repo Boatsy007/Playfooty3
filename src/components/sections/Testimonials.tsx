@@ -6,7 +6,7 @@ const benefits = [
   {
     icon: Trophy,
     title: 'A national title to play for.',
-    desc: 'For A Grade players who have won their local premiership, PlayFooty is the next step — a national championship that measures your club against the best country clubs in Australia.',
+    desc: 'For Senior players who have won their local premiership, PlayFooty is the next step — a national championship that measures your club against the best country clubs in Australia.',
     color: 'bg-pink-500',
   },
   {
@@ -17,8 +17,8 @@ const benefits = [
   },
   {
     icon: MapPin,
-    title: 'A Gold Coast end-of-season trip.',
-    desc: 'Four days on the Gold Coast is a reward in itself. Beaches, dining and attractions for every member of the travelling group — long after the final whistle.',
+    title: 'A future host city end-of-season trip.',
+    desc: 'Four days on the future host city is a reward in itself. Beaches, dining and attractions for every member of the travelling group — long after the final whistle.',
     color: 'bg-pink-500',
   },
   {
@@ -42,7 +42,7 @@ const stateList = [
 
 export default function Testimonials() {
   return (
-    <section id="why-playfooty" className="bg-white overflow-hidden">
+    <section id="why-cnca" className="bg-white overflow-hidden">
       {/* State ticker */}
       <div className="bg-navy-700 py-3 overflow-hidden">
         <motion.div
@@ -72,7 +72,7 @@ export default function Testimonials() {
             Why Clubs Will Want To Be There
           </h2>
           <p className="text-lg text-navy-400 max-w-xl mx-auto">
-            For A Grade premiership clubs who want to take the next step — and for every club member who deserves to celebrate the season in style.
+            For community football clubs who want to take the next step — and for every club member who deserves to celebrate the season in style.
           </p>
         </motion.div>
 

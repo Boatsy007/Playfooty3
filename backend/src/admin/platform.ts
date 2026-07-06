@@ -4,6 +4,7 @@
  */
 
 import { Router }          from 'express'
+import { createHash }      from 'node:crypto'
 import { prisma }          from '../db/client.js'
 import { requireAdminKey } from '../api/middleware/auth.js'
 import { recalculateNational } from '../jobs/recompute-strength.js'
@@ -23,6 +24,55 @@ const WF_WEEKLY_UPDATE = 'weekly-update.yml'
 
 const router = Router()
 router.use(requireAdminKey)
+
+const FOOTBALL_SOURCES = ['PLAYHQ_API', 'PLAYHQ_SCRAPER', 'CSV_UPLOAD', 'OCR_UPLOAD', 'MANUAL_ENTRY'] as const
+const FOOTBALL_DATA_TYPES = ['FIXTURES', 'RESULTS', 'LADDER', 'TEAMS', 'GRADES', 'ROUNDS'] as const
+type FootballSource = typeof FOOTBALL_SOURCES[number]
+type FootballDataType = typeof FOOTBALL_DATA_TYPES[number]
+type FootballRow = Record<string, unknown>
+
+const isFootballSource = (v: unknown): v is FootballSource => typeof v === 'string' && (FOOTBALL_SOURCES as readonly string[]).includes(v)
+const isFootballDataType = (v: unknown): v is FootballDataType => typeof v === 'string' && (FOOTBALL_DATA_TYPES as readonly string[]).includes(v)
+const stableHash = (v: unknown) => createHash('sha256').update(JSON.stringify(v ?? null)).digest('hex')
+const num = (v: unknown, fallback = 0) => Number.isFinite(Number(v)) ? Number(v) : fallback
+const str = (v: unknown, fallback = '') => typeof v === 'string' && v.trim() ? v.trim() : fallback
+const footballPoints = (goals: unknown, behinds: unknown, total?: unknown) => Number.isFinite(Number(total)) ? Number(total) : (num(goals) * 6) + num(behinds)
+
+function sourceFlags(primary?: string | null, fallbacks?: string[]) {
+  const set = new Set([primary, ...(fallbacks ?? [])].filter(Boolean))
+  return {
+    apiEnabled: set.has('PLAYHQ_API'),
+    scrapeEnabled: set.has('PLAYHQ_SCRAPER'),
+    manualEntryEnabled: set.has('MANUAL_ENTRY') || set.has('CSV_UPLOAD') || set.has('OCR_UPLOAD'),
+  }
+}
+
+async function createFootballReview(leagueId: string, kind: string, reason: string, payload: unknown, confidence = 0.5) {
+  await prisma.reviewItem.create({
+    data: { entityType: 'FootballData', entityId: leagueId, kind, reason, confidence, payload: JSON.stringify(payload) },
+  }).catch(e => logger.warn('football review item failed', { detail: String(e) }))
+}
+
+function generateFootballLadder(rows: { homeName: string; awayName: string; homePoints: number; awayPoints: number }[]) {
+  const table = new Map<string, { clubName: string; played: number; wins: number; losses: number; draws: number; pointsFor: number; pointsAgainst: number; premiershipPoints: number }>()
+  const ensure = (clubName: string) => {
+    if (!table.has(clubName)) table.set(clubName, { clubName, played: 0, wins: 0, losses: 0, draws: 0, pointsFor: 0, pointsAgainst: 0, premiershipPoints: 0 })
+    return table.get(clubName)!
+  }
+  for (const r of rows) {
+    const h = ensure(r.homeName), a = ensure(r.awayName)
+    h.played++; a.played++
+    h.pointsFor += r.homePoints; h.pointsAgainst += r.awayPoints
+    a.pointsFor += r.awayPoints; a.pointsAgainst += r.homePoints
+    if (r.homePoints > r.awayPoints) { h.wins++; a.losses++; h.premiershipPoints += 4 }
+    else if (r.homePoints < r.awayPoints) { a.wins++; h.losses++; a.premiershipPoints += 4 }
+    else { h.draws++; a.draws++; h.premiershipPoints += 2; a.premiershipPoints += 2 }
+  }
+  return [...table.values()]
+    .map(r => ({ ...r, percentage: r.pointsAgainst > 0 ? (r.pointsFor / r.pointsAgainst) * 100 : r.pointsFor > 0 ? 100 : 0 }))
+    .sort((a, b) => b.premiershipPoints - a.premiershipPoints || b.percentage - a.percentage || b.pointsFor - a.pointsFor)
+    .map((r, i) => ({ ...r, position: i + 1 }))
+}
 
 async function audit(action: string, entityType: string, entityId: string | null, after: unknown, source = 'ADMIN') {
   try {
@@ -342,6 +392,204 @@ router.post('/backups/:id/restore', async (req, res) => {
   for (const cs of d.clubLeagueSeasons) { await prisma.clubLeagueSeason.upsert({ where: { id: cs.id }, update: cs, create: cs }).catch(() => {}) }
   await audit('RESTORE_BACKUP', 'Backup', backup.id, backup.counts, 'SYSTEM')
   res.json({ data: { restored: true, from: backup.label } })
+})
+
+// ─── PlayFooty football data-source control centre ───────────────────────────
+router.get('/football/leagues', async (_req, res) => {
+  const leagues = await prisma.league.findMany({
+    where: { sport: 'FOOTBALL', archivedAt: null },
+    include: {
+      state: { select: { code: true, name: true } },
+      _count: { select: { clubSeasons: true, footballFixtures: true, footballResults: true, footballLadderEntries: true, footballImports: true } },
+    },
+    orderBy: [{ updatedAt: 'desc' }],
+    take: 300,
+  })
+  res.json({ data: leagues })
+})
+
+router.post('/football/leagues', async (req, res) => {
+  const b = req.body as { name?: string; state?: string; regionName?: string; sourceUrl?: string; primaryDataSource?: string; fallbackDataSources?: string[]; playhqOrganisationId?: string; playhqCompetitionId?: string; playhqSeasonId?: string; playhqGradeId?: string }
+  if (!b.name) return res.status(400).json({ error: 'name required' })
+  const source = isFootballSource(b.primaryDataSource) ? b.primaryDataSource : 'MANUAL_ENTRY'
+  const fallbacks = Array.isArray(b.fallbackDataSources) ? b.fallbackDataSources.filter(isFootballSource) : ['CSV_UPLOAD', 'OCR_UPLOAD']
+  const flags = sourceFlags(source, fallbacks)
+  const stateCode = (b.state || 'VIC').toUpperCase()
+  const state = await prisma.state.upsert({ where: { code: stateCode }, create: { code: stateCode, name: stateCode }, update: {} })
+  const league = await prisma.league.create({
+    data: {
+      name: b.name,
+      shortName: b.name,
+      stateId: state.id,
+      sport: 'FOOTBALL',
+      primaryDataSource: source,
+      fallbackDataSources: JSON.stringify(fallbacks),
+      sourceUrl: b.sourceUrl ?? null,
+      playhqOrganisationId: b.playhqOrganisationId ?? null,
+      playhqCompetitionId: b.playhqCompetitionId ?? null,
+      playhqSeasonId: b.playhqSeasonId ?? null,
+      playhqGradeId: b.playhqGradeId ?? null,
+      regionName: b.regionName ?? null,
+      syncStatus: 'READY',
+      dataConfidence: source === 'MANUAL_ENTRY' ? 0.75 : 0.55,
+      primarySource: source,
+      importType: 'MANUAL',
+      manualOverride: true,
+      currentSeason: '2026',
+      ...flags,
+    },
+  })
+  await audit('CREATE_FOOTBALL_LEAGUE', 'League', league.id, league)
+  res.status(201).json({ data: league })
+})
+
+router.patch('/football/leagues/:id/source', async (req, res) => {
+  const before = await prisma.league.findUnique({ where: { id: req.params.id } })
+  if (!before) return res.status(404).json({ error: 'not found' })
+  const b = req.body as Record<string, unknown>
+  const source = isFootballSource(b.primaryDataSource) ? b.primaryDataSource : before.primaryDataSource
+  const fallbacks = Array.isArray(b.fallbackDataSources) ? b.fallbackDataSources.filter(isFootballSource) : []
+  const flags = sourceFlags(source, fallbacks)
+  const updated = await prisma.league.update({
+    where: { id: req.params.id },
+    data: {
+      sport: 'FOOTBALL',
+      primaryDataSource: source,
+      fallbackDataSources: JSON.stringify(fallbacks),
+      sourceUrl: typeof b.sourceUrl === 'string' ? b.sourceUrl : before.sourceUrl,
+      playhqOrganisationId: typeof b.playhqOrganisationId === 'string' ? b.playhqOrganisationId : before.playhqOrganisationId,
+      playhqCompetitionId: typeof b.playhqCompetitionId === 'string' ? b.playhqCompetitionId : before.playhqCompetitionId,
+      playhqSeasonId: typeof b.playhqSeasonId === 'string' ? b.playhqSeasonId : before.playhqSeasonId,
+      playhqGradeId: typeof b.playhqGradeId === 'string' ? b.playhqGradeId : before.playhqGradeId,
+      syncStatus: 'READY',
+      dataSourceSyncError: null,
+      syncError: null,
+      lastManualUpdateAt: new Date(),
+      ...flags,
+    },
+  })
+  await audit('SET_FOOTBALL_DATA_SOURCE', 'League', updated.id, { before, after: updated })
+  res.json({ data: updated })
+})
+
+router.post('/football/leagues/:id/sync', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const dryRun = req.body?.dryRun !== false
+  const source = isFootballSource(req.body?.sourceType) ? req.body.sourceType : (league.primaryDataSource ?? 'PLAYHQ_SCRAPER')
+  const now = new Date()
+  if (source === 'PLAYHQ_API' && !league.apiEnabled) return res.status(400).json({ error: 'PLAYHQ_API is not enabled for this league' })
+  if (source === 'PLAYHQ_SCRAPER' && !league.scrapeEnabled) return res.status(400).json({ error: 'PLAYHQ_SCRAPER is not enabled for this league' })
+  await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: now, syncStatus: dryRun ? 'READY' : 'RUNNING', dataSourceSyncError: null, syncError: null } })
+  const payload = { leagueId: league.id, source, sourceUrl: league.sourceUrl, note: 'Sync dispatch placeholder. PlayHQ API credentials are not configured in this system yet.' }
+  const imp = await prisma.footballDataImport.upsert({
+    where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', payloadHash: stableHash(payload) } },
+    create: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', sourceUrl: league.sourceUrl, payloadHash: stableHash(payload), dryRun, status: 'PREVIEWED', recordsFound: 0, confidence: 0.2, payload: JSON.stringify(payload), scrapedAt: now },
+    update: { dryRun, status: 'PREVIEWED', payload: JSON.stringify(payload), scrapedAt: now },
+  })
+  await createFootballReview(league.id, 'FOOTBALL_SYNC_NOT_CONNECTED', 'PlayHQ credentials/scraper execution are not connected for this league yet.', payload, 0.2)
+  await prisma.league.update({ where: { id: league.id }, data: { syncStatus: 'NEEDS_REVIEW', dataSourceSyncError: 'Sync queued for review: external source connector not configured.', syncError: 'Sync queued for review: external source connector not configured.', lastSyncAt: now } })
+  await audit('FOOTBALL_SYNC_DRY_RUN', 'FootballDataImport', imp.id, payload, source)
+  res.status(202).json({ data: { importId: imp.id, dryRun, status: 'NEEDS_REVIEW', note: 'Dry-run recorded and routed to review. No external data was scraped or imported.' } })
+})
+
+router.post('/football/leagues/:id/import', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const source = isFootballSource(req.body?.sourceType) ? req.body.sourceType : 'MANUAL_ENTRY'
+  const dataType = isFootballDataType(req.body?.dataType) ? req.body.dataType : null
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows as FootballRow[] : []
+  const dryRun = !!req.body?.dryRun
+  if (!dataType) return res.status(400).json({ error: `dataType must be one of ${FOOTBALL_DATA_TYPES.join(', ')}` })
+  if (rows.length === 0) return res.status(400).json({ error: 'rows required' })
+
+  const payloadHash = stableHash({ source, dataType, rows })
+  const imp = await prisma.footballDataImport.upsert({
+    where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: source, dataType, payloadHash } },
+    create: { leagueId: league.id, sourceType: source, dataType, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), payloadHash, dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: rows.length, confidence: source === 'MANUAL_ENTRY' ? 0.9 : 0.65, payload: JSON.stringify(rows), scrapedAt: source === 'PLAYHQ_SCRAPER' ? new Date() : null },
+    update: { dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: rows.length, payload: JSON.stringify(rows) },
+  })
+  if (dryRun) return res.json({ data: { importId: imp.id, status: imp.status, recordsFound: rows.length, recordsImported: 0 } })
+
+  let imported = 0
+  if (dataType === 'FIXTURES') {
+    for (const r of rows) {
+      await prisma.footballFixture.upsert({
+        where: { leagueId_season_grade_round_homeName_awayName: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away) } },
+        create: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away), matchDate: r.matchDate ? new Date(String(r.matchDate)) : null, venue: str(r.venue, ''), sourceType: source, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), verified: source === 'MANUAL_ENTRY' },
+        update: { matchDate: r.matchDate ? new Date(String(r.matchDate)) : null, venue: str(r.venue, ''), sourceType: source, verified: source === 'MANUAL_ENTRY' },
+      }); imported++
+    }
+  } else if (dataType === 'RESULTS') {
+    for (const r of rows) {
+      const homeGoals = num(r.homeGoals), homeBehinds = num(r.homeBehinds), awayGoals = num(r.awayGoals), awayBehinds = num(r.awayBehinds)
+      await prisma.footballResult.upsert({
+        where: { leagueId_season_grade_round_homeName_awayName: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away) } },
+        create: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away), homeGoals, homeBehinds, homePoints: footballPoints(homeGoals, homeBehinds, r.homePoints), awayGoals, awayBehinds, awayPoints: footballPoints(awayGoals, awayBehinds, r.awayPoints), matchDate: r.matchDate ? new Date(String(r.matchDate)) : null, venue: str(r.venue, ''), sourceType: source, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), verified: source === 'MANUAL_ENTRY', published: false },
+        update: { homeGoals, homeBehinds, homePoints: footballPoints(homeGoals, homeBehinds, r.homePoints), awayGoals, awayBehinds, awayPoints: footballPoints(awayGoals, awayBehinds, r.awayPoints), sourceType: source, verified: source === 'MANUAL_ENTRY' },
+      }); imported++
+    }
+  } else if (dataType === 'LADDER') {
+    for (const r of rows) {
+      await prisma.footballLadderEntry.upsert({
+        where: { leagueId_season_grade_clubName: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), clubName: str(r.clubName ?? r.club) } },
+        create: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), clubName: str(r.clubName ?? r.club), position: num(r.position, imported + 1), played: num(r.played), wins: num(r.wins), losses: num(r.losses), draws: num(r.draws), pointsFor: num(r.pointsFor), pointsAgainst: num(r.pointsAgainst), percentage: num(r.percentage), premiershipPoints: num(r.premiershipPoints ?? r.points), sourceType: source, verified: source === 'MANUAL_ENTRY', published: false },
+        update: { position: num(r.position, imported + 1), played: num(r.played), wins: num(r.wins), losses: num(r.losses), draws: num(r.draws), pointsFor: num(r.pointsFor), pointsAgainst: num(r.pointsAgainst), percentage: num(r.percentage), premiershipPoints: num(r.premiershipPoints ?? r.points), sourceType: source, verified: source === 'MANUAL_ENTRY' },
+      }); imported++
+    }
+  }
+  await prisma.footballDataImport.update({ where: { id: imp.id }, data: { recordsImported: imported } })
+  await prisma.league.update({ where: { id: league.id }, data: { lastSuccessfulSyncAt: new Date(), syncStatus: 'SUCCESS', dataSourceSyncError: null, syncError: null, dataConfidence: source === 'MANUAL_ENTRY' ? 0.9 : 0.65 } })
+  await audit('FOOTBALL_IMPORT_COMMIT', 'FootballDataImport', imp.id, { dataType, source, imported }, source)
+  res.json({ data: { importId: imp.id, status: 'COMMITTED', recordsFound: rows.length, recordsImported: imported } })
+})
+
+router.post('/football/leagues/:id/generate-ladder', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const season = str(req.body?.season, '2026')
+  const grade = str(req.body?.grade, 'Senior Football')
+  const results = await prisma.footballResult.findMany({ where: { leagueId: league.id, season, grade } })
+  if (results.length === 0) return res.status(400).json({ error: 'No football results available to generate a ladder' })
+  const ladder = generateFootballLadder(results)
+  if (req.body?.dryRun) return res.json({ data: { season, grade, ladder } })
+  for (const r of ladder) {
+    await prisma.footballLadderEntry.upsert({
+      where: { leagueId_season_grade_clubName: { leagueId: league.id, season, grade, clubName: r.clubName } },
+      create: { leagueId: league.id, season, grade, clubName: r.clubName, position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, pointsFor: r.pointsFor, pointsAgainst: r.pointsAgainst, percentage: r.percentage, premiershipPoints: r.premiershipPoints, sourceType: 'MANUAL_ENTRY', verified: true },
+      update: { position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, pointsFor: r.pointsFor, pointsAgainst: r.pointsAgainst, percentage: r.percentage, premiershipPoints: r.premiershipPoints, sourceType: 'MANUAL_ENTRY', verified: true },
+    })
+  }
+  await audit('FOOTBALL_GENERATE_LADDER', 'League', league.id, { season, grade, rows: ladder.length })
+  res.json({ data: { season, grade, rows: ladder.length, ladder } })
+})
+
+router.get('/football/leagues/:id/compare-ladder', async (req, res) => {
+  const season = str(req.query.season, '2026')
+  const grade = str(req.query.grade, 'Senior Football')
+  const [results, stored] = await Promise.all([
+    prisma.footballResult.findMany({ where: { leagueId: req.params.id, season, grade } }),
+    prisma.footballLadderEntry.findMany({ where: { leagueId: req.params.id, season, grade }, orderBy: { position: 'asc' } }),
+  ])
+  const generated = generateFootballLadder(results)
+  const diffs = generated.map(g => {
+    const s = stored.find(x => x.clubName.toLowerCase() === g.clubName.toLowerCase())
+    return { clubName: g.clubName, generatedPosition: g.position, storedPosition: s?.position ?? null, generatedPoints: g.premiershipPoints, storedPoints: s?.premiershipPoints ?? null, differs: !s || s.position !== g.position || s.premiershipPoints !== g.premiershipPoints }
+  })
+  res.json({ data: { season, grade, generatedRows: generated.length, storedRows: stored.length, diffs, conflictCount: diffs.filter(d => d.differs).length } })
+})
+
+router.post('/football/leagues/:id/publish', async (req, res) => {
+  const season = str(req.body?.season, '2026')
+  const grade = str(req.body?.grade, 'Senior Football')
+  const [results, ladder] = await Promise.all([
+    prisma.footballResult.updateMany({ where: { leagueId: req.params.id, season, grade }, data: { published: true } }),
+    prisma.footballLadderEntry.updateMany({ where: { leagueId: req.params.id, season, grade }, data: { published: true } }),
+  ])
+  await prisma.footballDataImport.updateMany({ where: { leagueId: req.params.id, dataType: { in: ['RESULTS', 'LADDER'] }, status: 'COMMITTED' }, data: { status: 'PUBLISHED', publishedAt: new Date() } })
+  const recalc = req.body?.recalculate === true ? await recalculateNational().catch(e => ({ error: e instanceof Error ? e.message : 'recalc failed' })) : null
+  await audit('FOOTBALL_PUBLISH_APPROVED', 'League', req.params.id, { season, grade, results: results.count, ladder: ladder.count, recalc })
+  res.json({ data: { season, grade, publishedResults: results.count, publishedLadderRows: ladder.count, recalc } })
 })
 
 export { router as adminPlatformRouter }

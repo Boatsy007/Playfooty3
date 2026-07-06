@@ -19,10 +19,10 @@ export default function Statement() {
           >
             <p className="font-display text-white leading-[0.9]" style={{ fontSize: 'clamp(2.8rem, 7vw, 7rem)' }}>
               MORE THAN A<br />
-              <span style={{ color: '#ff2c91' }}>CHAMPIONSHIP.</span>
+              <span style={{ color: '#d71920' }}>CHAMPIONSHIP.</span>
             </p>
             <p className="font-display leading-[0.9] mt-3" style={{ fontSize: 'clamp(2.8rem, 7vw, 7rem)', color: 'rgba(255,255,255,0.22)' }}>
-              WHERE COUNTRY<br />FOOTBALL COMES<br />TOGETHER.
+              WHERE LOCAL<br />FOOTY COMES<br />TOGETHER.
             </p>
           </motion.div>
 
@@ -35,7 +35,7 @@ export default function Statement() {
             className="leading-relaxed lg:pb-2"
             style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.4)' }}
           >
-            For four days, Australia's leading Community Football clubs come together on the Gold Coast to compete, celebrate and connect. Players, coaches, officials, families and supporters all become part of the experience.
+            For four days, Australia's leading community football clubs come together on the future host city to compete, celebrate and connect. Players, coaches, futures, families and supporters all become part of the experience.
           </motion.p>
 
         </div>

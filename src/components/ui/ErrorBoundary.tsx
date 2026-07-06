@@ -20,7 +20,7 @@ export class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <div style={{ minHeight: '100vh', background: '#0d0d0d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', color: '#ff2c91', marginBottom: '1rem' }}>
+          <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3rem', color: '#d71920', marginBottom: '1rem' }}>
             Something went wrong
           </p>
           <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', maxWidth: '400px' }}>
@@ -28,7 +28,7 @@ export class ErrorBoundary extends React.Component<
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            style={{ background: '#ff2c91', color: '#fff', border: 'none', borderRadius: '9999px', padding: '0.75rem 2rem', fontWeight: 700, cursor: 'pointer' }}
+            style={{ background: '#d71920', color: '#fff', border: 'none', borderRadius: '9999px', padding: '0.75rem 2rem', fontWeight: 700, cursor: 'pointer' }}
           >
             Try Again
           </button>

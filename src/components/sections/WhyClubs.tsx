@@ -5,19 +5,19 @@ const benefits = [
   {
     num: '01',
     title: 'A National Title To Play For',
-    desc: "For A Grade teams who've won locally, PlayFooty is the next step. Compete against the best country clubs in Australia for a national title.",
+    desc: "For Senior teams who've won locally, PlayFooty is the next step. Compete against the best country clubs in Australia for a national title.",
     icon: Trophy,
   },
   {
     num: '02',
     title: 'A Reason To Bring The Whole Club',
-    desc: 'Winning the premiership is the perfect excuse for a club trip. Give everyone a reason to travel, celebrate and bond on the Gold Coast.',
+    desc: 'Winning the premiership is the perfect excuse for a club trip. Give everyone a reason to travel, celebrate and bond on the future host city.',
     icon: Users,
   },
   {
     num: '03',
-    title: 'A Gold Coast End-Of-Season Trip',
-    desc: 'Four days on the Gold Coast. Beaches, entertainment and experiences for every member of the travelling group.',
+    title: 'A future host city End-Of-Season Trip',
+    desc: 'Four days on the future host city. Beaches, entertainment and experiences for every member of the travelling group.',
     icon: MapPin,
   },
   {

@@ -17,12 +17,12 @@ interface FormData {
 
 const stateOptions = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA']
 
-const inputCls = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-[#ff2c91] focus:ring-2 focus:ring-[#ff2c91]/10 transition-all duration-200"
+const inputCls = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-[#d71920] focus:ring-2 focus:ring-[#d71920]/10 transition-all duration-200"
 const labelCls = "block text-xs font-bold tracking-wide text-[#1a1a1a]/60 mb-1.5 uppercase"
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
-export default function Invitation() {
+export default function Update() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit } = useForm<FormData>()
@@ -35,7 +35,7 @@ export default function Invitation() {
   }
 
   return (
-    <section id="invitation" className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>
+    <section id="update" className="relative overflow-hidden" style={{ background: '#0d0d0d' }}>
       {/* Subtle photo tint at top */}
       <div className="relative h-16 lg:h-24 overflow-hidden">
         <img src="/hero-photo.webp" alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '65% 80%' }} />
@@ -54,20 +54,20 @@ export default function Invitation() {
             className="lg:sticky lg:top-24 pt-2"
           >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full" style={{ background: 'rgba(255,44,145,0.12)', border: '1px solid rgba(255,44,145,0.3)' }}>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#ff2c91' }} />
-              <span className="font-condensed font-bold text-[10px] tracking-[0.22em] uppercase" style={{ color: '#ff2c91' }}>
-                Invitation Only
+            <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full" style={{ background: 'rgba(215,25,32,0.12)', border: '1px solid rgba(215,25,32,0.3)' }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#d71920' }} />
+              <span className="font-condensed font-bold text-[10px] tracking-[0.22em] uppercase" style={{ color: '#d71920' }}>
+                Update Only
               </span>
             </div>
 
             <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 6vw, 5rem)' }}>
-              REQUEST AN<br /><span style={{ color: '#ff2c91' }}>INVITATION</span>
+              REQUEST AN<br /><span style={{ color: '#d71920' }}>INVITATION</span>
             </h2>
             <p className="leading-relaxed mb-3" style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.45)' }}>
-              Invitation requests are now open for eligible A Grade premiership clubs across Australia. Places are limited.
+              Interest updates are not open yet for interested community football clubs across Australia. No places are currently open.
             </p>
-            <p className="mb-8 font-condensed font-bold text-xs tracking-[0.18em] uppercase" style={{ color: 'rgba(255,44,145,0.7)' }}>
+            <p className="mb-8 font-condensed font-bold text-xs tracking-[0.18em] uppercase" style={{ color: 'rgba(215,25,32,0.7)' }}>
               Limited inaugural championship field.
             </p>
 
@@ -82,11 +82,11 @@ export default function Invitation() {
 
             <div className="space-y-3">
               {[
-                { label: 'Date', value: 'October 2027' },
-                { label: 'Location', value: 'Gold Coast, Queensland' },
-                { label: 'Eligibility', value: 'A Grade Premiership Clubs' },
-                { label: 'Website', value: 'playfooty.com.au' },
-                { label: 'Email', value: 'info@playfooty.com.au' },
+                { label: 'Date', value: 'Date TBC' },
+                { label: 'Location', value: 'future host city, Queensland' },
+                { label: 'Eligibility', value: 'Community Clubship Clubs' },
+                { label: 'Website', value: 'cnca.com.au' },
+                { label: 'Email', value: 'info@cnca.com.au' },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <span className="font-condensed font-bold text-xs tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -116,8 +116,8 @@ export default function Invitation() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center text-center py-12"
                 >
-                  <div className="w-16 h-16 rounded-full bg-[#ff2c91]/10 flex items-center justify-center mb-5">
-                    <CheckCircle size={32} style={{ color: '#ff2c91' }} />
+                  <div className="w-16 h-16 rounded-full bg-[#d71920]/10 flex items-center justify-center mb-5">
+                    <CheckCircle size={32} style={{ color: '#d71920' }} />
                   </div>
                   <h3 className="font-display text-[#1a1a1a] text-3xl mb-3">Request Received</h3>
                   <p className="text-[#1a1a1a]/55 text-sm max-w-xs leading-relaxed">
@@ -130,7 +130,7 @@ export default function Invitation() {
                     <h3 className="font-display text-[#1a1a1a] leading-none mb-1" style={{ fontSize: '1.6rem' }}>
                       Club Registration
                     </h3>
-                    <p className="text-xs" style={{ color: 'rgba(17,17,17,0.4)' }}>Complete the form below to request your invitation.</p>
+                    <p className="text-xs" style={{ color: 'rgba(17,17,17,0.4)' }}>Complete the form below to join updates.</p>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">
@@ -170,7 +170,7 @@ export default function Invitation() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Are you an A Grade premier or in finals contention? *</label>
+                    <label className={labelCls}>Are you an Senior premier or in finals contention? *</label>
                     <select {...register('premiership', { required: true })} className={inputCls}>
                       <option value="">Select an option</option>
                       <option value="yes">Yes, we won our premiership</option>
@@ -205,7 +205,7 @@ export default function Invitation() {
                       {loading ? (
                         <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
                       ) : (
-                        'Request Club Invitation'
+                        'Join updates'
                       )}
                     </button>
                     <p className="text-center text-xs text-[#1a1a1a]/35 mt-3">We'll respond within 2 business days</p>

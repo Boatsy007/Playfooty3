@@ -1,5 +1,5 @@
 /**
- * About PlayFooty — mission and how the rankings work. Editorial, static.
+ * About PlayFooty — mission and how the prototype rankings work. Editorial, static.
  */
 import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
@@ -7,13 +7,13 @@ import { Link } from 'react-router-dom'
 import { useSeo } from '../lib/seo'
 
 const TEXT = '#111111'
-const PINK = '#ff2c91'
+const PINK = '#d71920'
 const MUTE = 'rgba(17,17,17,0.55)'
 
 export default function About() {
   useSeo({
-    title: 'About PlayFooty — Australia\'s Home of Community Football',
-    description: 'PlayFooty is Australia\'s home of Community Football: the definitive national rankings, league ladders, club profiles and news for country and regional football.',
+    title: 'About PlayFooty — Australia’s community football platform',
+    description: 'PlayFooty is Australia’s community football platform: a prototype for rankings, league ladders, club profiles, results and local footy stories.',
     path: '/about',
   })
 
@@ -26,28 +26,22 @@ export default function About() {
             About
           </p>
           <h1 className="font-display leading-none" style={{ fontSize: 'clamp(2.6rem, 6vw, 5rem)', color: TEXT, marginBottom: 24 }}>
-            AUSTRALIA'S HOME OF<br /><span style={{ color: PINK }}>Community Football</span>
+            AUSTRALIA’S COMMUNITY<br /><span style={{ color: PINK }}>FOOTBALL PLATFORM</span>
           </h1>
 
           <div style={{ color: MUTE, fontSize: 16.5, lineHeight: 1.75, display: 'grid', gap: 18 }}>
             <p>
-              PlayFooty exists to answer one question better than anyone else: <strong style={{ color: TEXT }}>who are the
-              best Community Football clubs and leagues in Australia?</strong>
+              PlayFooty exists to help answer one question clearly: <strong style={{ color: TEXT }}>what is happening across
+              community football clubs and leagues in Australia?</strong>
             </p>
             <p>
-              Every week of the season we collect A Grade results and ladders from country and regional leagues across
-              the nation — football leagues, regional associations, every state and territory — and rank every
-              club on one national ladder.
+              The prototype is built to integrate with official competition data where available, while also supporting manually managed league, ladder and result data when API access is not yet available.
             </p>
             <p>
-              Rankings are never based on ladder position alone. Each club's power rating weighs its win record,
-              percentage, attacking and defensive numbers, recent form, consistency and the strength of the league it
-              plays in — and each league's strength is itself calculated from how its clubs rate nationally. Every rating
-              comes with its reasoning, so you can always see <em>why</em> a club sits where it does.
+              PlayFooty is designed for clubs, leagues, supporters and partners: rankings, results, ladders, fixtures, statistics and editorial coverage in one public sports-media experience.
             </p>
             <p>
-              Rankings. Ladders. Clubs. News. Updated every week — so every Monday morning, Community Football knows where
-              it stands.
+              Rankings. Results. Ladders. Clubs. News. Built for local footy and ready for official competition feeds when they are available.
             </p>
           </div>
 

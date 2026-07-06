@@ -5,7 +5,7 @@ import Button from '../ui/Button'
 const prizeElements = [
   { icon: Trophy, label: 'Club Reward', desc: 'A prize package designed to deliver lasting value for the winning club and its community.' },
   { icon: Users, label: 'Player Recognition', desc: 'Recognition for the players who competed and won at the national championship level.' },
-  { icon: Star, label: 'Champion Status', desc: 'The PlayFooty title — the highest honour in A Grade Community Football — plus the memories that go with it.' },
+  { icon: Star, label: 'Champion Status', desc: 'The PlayFooty title — the highest honour in Senior community football — plus the memories that go with it.' },
   { icon: Shield, label: 'Community Value', desc: 'A prize built to benefit the club at home — creating a legacy from the championship win.' },
 ]
 
@@ -82,7 +82,7 @@ export default function Grant() {
             <div className="col-span-2 bg-pink-gradient rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">PlayFooty 2027</p>
+                  <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">PlayFooty future</p>
                   <p className="text-xl font-extrabold text-white mb-1">Major Prize Package</p>
                   <p className="text-white/65 text-sm">Details to be announced. Register interest to stay informed.</p>
                 </div>

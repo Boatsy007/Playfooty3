@@ -28,17 +28,17 @@ body {
 }
 
 .btn-pink {
-  background: #ff2c91;
+  background: #d71920;
   color: #ffffff;
   font-weight: 700;
   border-radius: 9999px;
-  box-shadow: 0 8px 32px rgba(255,44,145,0.3);
+  box-shadow: 0 8px 32px rgba(215,25,32,0.3);
   transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
   display: inline-block;
 }
 .btn-pink:hover {
-  background: #cc1f6e;
-  box-shadow: 0 12px 40px rgba(255,44,145,0.4);
+  background: #a50f17;
+  box-shadow: 0 12px 40px rgba(215,25,32,0.4);
   transform: translateY(-1px);
 }
 
@@ -78,7 +78,7 @@ body {
 /* ── Rankings product ─────────────────────────────────────────────── */
 .rank-row { transition: background 0.15s ease; }
 .rank-row:hover { background: rgba(255,255,255,0.05) !important; }
-.rank-row:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+.rank-row:focus-visible { outline: 2px solid #d71920; outline-offset: -2px; }
 @media (max-width: 620px) {
   .hide-sm { display: none !important; }
 }
@@ -90,8 +90,8 @@ body {
 .show-sm { display: none; }
 
 .rank-row-lt { transition: background 0.15s ease; }
-.rank-row-lt:hover { background: rgba(255,44,145,0.05) !important; }
-.rank-row-lt:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+.rank-row-lt:hover { background: rgba(215,25,32,0.05) !important; }
+.rank-row-lt:focus-visible { outline: 2px solid #d71920; outline-offset: -2px; }
 
 /* Rankings leaderboard grid — responsive so hidden desktop columns don't
    reserve width and collapse the team-name column on mobile. */
@@ -119,12 +119,12 @@ body {
 }
 a.gn-card, button.gn-card { cursor: pointer; }
 .gn-card-hover:hover { transform: translateY(-3px); box-shadow: var(--gn-shadow-lift); border-color: rgba(17,17,17,0.14); }
-.gn-card-hover:focus-visible { outline: 2px solid #ff2c91; outline-offset: 2px; }
+.gn-card-hover:focus-visible { outline: 2px solid #d71920; outline-offset: 2px; }
 
 /* Interactive rows (leaderboards, lists) */
 .gn-row { transition: background 0.16s ease, transform 0.16s ease; }
 .gn-row:hover { background: rgba(17,17,17,0.025); }
-.gn-row:focus-visible { outline: 2px solid #ff2c91; outline-offset: -2px; }
+.gn-row:focus-visible { outline: 2px solid #d71920; outline-offset: -2px; }
 
 /* Skeleton shimmer */
 @keyframes gn-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -156,9 +156,9 @@ a.gn-card, button.gn-card { cursor: pointer; }
   border: 1.5px solid rgba(17,17,17,0.16); color: rgba(17,17,17,0.72); background: transparent;
   transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
 }
-.btn-ghost:hover { border-color: #ff2c91; color: #ff2c91; transform: translateY(-1px); }
-.btn-ghost:focus-visible, .btn-pink:focus-visible { outline: 2px solid #ff2c91; outline-offset: 3px; }
+.btn-ghost:hover { border-color: #d71920; color: #d71920; transform: translateY(-1px); }
+.btn-ghost:focus-visible, .btn-pink:focus-visible { outline: 2px solid #d71920; outline-offset: 3px; }
 
 /* Ghost button on the dark masthead */
 .btn-ghost.on-dark { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
-.btn-ghost.on-dark:hover { border-color: #ff2c91; color: #ffffff; }
+.btn-ghost.on-dark:hover { border-color: #d71920; color: #ffffff; }

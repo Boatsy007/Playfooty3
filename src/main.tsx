@@ -12,6 +12,7 @@ import LeagueProfile from './pages/LeagueProfile.tsx'
 import Leagues from './pages/Leagues.tsx'
 import News from './pages/News.tsx'
 import NewsArticle from './pages/NewsArticle.tsx'
+import Championship from './pages/Championship.tsx'
 import About from './pages/About.tsx'
 import Admin from './pages/Admin.tsx'
 
@@ -37,9 +38,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/directory" element={<Directory />} />
         <Route path="/about" element={<About />} />
         <Route path="/admin" element={<Admin />} />
-        {/* V1 championship routes retired (postponed, not deleted) — the pages
-            remain in the repo so the championship can plug back in later. */}
-        <Route path="/championship" element={<Navigate to="/rankings" replace />} />
+        <Route path="/championship" element={<Championship />} />
         <Route path="/club-packages" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

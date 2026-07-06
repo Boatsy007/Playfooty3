@@ -29,7 +29,7 @@ export default function TeamProfile() {
 
   useSeo({
     title: data ? seoTitle(data) : 'Club | PlayFooty',
-    description: data ? seoDesc(data) : 'Community Football club profile, national ranking and current form.',
+    description: data ? seoDesc(data) : 'Country football club profile, national ranking and current form.',
     path: `/team/${clubId}`,
     jsonLd: data ? buildJsonLd(data, clubId) : undefined,
   })
@@ -90,7 +90,7 @@ function seoTitle(d: ClubProfile): string {
 }
 function seoDesc(d: ClubProfile): string {
   const where = [d.town, d.leagueName?.replace(/\s*-\s*a grade.*/i, ''), d.stateName ?? d.state].filter(Boolean).join(', ')
-  const bits = [`${d.clubName} Community Football on PlayFooty${where ? ` (${where})` : ''}.`]
+  const bits = [`${d.clubName} community football on PlayFooty${where ? ` (${where})` : ''}.`]
   if (d.rank != null) bits.push(`Ranked #${d.rank} nationally with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}.`)
   if (d.record.played > 0) bits.push(`${d.record.wins}-${d.record.losses} this season${d.ladderPosition != null ? `, ${ordinal(d.ladderPosition)} on the ladder` : ''}.`)
   bits.push('Live ladder, form and national ranking, updated every week.')
@@ -121,7 +121,7 @@ function buildJsonLd(d: ClubProfile, clubId: string) {
   const faqs: { q: string; a: string }[] = []
   if (d.rank != null) faqs.push({
     q: `What is ${d.clubName}'s national football ranking?`,
-    a: `${d.clubName} is ranked #${d.rank} in Australia's Community Football A Grade rankings on PlayFooty, with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}${d.leagueName ? ` playing in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}` : ''}.`,
+    a: `${d.clubName} is ranked #${d.rank} in Australia's community football Senior rankings on PlayFooty, with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}${d.leagueName ? ` playing in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}` : ''}.`,
   })
   if (d.record.played > 0) faqs.push({
     q: `How is ${d.clubName} going this season?`,
@@ -129,7 +129,7 @@ function buildJsonLd(d: ClubProfile, clubId: string) {
   })
   if (d.leagueName && d.leagueStrengthScore != null) faqs.push({
     q: `What league does ${d.clubName} play in?`,
-    a: `${d.clubName} plays A Grade football in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}, a ${strengthLabel(strengthStars(d.leagueStrengthScore)).toLowerCase()} ${strengthStars(d.leagueStrengthScore)}-star Community Football competition.`,
+    a: `${d.clubName} plays Senior football in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}, a ${strengthLabel(strengthStars(d.leagueStrengthScore)).toLowerCase()} ${strengthStars(d.leagueStrengthScore)}-star community football competition.`,
   })
 
   return [

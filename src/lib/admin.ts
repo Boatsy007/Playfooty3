@@ -31,6 +31,17 @@ export interface AdminLeague {
   archivedAt?: string | null; approvalStatus?: string; leagueType?: string | null; reviewReason?: string | null
   strengthReasoning?: string | null; strengthCalculatedAt?: string | null
 }
+export interface FootballLeague extends AdminLeague {
+  sport: string; primaryDataSource: string | null; fallbackDataSources: string | null; sourceUrl: string | null
+  currentSeason: string | null
+  playhqOrganisationId: string | null; playhqCompetitionId: string | null; playhqSeasonId: string | null; playhqGradeId: string | null
+  scrapeEnabled: boolean; apiEnabled: boolean; manualEntryEnabled: boolean
+  lastSyncAt: string | null; lastSuccessfulSyncAt: string | null; syncStatus: string; dataSourceSyncError: string | null
+  _count?: AdminLeague['_count'] & { footballFixtures?: number; footballResults?: number; footballLadderEntries?: number; footballImports?: number }
+}
+export interface FootballImportResult {
+  importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string
+}
 export interface AdminClub {
   id: string; name: string; shortName: string | null; region: string | null
   logoUrl: string | null; websiteUrl: string | null; primaryColour: string | null
@@ -177,6 +188,15 @@ export const admin = {
   // CSV import (Phase 4)
   csvPreview:  (entity: CsvEntity, csv: string) => req<{ data: CsvPreview }>('POST', '/admin/platform/csv/preview', { entity, csv }).then(r => r.data),
   csvCommit:   (entity: CsvEntity, rows: CsvPreviewRow[]) => req<{ data: CsvCommitResult }>('POST', '/admin/platform/csv/commit', { entity, rows }).then(r => r.data),
+  // PlayFooty football data-source control centre
+  listFootballLeagues: () => req<{ data: FootballLeague[] }>('GET', '/admin/platform/football/leagues').then(r => r.data),
+  createFootballLeague: (b: Record<string, unknown>) => req<{ data: FootballLeague }>('POST', '/admin/platform/football/leagues', b).then(r => r.data),
+  setFootballSource: (id: string, b: Record<string, unknown>) => req<{ data: FootballLeague }>('PATCH', `/admin/platform/football/leagues/${id}/source`, b).then(r => r.data),
+  syncFootballLeague: (id: string, b: { sourceType?: string; dryRun?: boolean }) => req<{ data: FootballImportResult }>('POST', `/admin/platform/football/leagues/${id}/sync`, b).then(r => r.data),
+  importFootballRows: (id: string, b: { sourceType: string; dataType: string; rows: unknown[]; dryRun?: boolean; sourceUrl?: string }) => req<{ data: FootballImportResult }>('POST', `/admin/platform/football/leagues/${id}/import`, b).then(r => r.data),
+  generateFootballLadder: (id: string, b: { season?: string; grade?: string; dryRun?: boolean }) => req<{ data: { season: string; grade: string; rows?: number; ladder?: unknown[] } }>('POST', `/admin/platform/football/leagues/${id}/generate-ladder`, b).then(r => r.data),
+  compareFootballLadder: (id: string, season = '2026', grade = 'Senior Football') => req<{ data: { generatedRows: number; storedRows: number; conflictCount: number; diffs: unknown[] } }>('GET', `/admin/platform/football/leagues/${id}/compare-ladder?season=${encodeURIComponent(season)}&grade=${encodeURIComponent(grade)}`).then(r => r.data),
+  publishFootballLeague: (id: string, b: { season?: string; grade?: string; recalculate?: boolean }) => req<{ data: { publishedResults: number; publishedLadderRows: number; recalc: unknown } }>('POST', `/admin/platform/football/leagues/${id}/publish`, b).then(r => r.data),
   // Ranking explainability (Phase 6) — public endpoint, but handy in admin too
   explainClub: (clubId: string) => req<{ data: ClubExplanation }>('GET', `/api/rankings/explain/${clubId}`).then(r => r.data),
 }

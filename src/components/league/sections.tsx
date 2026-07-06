@@ -578,6 +578,7 @@ export function LeagueSidebar({ league, facts }: { league: LeagueDetail; facts: 
       )}
       {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest league news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
       <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
+      <div className="gn-card" aria-disabled="true" style={{ padding: 18, background: PINK, color: '#fff' }}><SideLabel color="rgba(255,255,255,0.72)">Claim league</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Claiming coming soon</strong></div>
       <style>{`@media(max-width:980px){.league-sidebar{position:static!important;margin-top:18px}}`}</style>
     </aside>
   )

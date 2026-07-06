@@ -14,15 +14,15 @@ const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
 // ─── Why Book Through PlayFooty ──────────────────────────────────────────────────
 const benefits = [
-  { icon: FileText,     title: 'One Organiser',              desc: 'Your club deals with one contact for the entire trip — accommodation, transport, activities and more.',  accent: '#ff2c91' },
-  { icon: FileText,     title: 'One Invoice',                desc: 'One clean invoice for the entire club package. No chasing multiple suppliers across the Gold Coast.',    accent: '#f4c14d' },
-  { icon: Building,     title: 'Official Partners',          desc: 'Every accommodation partner is vetted, approved and exclusive to PlayFooty clubs. No surprises.',            accent: '#ff2c91' },
+  { icon: FileText,     title: 'One Organiser',              desc: 'Your club deals with one contact for the entire trip — accommodation, transport, activities and more.',  accent: '#d71920' },
+  { icon: FileText,     title: 'One Invoice',                desc: 'One clean invoice for the entire club package. No chasing multiple suppliers across the future host city.',    accent: '#f4c14d' },
+  { icon: Building,     title: 'Future Partners',          desc: 'Real accommodation partners can be listed once confirmed. No fake partners are shown in the prototype.',            accent: '#d71920' },
   { icon: Star,         title: 'Exclusive Club Rates',       desc: 'Group rates unavailable to the public. Your club saves money and travels better.',                       accent: '#4dd9f4' },
-  { icon: Plane,        title: 'Airport Transfers',          desc: 'Seamless arrival and departure transfers from Gold Coast Airport for your entire group.',                 accent: '#f4c14d' },
-  { icon: Bus,          title: 'Team Transport',             desc: 'Dedicated team transport between accommodation and the championship venue throughout the weekend.',        accent: '#ff2c91' },
+  { icon: Plane,        title: 'Airport Transfers',          desc: 'Seamless arrival and departure transfers from future host city Airport for your entire group.',                 accent: '#f4c14d' },
+  { icon: Bus,          title: 'Team Transport',             desc: 'Dedicated team transport between accommodation and the championship venue throughout the weekend.',        accent: '#d71920' },
   { icon: Ticket,       title: 'Theme Park Discounts',       desc: 'Exclusive group pricing at Movie World, Dreamworld, Wet\'n\'Wild and Sea World for the whole club.',     accent: '#4dd9f4' },
   { icon: Trophy,       title: 'Awards Night Tickets',       desc: 'Your club package includes tickets to the PlayFooty Awards Night — the centrepiece of the weekend.',          accent: '#f4c14d' },
-  { icon: Clock,        title: 'Priority Booking',           desc: 'Club packages are booked first. Earlier confirmation means better rates and better availability.',        accent: '#ff2c91' },
+  { icon: Clock,        title: 'Priority Booking',           desc: 'Club packages are booked first. Earlier confirmation means better rates and better availability.',        accent: '#d71920' },
   { icon: Heart,        title: 'Less Work for Volunteers',   desc: 'Stop the committee from running a travel agency. We handle it so they can enjoy the weekend.',           accent: '#f4c14d' },
 ]
 
@@ -59,7 +59,7 @@ const builderSteps = [
   {
     label: 'Championship Extras',
     key: 'extras',
-    options: ['Opening Function', 'Awards Night', 'Official Merchandise', 'VIP Seating'],
+    options: ['Opening Function', 'Awards Night', 'Future Merchandise', 'VIP Seating'],
     multi: true,
   },
   {
@@ -78,7 +78,7 @@ const hotels = [
     venueKm: '2.4',
     beachKm: '0.1',
     features: ['Pool', 'Breakfast', 'Parking', 'Club Friendly'],
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
   {
     name: 'RACV Royal Pines Resort',
@@ -105,10 +105,10 @@ const hotels = [
     venueKm: '2.8',
     beachKm: '0.4',
     features: ['Full Kitchen', 'Laundry', 'BBQ', 'Balconies'],
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
   {
-    name: 'Gold Coast Holiday Park',
+    name: 'future host city Holiday Park',
     type: 'Holiday Park',
     stars: 3,
     venueKm: '4.2',
@@ -129,17 +129,17 @@ const hotels = [
 
 // ─── Experiences ─────────────────────────────────────────────────────────────
 const experiences = [
-  { title: 'Movie World',     cat: 'Theme Park',    icon: Star,       accent: '#f4c14d', desc: 'Hollywood blockbuster rides, shows and characters. The Gold Coast\'s most iconic theme park — a full day for all ages.' },
-  { title: 'Dreamworld',      cat: 'Theme Park',    icon: Zap,        accent: '#ff2c91', desc: 'Australia\'s biggest theme park. Thrill rides, Tiger Island and BigBaby Tom. Massive fun for the whole club.' },
-  { title: 'Wet\'n\'Wild',    cat: 'Water Park',    icon: Waves,      accent: '#4dd9f4', desc: 'Australia\'s largest waterpark. Slides, wave pools and lazy rivers — perfect for a warm October day.' },
+  { title: 'Movie World',     cat: 'Theme Park',    icon: Star,       accent: '#f4c14d', desc: 'Hollywood blockbuster rides, shows and characters. The future host city\'s most iconic theme park — a full day for all ages.' },
+  { title: 'Dreamworld',      cat: 'Theme Park',    icon: Zap,        accent: '#d71920', desc: 'Australia\'s biggest theme park. Thrill rides, Tiger Island and BigBaby Tom. Massive fun for the whole club.' },
+  { title: 'Wet\'n\'Wild',    cat: 'Water Park',    icon: Waves,      accent: '#4dd9f4', desc: 'Australia\'s largest waterpark. Slides, wave pools and lazy rivers — a future add-on if real travel packages are confirmed.' },
   { title: 'TopGolf',         cat: 'Entertainment', icon: Trophy,     accent: '#f4c14d', desc: 'Multi-level driving range with food, drinks and serious fun. The go-to for club nights out — golfer or not.' },
-  { title: 'Surf Lessons',    cat: 'Beach',         icon: Waves,      accent: '#4dd9f4', desc: 'Learn to ride the Gold Coast\'s famous breaks with qualified instructors. A memorable experience for any club.' },
-  { title: 'Whale Watching',  cat: 'Marine',        icon: Camera,     accent: '#ff2c91', desc: 'October is peak whale season. Witness humpbacks on a guided ocean cruise — unforgettable for families.' },
-  { title: 'SkyPoint',        cat: 'Attraction',    icon: MapPin,     accent: '#f4c14d', desc: 'Climb to the top of the Q1 tower — 270° views of the Gold Coast, hinterland and Pacific Ocean from 230m.' },
+  { title: 'Surf Lessons',    cat: 'Beach',         icon: Waves,      accent: '#4dd9f4', desc: 'Learn to ride the future host city\'s famous breaks with qualified instructors. A memorable experience for any club.' },
+  { title: 'Whale Watching',  cat: 'Marine',        icon: Camera,     accent: '#d71920', desc: 'Marine experiences can be listed if real travel packages are confirmed.' },
+  { title: 'SkyPoint',        cat: 'Attraction',    icon: MapPin,     accent: '#f4c14d', desc: 'Climb to the top of the Q1 tower — 270° views of the future host city, hinterland and Pacific Ocean from 230m.' },
   { title: 'Harbour Cruises', cat: 'Waterway',      icon: Waves,      accent: '#4dd9f4', desc: 'Explore the stunning Broadwater by boat. Sunset cruises, island transfers and private charter options.' },
-  { title: 'Pacific Fair',    cat: 'Shopping',      icon: ShoppingBag,accent: '#ff2c91', desc: 'Australia\'s biggest fashion destination. 400+ stores, restaurants and entertainment — a full day on its own.' },
+  { title: 'Pacific Fair',    cat: 'Shopping',      icon: ShoppingBag,accent: '#d71920', desc: 'Australia\'s biggest fashion destination. 400+ stores, restaurants and entertainment — a full day on its own.' },
   { title: 'Mini Golf',       cat: 'Entertainment', icon: Trophy,     accent: '#f4c14d', desc: 'Putt Putt Golf at Mermaid Beach — a PlayFooty classic for clubs wanting a fun, competitive afternoon together.' },
-  { title: 'Escape Rooms',    cat: 'Entertainment', icon: Zap,        accent: '#ff2c91', desc: 'Team bonding at its finest. Work together to solve puzzles and beat the clock — perfect for club groups.' },
+  { title: 'Escape Rooms',    cat: 'Entertainment', icon: Zap,        accent: '#d71920', desc: 'Team bonding at its finest. Work together to solve puzzles and beat the clock — perfect for club groups.' },
   { title: 'Karting',         cat: 'Motorsport',    icon: Zap,        accent: '#4dd9f4', desc: 'Race your teammates at Slideways Go Karting — great fun and fierce competition guaranteed.' },
 ]
 
@@ -147,18 +147,18 @@ const experiences = [
 const dining = [
   { title: 'Steakhouse',        sub: 'Argentine Grill & Australian Beef', desc: 'Premium cuts, open flames and a dining room that understands a hungry club. Perfect for the post-match dinner.', accent: '#f4c14d' },
   { title: 'Beachfront',        sub: 'Oceanside Breakfast & Brunch',      desc: 'Start the day with the Pacific at your feet. Fresh juices, big breakfasts and coffee worth the walk.', accent: '#4dd9f4' },
-  { title: 'Italian',           sub: 'Pasta, Pizza & Wine',                desc: 'Shared plates, great wine and the kind of atmosphere that turns dinner into a three-hour celebration.', accent: '#ff2c91' },
+  { title: 'Italian',           sub: 'Pasta, Pizza & Wine',                desc: 'Shared plates, great wine and the kind of atmosphere that turns dinner into a three-hour celebration.', accent: '#d71920' },
   { title: 'Buffet',            sub: 'Club-Friendly Group Dining',         desc: 'Feed the whole club without the hassle. Premium buffet options for large groups with dietary requirements covered.', accent: '#f4c14d' },
-  { title: 'Awards Dinner',     sub: 'Private Function Room',              desc: 'A dedicated private dining space for your club\'s official PlayFooty celebration. Setup, AV and menu all included.', accent: '#ff2c91' },
-  { title: 'Sunset Dining',     sub: 'Rooftop Bar & Restaurant',           desc: 'Watch the Gold Coast sun disappear into the hinterland over drinks and a premium shared menu.', accent: '#4dd9f4' },
+  { title: 'Awards Dinner',     sub: 'Private Function Room',              desc: 'A dedicated private dining space for your club\'s PlayFooty celebration. Setup, AV and menu all included.', accent: '#d71920' },
+  { title: 'Sunset Dining',     sub: 'Rooftop Bar & Restaurant',           desc: 'Watch the future host city sun disappear into the hinterland over drinks and a premium shared menu.', accent: '#4dd9f4' },
 ]
 
 // ─── Transport ───────────────────────────────────────────────────────────────
 const transport = [
-  { icon: Plane,  title: 'Airport Transfers',  desc: 'Private coaches and minibuses from Gold Coast Airport directly to your accommodation. No confusion, no delays.', accent: '#ff2c91' },
+  { icon: Plane,  title: 'Airport Transfers',  desc: 'Private coaches and minibuses from future host city Airport directly to your accommodation. No confusion, no delays.', accent: '#d71920' },
   { icon: Bus,    title: 'Private Coaches',     desc: 'Dedicated coaches for large club groups. Fully managed transfers between accommodation, the venue and activities.', accent: '#f4c14d' },
   { icon: Users,  title: 'Mini Buses',          desc: 'Flexible mini-bus options for smaller group movement. Split the club into activity groups with ease.', accent: '#4dd9f4' },
-  { icon: MapPin, title: 'Club Shuttle',        desc: 'Regular shuttle service running between your hotel and the championship precinct throughout the event.', accent: '#ff2c91' },
+  { icon: MapPin, title: 'Club Shuttle',        desc: 'Regular shuttle service running between your hotel and the championship precinct throughout the event.', accent: '#d71920' },
 ]
 
 // ─── Itinerary ───────────────────────────────────────────────────────────────
@@ -167,12 +167,12 @@ const itinerary = [
     day: 'Friday',
     date: '7 Oct',
     label: 'Arrival Day',
-    accent: '#ff2c91',
+    accent: '#d71920',
     events: [
-      { time: 'Morning',   label: 'Flights Arrive', desc: 'Club lands at Gold Coast Airport — transfers waiting.' },
+      { time: 'Morning',   label: 'Flights Arrive', desc: 'Club lands at future host city Airport — transfers waiting.' },
       { time: 'Midday',    label: 'Check In',       desc: 'Settle into your accommodation and get your bearings.' },
-      { time: 'Afternoon', label: 'Beach Walk',     desc: 'First swim, first coffee, first Gold Coast moment.' },
-      { time: 'Evening',   label: 'Welcome Function', desc: 'Official PlayFooty opening event. Meet the clubs, feel the energy.' },
+      { time: 'Afternoon', label: 'Beach Walk',     desc: 'First swim, first coffee, first future host city moment.' },
+      { time: 'Evening',   label: 'Welcome Function', desc: 'PlayFooty opening event. Meet the clubs, feel the energy.' },
     ],
   },
   {
@@ -203,7 +203,7 @@ const itinerary = [
     day: 'Monday',
     date: '10 Oct',
     label: 'Leisure Day',
-    accent: '#ff2c91',
+    accent: '#d71920',
     events: [
       { time: 'Morning',   label: 'Theme Parks',  desc: 'Movie World, Dreamworld or a beach day. Your choice.' },
       { time: 'Midday',    label: 'Shopping',     desc: 'Pacific Fair, boutiques and the Surfers Paradise strip.' },
@@ -221,7 +221,7 @@ const packages = [
     tagColor: '#f4c14d',
     accent: '#f4c14d',
     items: [
-      'Official PlayFooty Accommodation',
+      'PlayFooty Accommodation',
       'Airport Transfers (Return)',
       'Championship Entry',
       'Welcome Pack',
@@ -230,19 +230,19 @@ const packages = [
   {
     name: 'Championship Experience',
     tag: 'Most Popular',
-    tagColor: '#ff2c91',
-    accent: '#ff2c91',
+    tagColor: '#d71920',
+    accent: '#d71920',
     featured: true,
     items: [
-      'Official PlayFooty Accommodation',
+      'PlayFooty Accommodation',
       'Airport & Venue Transfers',
       'Awards Night Tickets',
       'Welcome Function Entry',
-      'Official Merchandise',
+      'Future Merchandise',
     ],
   },
   {
-    name: 'Gold Coast Escape',
+    name: 'future host city Escape',
     tag: 'Families Welcome',
     tagColor: '#4dd9f4',
     accent: '#4dd9f4',
@@ -272,22 +272,22 @@ const packages = [
 
 // ─── Package FAQs ────────────────────────────────────────────────────────────
 const packageFaqs = [
-  { q: 'Can families attend PlayFooty?',                    a: 'Absolutely. PlayFooty is designed as a whole-of-club event. Families, partners and children are welcome as spectators and participants in the wider Gold Coast experience across the entire weekend.' },
-  { q: 'Can junior players come along?',               a: 'Yes. Junior players attending as spectators and supporters are part of the PlayFooty community. The Gold Coast is an incredible environment for young footballers to experience elite country competition and the wider event atmosphere.' },
+  { q: 'Can families attend PlayFooty?',                    a: 'Absolutely. PlayFooty is designed as a whole-of-club event. Families, partners and children are welcome as spectators and participants in the wider future host city experience across the entire weekend.' },
+  { q: 'Can junior players come along?',               a: 'Yes. Junior players attending as spectators and supporters are part of the PlayFooty community. The future host city is an incredible environment for young footballers to experience elite country competition and the wider event atmosphere.' },
   { q: 'Can we stay longer than four days?',           a: 'Yes. Many clubs extend their stay before or after the championship. Our team can arrange accommodation and activity packages for early arrivals and extended stays — just let us know your preferred dates.' },
-  { q: 'Can we choose our own accommodation?',         a: 'Clubs can select from our official accommodation partner options across a range of styles and budgets — from budget-friendly holiday parks to luxury beachfront resorts. We work with your club to match the right fit.' },
+  { q: 'Can we choose our own accommodation?',         a: 'Clubs can select from our future accommodation partner options across a range of styles and budgets — from budget-friendly holiday parks to luxury beachfront resorts. We work with your club to match the right fit.' },
   { q: 'Can we organise our own flights?',             a: 'Absolutely. Many clubs prefer to book flights independently or through their preferred airline or travel agent. Our package simply picks you up at the airport and manages everything from that point forward.' },
   { q: 'Can club supporters book through PlayFooty?',       a: 'Yes. All supporters, volunteers and community members are welcome to book through PlayFooty club packages regardless of whether their club is competing. Everyone who wants to experience the PlayFooty weekend can join the group package.' },
-  { q: 'Can we add theme park visits to the package?', a: 'Yes. Theme park experiences can be added to any package level. We have exclusive group pricing at major Gold Coast parks including Movie World, Dreamworld and Wet\'n\'Wild. Simply include this when building your enquiry.' },
-  { q: 'Can we arrive early or extend the trip?',      a: 'Yes. Whether you want to arrive a day or two early to settle in and explore or stay on for a full Gold Coast holiday after the championship, our team can build an itinerary around your preferred schedule.' },
+  { q: 'Can we add theme park visits to the package?', a: 'Yes. Theme park experiences can be added to any package level. We have exclusive group pricing at major future host city parks including Movie World, Dreamworld and Wet\'n\'Wild. Simply include this when building your enquiry.' },
+  { q: 'Can we arrive early or extend the trip?',      a: 'Yes. Whether you want to arrive a day or two early to settle in and explore or stay on for a full future host city holiday after the championship, our team can build an itinerary around your preferred schedule.' },
 ]
 
 // ─── Why Clubs Love Travelling Together copy ─────────────────────────────────
 const storyPoints = [
-  { heading: 'Celebrate the season.', body: 'Every training session, every match, every final — your A Grade season builds to PlayFooty. Arriving on the Gold Coast together is the moment it all pays off.' },
+  { heading: 'Celebrate the season.', body: 'Every training session, every match, every final — your Senior season builds to PlayFooty. Arriving on the future host city together is the moment it all pays off.' },
   { heading: 'Build club culture.', body: 'The memories made off the court are as powerful as the ones on it. Shared experiences become the stories that define your club for years.' },
   { heading: 'Reward your volunteers.', body: 'The people who set up courts, run canteens and write match reports deserve to be part of something extraordinary. PlayFooty is their reward too.' },
-  { heading: 'Family holidays attached.', body: 'Partners, parents and kids don\'t just come to watch — they come for the Gold Coast. Let the families turn PlayFooty into a full October holiday.' },
+  { heading: 'Family holidays attached.', body: 'Partners, parents and kids don\'t just come to watch — they come for the future host city. Let the families turn PlayFooty into a future football trip.' },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -344,7 +344,7 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.6) 55%, transparent 85%)' }} />
 
       {/* Pink glow */}
-      <div className="absolute bottom-0 left-0 w-[600px] h-[400px] pointer-events-none" style={{ background: 'radial-gradient(ellipse at 0% 100%, rgba(255,44,145,0.12) 0%, transparent 70%)' }} />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[400px] pointer-events-none" style={{ background: 'radial-gradient(ellipse at 0% 100%, rgba(215,25,32,0.12) 0%, transparent 70%)' }} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col justify-end flex-1 px-6 sm:px-10 lg:px-16 pb-16 lg:pb-24 max-w-6xl mx-auto w-full">
@@ -356,9 +356,9 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
           transition={{ duration: 0.5, delay: 0.1, ease }}
           className="flex items-center gap-3 mb-8"
         >
-          <div className="w-6 h-[1.5px]" style={{ background: '#ff2c91' }} />
+          <div className="w-6 h-[1.5px]" style={{ background: '#d71920' }} />
           <span className="font-condensed font-bold tracking-[0.28em] uppercase text-[10px]" style={{ color: '#f4c14d' }}>
-            Official Club Packages · Gold Coast · October 2027
+            Future Club Packages · future host city · Date TBC
           </span>
         </motion.div>
 
@@ -380,7 +380,7 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
             animate={{ y: '0%' }}
             transition={{ duration: 0.85, delay: 0.3, ease }}
             className="block font-display leading-[0.88]"
-            style={{ fontSize: 'clamp(3.2rem, 10vw, 10rem)', color: '#ff2c91' }}
+            style={{ fontSize: 'clamp(3.2rem, 10vw, 10rem)', color: '#d71920' }}
           >
             PACKAGES.
           </motion.span>
@@ -405,7 +405,7 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
           className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-10"
         >
           {words.map((w, i) => (
-            <span key={w} className="font-condensed font-bold text-[10px] tracking-[0.25em] uppercase" style={{ color: i % 2 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,44,145,0.5)' }}>
+            <span key={w} className="font-condensed font-bold text-[10px] tracking-[0.25em] uppercase" style={{ color: i % 2 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(215,25,32,0.5)' }}>
               {w}
             </span>
           ))}
@@ -422,17 +422,17 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
             onClick={onRequest}
             className="font-bold rounded-full text-white text-sm tracking-wide transition-all"
             style={{
-              background: '#ff2c91',
+              background: '#d71920',
               padding: '0.85rem 2.2rem',
-              boxShadow: '0 4px 32px rgba(255,44,145,0.35)',
+              boxShadow: '0 4px 32px rgba(215,25,32,0.35)',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#cc1f6e'
-              e.currentTarget.style.boxShadow = '0 8px 48px rgba(255,44,145,0.5)'
+              e.currentTarget.style.background = '#a50f17'
+              e.currentTarget.style.boxShadow = '0 8px 48px rgba(215,25,32,0.5)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#ff2c91'
-              e.currentTarget.style.boxShadow = '0 4px 32px rgba(255,44,145,0.35)'
+              e.currentTarget.style.background = '#d71920'
+              e.currentTarget.style.boxShadow = '0 4px 32px rgba(215,25,32,0.35)'
             }}
           >
             Request Package
@@ -501,10 +501,10 @@ function WhyBook() {
             Why Book Through PlayFooty
           </p>
           <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 8vw, 7rem)' }}>
-            ONE CALL.<br /><span style={{ color: '#ff2c91' }}>EVERYTHING SORTED.</span>
+            ONE CALL.<br /><span style={{ color: '#d71920' }}>EVERYTHING SORTED.</span>
           </h2>
           <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.4)', maxWidth: '50ch', lineHeight: 1.7 }}>
-            Stop spending club committee hours coordinating a Gold Coast trip. We handle every detail so your volunteers can enjoy the weekend they've earned.
+            Stop spending club committee hours coordinating a future host city trip. We handle every detail so your volunteers can enjoy the weekend they've earned.
           </p>
         </motion.div>
 
@@ -589,7 +589,7 @@ function PackageBuilder() {
             Package Builder
           </p>
           <h2 className="font-display text-white leading-none mb-4" style={{ fontSize: 'clamp(2.5rem, 7vw, 6rem)' }}>
-            BUILD YOUR<br /><span style={{ color: '#ff2c91' }}>CLUB TRIP.</span>
+            BUILD YOUR<br /><span style={{ color: '#d71920' }}>CLUB TRIP.</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.35)', maxWidth: '44ch', margin: '0 auto', lineHeight: 1.7 }}>
             Tell us what your club needs. We'll put together a tailored enquiry package with everything included.
@@ -605,8 +605,8 @@ function PackageBuilder() {
               transition={{ duration: 0.5, ease }}
               className="text-center py-20"
             >
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(255,44,145,0.15)', border: '1px solid rgba(255,44,145,0.3)' }}>
-                <CheckCircle size={28} style={{ color: '#ff2c91' }} />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(215,25,32,0.15)', border: '1px solid rgba(215,25,32,0.3)' }}>
+                <CheckCircle size={28} style={{ color: '#d71920' }} />
               </div>
               <h3 className="font-display text-white text-3xl mb-3">ENQUIRY SENT.</h3>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem' }}>Our team will be in touch within 2 business days with your tailored package proposal.</p>
@@ -639,10 +639,10 @@ function PackageBuilder() {
                           onClick={() => toggle(key, opt, multi)}
                           className="font-condensed font-bold text-xs tracking-[0.1em] uppercase rounded-xl px-4 py-2.5 transition-all duration-200"
                           style={{
-                            background: sel ? '#ff2c91' : 'rgba(255,255,255,0.05)',
+                            background: sel ? '#d71920' : 'rgba(255,255,255,0.05)',
                             color: sel ? '#ffffff' : 'rgba(255,255,255,0.45)',
-                            border: `1px solid ${sel ? '#ff2c91' : 'rgba(255,255,255,0.1)'}`,
-                            boxShadow: sel ? '0 4px 20px rgba(255,44,145,0.25)' : 'none',
+                            border: `1px solid ${sel ? '#d71920' : 'rgba(255,255,255,0.1)'}`,
+                            boxShadow: sel ? '0 4px 20px rgba(215,25,32,0.25)' : 'none',
                           }}
                         >
                           {opt}
@@ -664,17 +664,17 @@ function PackageBuilder() {
                   onClick={handleSubmit}
                   className="w-full sm:w-auto font-bold rounded-full text-white text-sm tracking-wide flex items-center justify-center gap-2 transition-all"
                   style={{
-                    background: '#ff2c91',
+                    background: '#d71920',
                     padding: '1rem 3rem',
-                    boxShadow: '0 4px 32px rgba(255,44,145,0.3)',
+                    boxShadow: '0 4px 32px rgba(215,25,32,0.3)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background = '#cc1f6e'
-                    e.currentTarget.style.boxShadow = '0 8px 48px rgba(255,44,145,0.45)'
+                    e.currentTarget.style.background = '#a50f17'
+                    e.currentTarget.style.boxShadow = '0 8px 48px rgba(215,25,32,0.45)'
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = '#ff2c91'
-                    e.currentTarget.style.boxShadow = '0 4px 32px rgba(255,44,145,0.3)'
+                    e.currentTarget.style.background = '#d71920'
+                    e.currentTarget.style.boxShadow = '0 4px 32px rgba(215,25,32,0.3)'
                   }}
                 >
                   Generate Enquiry <ArrowRight size={15} />
@@ -713,10 +713,10 @@ function AccommodationSection() {
           </p>
           <div className="grid lg:grid-cols-[5fr,4fr] gap-8 items-end">
             <h2 className="font-display leading-none" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)', color: '#111111' }}>
-              WHERE YOUR<br /><span style={{ color: '#ff2c91' }}>CLUB STAYS.</span>
+              WHERE YOUR<br /><span style={{ color: '#d71920' }}>CLUB STAYS.</span>
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', lineHeight: 1.7 }}>
-              Official PlayFooty accommodation partners — vetted, approved and positioned to make the whole club's stay seamless, comfortable and social.
+              PlayFooty accommodation partner space — ready for real partners once confirmed.
             </p>
           </div>
         </motion.div>
@@ -789,7 +789,7 @@ function AccommodationSection() {
       {/* Bottom strip */}
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8" style={{ borderTop: '1px solid rgba(17,17,17,0.07)' }}>
         <p className="font-condensed font-bold text-[10px] tracking-[0.28em] uppercase text-center" style={{ color: 'rgba(17,17,17,0.28)' }}>
-          All properties are vetted PlayFooty partners &nbsp;·&nbsp; Exclusive group rates available &nbsp;·&nbsp; Priority booking for PlayFooty clubs
+          Partner listings will appear only when real providers are confirmed &nbsp;·&nbsp; No fake travel inventory is live
         </p>
       </div>
     </section>
@@ -814,13 +814,13 @@ function ExperiencesSection() {
           className="mb-14"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-[10px] uppercase mb-5" style={{ color: '#f4c14d' }}>
-            Gold Coast Experiences
+            future host city Experiences
           </p>
           <h2 className="font-display text-white leading-none mb-4" style={{ fontSize: 'clamp(2.8rem, 7vw, 6.5rem)' }}>
-            BEYOND THE<br /><span style={{ color: '#ff2c91' }}>COURTS.</span>
+            BEYOND THE<br /><span style={{ color: '#d71920' }}>COURTS.</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.35)', maxWidth: '52ch', lineHeight: 1.7 }}>
-            The Gold Coast is the perfect backdrop for your club's annual trip. Every experience below can be added to your club package.
+            The future host city is the perfect backdrop for your club's annual trip. Every experience below can be added to your club package.
           </p>
         </motion.div>
       </div>
@@ -896,7 +896,7 @@ function DiningSection() {
             Club Dining
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.5rem, 6vw, 5.5rem)' }}>
-            EAT TOGETHER.<br /><span style={{ color: '#ff2c91' }}>CELEBRATE TOGETHER.</span>
+            EAT TOGETHER.<br /><span style={{ color: '#d71920' }}>CELEBRATE TOGETHER.</span>
           </h2>
         </motion.div>
 
@@ -960,10 +960,10 @@ function TransportSection() {
               Transport
             </p>
             <h2 className="font-display leading-none mb-6" style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', color: '#111111' }}>
-              WE MOVE<br /><span style={{ color: '#ff2c91' }}>YOUR CLUB.</span>
+              WE MOVE<br /><span style={{ color: '#d71920' }}>YOUR CLUB.</span>
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', lineHeight: 1.7, maxWidth: '40ch' }}>
-              From the moment your club lands at Gold Coast Airport to the final shuttle back on Monday afternoon — every transfer is handled.
+              From the moment your club lands at future host city Airport to the final shuttle back on Monday afternoon — every transfer is handled.
             </p>
 
             {/* Map placeholder */}
@@ -983,10 +983,10 @@ function TransportSection() {
             >
               {/* Fake map dots */}
               {[
-                { left: '20%', top: '30%', label: 'Airport', accent: '#ff2c91' },
+                { left: '20%', top: '30%', label: 'Airport', accent: '#d71920' },
                 { left: '50%', top: '55%', label: 'Venue', accent: '#f4c14d' },
                 { left: '65%', top: '25%', label: 'Hotels', accent: '#4dd9f4' },
-                { left: '80%', top: '65%', label: 'Parks', accent: '#ff2c91' },
+                { left: '80%', top: '65%', label: 'Parks', accent: '#d71920' },
               ].map(({ left, top, label, accent }) => (
                 <div key={label} className="absolute flex flex-col items-center gap-1" style={{ left, top, transform: 'translate(-50%, -50%)' }}>
                   <div className="w-3 h-3 rounded-full" style={{ background: accent, boxShadow: `0 0 12px ${accent}60` }} />
@@ -1053,7 +1053,7 @@ function ItinerarySection() {
             Suggested Itinerary
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.5rem, 7vw, 6rem)' }}>
-            FOUR DAYS.<br /><span style={{ color: '#ff2c91' }}>UNFORGETTABLE.</span>
+            FOUR DAYS.<br /><span style={{ color: '#d71920' }}>UNFORGETTABLE.</span>
           </h2>
         </motion.div>
 
@@ -1120,7 +1120,7 @@ function PackageTiers() {
             Example Packages
           </p>
           <h2 className="font-display text-white leading-none mb-4" style={{ fontSize: 'clamp(2.5rem, 6vw, 5.5rem)' }}>
-            CHOOSE YOUR<br /><span style={{ color: '#ff2c91' }}>EXPERIENCE.</span>
+            CHOOSE YOUR<br /><span style={{ color: '#d71920' }}>EXPERIENCE.</span>
           </h2>
           <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', maxWidth: '42ch', margin: '0 auto' }}>
             Every package is fully customisable. These are starting points — not limits.
@@ -1137,13 +1137,13 @@ function PackageTiers() {
               transition={{ duration: 0.55, delay: prefersReduced ? 0 : i * 0.09, ease }}
               className="flex flex-col rounded-2xl p-7 relative overflow-hidden"
               style={{
-                background: featured ? 'rgba(255,44,145,0.08)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${featured ? 'rgba(255,44,145,0.25)' : 'rgba(255,255,255,0.07)'}`,
-                boxShadow: featured ? '0 0 60px rgba(255,44,145,0.08)' : 'none',
+                background: featured ? 'rgba(215,25,32,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${featured ? 'rgba(215,25,32,0.25)' : 'rgba(255,255,255,0.07)'}`,
+                boxShadow: featured ? '0 0 60px rgba(215,25,32,0.08)' : 'none',
               }}
             >
               {featured && (
-                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(to right, transparent, #ff2c91, transparent)' }} />
+                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(to right, transparent, #d71920, transparent)' }} />
               )}
               <PillTag label={tag} color={tagColor} />
               <h3 className="font-display text-white leading-none mt-5 mb-2" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.7rem)' }}>
@@ -1161,7 +1161,7 @@ function PackageTiers() {
               <button
                 className="mt-6 w-full font-condensed font-bold text-xs tracking-[0.12em] uppercase py-3 rounded-xl transition-all duration-200"
                 style={{
-                  background: featured ? '#ff2c91' : 'rgba(255,255,255,0.06)',
+                  background: featured ? '#d71920' : 'rgba(255,255,255,0.06)',
                   color: featured ? '#ffffff' : 'rgba(255,255,255,0.55)',
                   border: featured ? 'none' : '1px solid rgba(255,255,255,0.1)',
                 }}
@@ -1206,10 +1206,10 @@ function MapSection() {
   const prefersReduced = useReducedMotion()
   const mapPoints = [
     { label: 'GC Airport',  left: '12%', top: '72%', accent: '#4dd9f4' },
-    { label: 'PlayFooty Venue',  left: '48%', top: '52%', accent: '#ff2c91' },
+    { label: 'PlayFooty Venue',  left: '48%', top: '52%', accent: '#d71920' },
     { label: 'Surfers Para.', left: '54%', top: '35%', accent: '#f4c14d' },
     { label: 'Movie World', left: '22%', top: '28%', accent: '#f4c14d' },
-    { label: 'Dreamworld',  left: '30%', top: '18%', accent: '#ff2c91' },
+    { label: 'Dreamworld',  left: '30%', top: '18%', accent: '#d71920' },
     { label: 'Pacific Fair', left: '62%', top: '58%', accent: '#4dd9f4' },
     { label: 'Hotels',      left: '50%', top: '42%', accent: '#ffffff' },
     { label: 'Beach',       left: '72%', top: '22%', accent: '#4dd9f4' },
@@ -1226,10 +1226,10 @@ function MapSection() {
           className="mb-10"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-[10px] uppercase mb-4" style={{ color: '#f4c14d' }}>
-            Gold Coast Map
+            future host city Map
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2rem, 5vw, 4rem)' }}>
-            EVERYTHING IS<br /><span style={{ color: '#ff2c91' }}>CLOSE.</span>
+            EVERYTHING IS<br /><span style={{ color: '#d71920' }}>CLOSE.</span>
           </h2>
         </motion.div>
 
@@ -1260,7 +1260,7 @@ function MapSection() {
           ))}
 
           <div className="absolute bottom-5 right-5 flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <MapPin size={10} style={{ color: '#ff2c91' }} />
+            <MapPin size={10} style={{ color: '#d71920' }} />
             <span className="font-condensed font-bold text-[9px] tracking-[0.18em] uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Interactive Map — Coming Soon
             </span>
@@ -1307,7 +1307,7 @@ function WhyClubsTravelSection() {
             The Real Reason
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.8rem, 8vw, 8rem)' }}>
-            THIS IS BIGGER<br />THAN <span style={{ color: '#ff2c91' }}>FOOTBALL.</span>
+            THIS IS BIGGER<br />THAN <span style={{ color: '#d71920' }}>FOOTY.</span>
           </h2>
         </motion.div>
 
@@ -1325,13 +1325,13 @@ function WhyClubsTravelSection() {
                 borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none',
               }}
             >
-              <span className="font-condensed font-bold text-[9px] tracking-[0.3em] uppercase mb-4 block" style={{ color: 'rgba(255,44,145,0.5)' }}>
+              <span className="font-condensed font-bold text-[9px] tracking-[0.3em] uppercase mb-4 block" style={{ color: 'rgba(215,25,32,0.5)' }}>
                 0{i + 1}
               </span>
               <h3 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(1.6rem, 3.5vw, 3rem)' }}>
                 {heading.toUpperCase().replace('.', '')}
               </h3>
-              <div className="h-px w-10 mb-5" style={{ background: 'rgba(255,44,145,0.4)' }} />
+              <div className="h-px w-10 mb-5" style={{ background: 'rgba(215,25,32,0.4)' }} />
               <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.8, maxWidth: '42ch' }}>
                 {body}
               </p>
@@ -1348,7 +1348,7 @@ function WhyClubsTravelSection() {
           className="mt-16 lg:mt-20 text-center px-4"
         >
           <p className="font-display text-white" style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)', lineHeight: 1.2 }}>
-            "The trip is the season. The <span style={{ color: '#ff2c91' }}>Gold Coast</span> is the reward."
+            "The trip is the season. The <span style={{ color: '#d71920' }}>future host city</span> is the reward."
           </p>
         </motion.div>
       </div>
@@ -1378,7 +1378,7 @@ function PackageFAQSection() {
             Common Questions
           </p>
           <h2 className="font-display leading-none" style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)', color: '#111111' }}>
-            PACKAGE<br /><span style={{ color: '#ff2c91' }}>FAQ.</span>
+            PACKAGE<br /><span style={{ color: '#d71920' }}>FAQ.</span>
           </h2>
         </motion.div>
 
@@ -1404,7 +1404,7 @@ function PackageFAQSection() {
                   animate={{ rotate: open === i ? 45 : 0 }}
                   transition={{ duration: 0.2, ease }}
                   className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: open === i ? '#ff2c91' : 'rgba(17,17,17,0.07)' }}
+                  style={{ background: open === i ? '#d71920' : 'rgba(17,17,17,0.07)' }}
                 >
                   <Plus size={13} style={{ color: open === i ? '#ffffff' : 'rgba(17,17,17,0.5)' }} />
                 </motion.div>
@@ -1448,7 +1448,7 @@ function PackagesCTA({ onRequest }: { onRequest: () => void }) {
       </div>
 
       {/* Glow */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 50% 100%, rgba(255,44,145,0.1) 0%, transparent 65%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 50% 100%, rgba(215,25,32,0.1) 0%, transparent 65%)' }} />
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-8 pb-24 lg:pb-32 text-center">
 
@@ -1462,7 +1462,7 @@ function PackagesCTA({ onRequest }: { onRequest: () => void }) {
             Ready to Book?
           </p>
           <h2 className="font-display text-white leading-[0.88] mb-5" style={{ fontSize: 'clamp(3rem, 9vw, 9rem)' }}>
-            MAKE PlayFooty YOUR<br /><span style={{ color: '#ff2c91' }}>2027 CLUB TRIP.</span>
+            MAKE PlayFooty YOUR<br /><span style={{ color: '#d71920' }}>future CLUB TRIP.</span>
           </h2>
           <p className="mb-12" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.35)', maxWidth: '40ch', margin: '0 auto 3rem' }}>
             One organiser. One unforgettable weekend.<br />Let us handle every detail.
@@ -1474,25 +1474,25 @@ function PackagesCTA({ onRequest }: { onRequest: () => void }) {
             whileTap={{ scale: 0.97 }}
             className="font-bold rounded-full text-white tracking-wide inline-flex items-center gap-2"
             style={{
-              background: '#ff2c91',
+              background: '#d71920',
               fontSize: '0.95rem',
               padding: '1.1rem 3rem',
-              boxShadow: '0 8px 48px rgba(255,44,145,0.4)',
+              boxShadow: '0 8px 48px rgba(215,25,32,0.4)',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#cc1f6e'
-              e.currentTarget.style.boxShadow = '0 12px 60px rgba(255,44,145,0.55)'
+              e.currentTarget.style.background = '#a50f17'
+              e.currentTarget.style.boxShadow = '0 12px 60px rgba(215,25,32,0.55)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#ff2c91'
-              e.currentTarget.style.boxShadow = '0 8px 48px rgba(255,44,145,0.4)'
+              e.currentTarget.style.background = '#d71920'
+              e.currentTarget.style.boxShadow = '0 8px 48px rgba(215,25,32,0.4)'
             }}
           >
             Request Your Club Package <ArrowRight size={16} />
           </motion.button>
 
           <p className="mt-5 font-condensed font-bold text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>
-            Gold Coast · Queensland · October 2027
+            future host city · Queensland · Date TBC
           </p>
         </motion.div>
       </div>
@@ -1515,7 +1515,7 @@ function PackageRequestModal({ open: isOpen, onClose }: { open: boolean; onClose
     setSubmitted(true)
   }
 
-  const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#ff2c91] focus:ring-1 focus:ring-[#ff2c91]/30 transition-all duration-200"
+  const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#d71920] focus:ring-1 focus:ring-[#d71920]/30 transition-all duration-200"
   const labelCls = "block text-[10px] font-bold tracking-[0.2em] text-white/40 mb-1.5 uppercase"
 
   return (
@@ -1544,8 +1544,8 @@ function PackageRequestModal({ open: isOpen, onClose }: { open: boolean; onClose
               {/* Header */}
               <div className="flex items-start justify-between mb-7">
                 <div>
-                  <p className="font-condensed font-bold text-[9px] tracking-[0.25em] uppercase mb-2" style={{ color: '#f4c14d' }}>Official Club Packages</p>
-                  <h3 className="font-display text-white leading-none" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.4rem)' }}>REQUEST A<br /><span style={{ color: '#ff2c91' }}>PACKAGE.</span></h3>
+                  <p className="font-condensed font-bold text-[9px] tracking-[0.25em] uppercase mb-2" style={{ color: '#f4c14d' }}>Future Club Packages</p>
+                  <h3 className="font-display text-white leading-none" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.4rem)' }}>REQUEST A<br /><span style={{ color: '#d71920' }}>PACKAGE.</span></h3>
                 </div>
                 <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-all" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#ffffff' }}
@@ -1557,8 +1557,8 @@ function PackageRequestModal({ open: isOpen, onClose }: { open: boolean; onClose
 
               {submitted ? (
                 <div className="text-center py-10">
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(255,44,145,0.15)', border: '1px solid rgba(255,44,145,0.3)' }}>
-                    <CheckCircle size={24} style={{ color: '#ff2c91' }} />
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(215,25,32,0.15)', border: '1px solid rgba(215,25,32,0.3)' }}>
+                    <CheckCircle size={24} style={{ color: '#d71920' }} />
                   </div>
                   <h4 className="font-display text-white text-2xl mb-2">DONE.</h4>
                   <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>We'll be in touch within 2 business days with your package proposal.</p>
@@ -1604,7 +1604,7 @@ function PackageRequestModal({ open: isOpen, onClose }: { open: boolean; onClose
                     type="submit"
                     disabled={loading}
                     className="w-full font-bold rounded-full text-white text-sm tracking-wide py-3.5 transition-all"
-                    style={{ background: loading ? '#cc1f6e' : '#ff2c91', boxShadow: '0 4px 24px rgba(255,44,145,0.3)' }}
+                    style={{ background: loading ? '#a50f17' : '#d71920', boxShadow: '0 4px 24px rgba(215,25,32,0.3)' }}
                   >
                     {loading ? 'Sending...' : 'Send Package Request'}
                   </button>
@@ -1637,18 +1637,17 @@ export default function ClubPackages() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "TouristTrip",
-        "name": "PlayFooty Official Club Packages — Gold Coast 2027",
-        "description": "Official club travel packages for the Community Football Championships Australia on the Gold Coast, October 2027. Accommodation, transport, activities and championship experiences for competing and non-competing clubs.",
+        "name": "PlayFooty Future Club Packages — Date TBC",
+        "description": "Future club travel packages for the PlayFooty Championship on the future host city, Date TBC. Accommodation, transport, activities and championship experiences for competing and non-competing clubs.",
         "touristType": ["Sports team", "Football club", "Family"],
         "offers": {
           "@type": "Offer",
-          "availability": "https://schema.org/InStock",
-          "availabilityEnds": "2027-10-06",
-          "seller": { "@type": "Organization", "name": "PlayFooty — Community Football Championships Australia" }
+          "availability": "https://schema.org/PreOrder",
+          "seller": { "@type": "Organization", "name": "PlayFooty — PlayFooty Championship" }
         },
         "itinerary": {
           "@type": "ItemList",
-          "name": "PlayFooty 2027 Club Package Itinerary",
+          "name": "PlayFooty future Club Package Itinerary",
           "itemListElement": itinerary.map((d, i) => ({
             "@type": "ListItem",
             "position": i + 1,

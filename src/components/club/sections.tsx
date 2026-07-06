@@ -41,8 +41,6 @@ export function ClubHero({ club }: { club: ClubProfile }) {
   const id = clubIdentity(club)
   const rec = club.record
   const place = [club.town, club.leagueName, club.stateName ?? club.state].filter(Boolean).join(' · ')
-  const claimSubject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
-
   return (
     <header style={{ position: 'relative', overflow: 'hidden', background: INK, borderBottom: `3px solid ${id.accent}` }}>
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: `
@@ -72,7 +70,7 @@ export function ClubHero({ club }: { club: ClubProfile }) {
             <ClubCrest name={club.clubName} src={club.logoUrl} id={id} />
             <div style={{ minWidth: 0 }}>
               <div className="font-condensed" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, flexWrap: 'wrap' }}>
-                <Tag color={GOLD}>Community Football club</Tag>
+                <Tag color={GOLD}>Country football club</Tag>
                 {club.ranked && <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ranked nationally</span>}
               </div>
               <div style={{ overflow: 'hidden' }}>
@@ -115,10 +113,10 @@ export function ClubHero({ club }: { club: ClubProfile }) {
               <FormPips form={club.recentForm} />
             </span>
           )}
-          <a href={`mailto:hello@playfooty.com.au?subject=${claimSubject}`} className="font-condensed club-hero-claim"
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: PINK, color: '#fff', padding: '12px 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', boxShadow: '0 14px 34px rgba(255,44,145,0.28)' }}>
-            Claim club <ArrowRight size={14} />
-          </a>
+          <span className="font-condensed club-hero-claim" aria-disabled="true"
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '12px 18px', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', border: '1px solid rgba(255,255,255,0.22)' }}>
+            Claiming coming soon <ArrowRight size={14} />
+          </span>
         </motion.div>
       </div>
       <style>{`
@@ -438,7 +436,6 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
   if (club.websiteUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Website', href: club.websiteUrl })
   if (club.facebookUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Facebook', href: club.facebookUrl })
   if (club.instagramUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Instagram', href: club.instagramUrl })
-  const subject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
 
   return (
     <Section>
@@ -460,17 +457,17 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(60% 100% at 100% 0%, ${id.wash}, transparent 70%)` }} />
             <div style={{ position: 'relative', display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div style={{ maxWidth: 560 }}>
-                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club officials</div>
+                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club administrators</div>
                 <h2 className="font-display" style={{ color: '#fff', fontSize: 'clamp(1.7rem, 4vw, 2.6rem)', lineHeight: 0.95, margin: '0 0 10px' }}>IS THIS YOUR CLUB?</h2>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
                   Claim {club.clubName} to add your logo and colours, home ground, premiership honours, sponsors, photos and links.
                   Your national profile then updates automatically every Monday.
                 </p>
               </div>
-              <a href={`mailto:hello@playfooty.com.au?subject=${subject}`} className="btn-pink font-condensed"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '1rem 2rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.08em', border: 'none', whiteSpace: 'nowrap' }}>
-                CLAIM THIS CLUB <ArrowRight size={16} />
-              </a>
+              <span className="btn-pink font-condensed" aria-disabled="true"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '1rem 2rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.08em', border: 'none', whiteSpace: 'nowrap', cursor: 'default' }}>
+                CLAIMING COMING SOON <ArrowRight size={16} />
+              </span>
             </div>
           </div>
         </div>
@@ -495,7 +492,7 @@ export function ClubInfo({ club }: { club: ClubProfile }) {
   if (!facts.length && !hasColours) return null
   return (
     <Section>
-      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Verified profile details currently available on PlayFooty." />
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Profile details currently available in PlayFooty." />
       <div className="club-info-grid" style={{ display: 'grid', gap: 14 }}>
         {facts.map(f => {
           const body = <><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{f.label}</span><strong style={{ color: TEXT, display: 'block', marginTop: 7, lineHeight: 1.1 }}>{f.value}</strong></>
@@ -513,10 +510,10 @@ export function ClubInfo({ club }: { club: ClubProfile }) {
 export function ClubGallery({ club }: { club: ClubProfile }) {
   return (
     <Section band>
-      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for official ${club.clubName} match-day photos.`} />
+      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for ${club.clubName} match-day photos.`} />
       <div className="gn-card" style={{ padding: 'clamp(24px,4vw,38px)', borderStyle: 'dashed', textAlign: 'center' }}>
         <div className="font-display" style={{ color: 'rgba(17,17,17,0.14)', fontSize: 'clamp(3rem,9vw,6rem)', lineHeight: .85 }}>PHOTOS</div>
-        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No official gallery has been added yet. Club officials can claim this profile to add photos and media.</p>
+        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No gallery has been added yet. Claiming is coming soon for clubs that want to add photos and media.</p>
       </div>
     </Section>
   )
@@ -529,7 +526,7 @@ export function ClubSponsors({ club }: { club: ClubProfile }) {
       <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
         <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sponsor-ready space</div>
         <h3 className="font-display" style={{ color: TEXT, fontSize: 'clamp(1.5rem,3vw,2.3rem)', margin: '10px 0 8px', lineHeight: .95 }}>SUPPORT {club.clubName.toUpperCase()}</h3>
-        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for official club partners without displaying fake sponsors.</p>
+        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for real club partners without displaying fake sponsors.</p>
       </div>
     </Section>
   )
@@ -554,7 +551,6 @@ export function ClubSidebar({ club }: { club: ClubProfile }) {
   const [, bump] = useState(0)
   useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
   const news = allArticles().filter(a => a.tags.club && (a.tags.club.toLowerCase().includes(club.clubName.toLowerCase()) || club.clubName.toLowerCase().includes(a.tags.club.toLowerCase()))).slice(0, 2)
-  const claimSubject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
   return (
     <aside className="club-sidebar" style={{ position: 'sticky', top: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="gn-card" style={{ padding: 18, borderTop: `3px solid ${id.accent}` }}><SideLabel>Latest ranking</SideLabel><strong className="font-display" style={{ fontSize: 34, color: club.rank != null ? PINK : TEXT }}>{club.rank != null ? `#${club.rank}` : 'Pending'}</strong>{club.rank != null && <div style={{ marginTop: 6 }}><Move delta={club.rankMovement} /></div>}</div>
@@ -563,8 +559,7 @@ export function ClubSidebar({ club }: { club: ClubProfile }) {
       {club.leagueStrengthScore != null && <Link to={club.leagueId ? leaguePath(club.leagueId) : '/leagues'} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>League strength</SideLabel><div style={{ marginTop: 8 }}><StarStrength stars={strengthStars(club.leagueStrengthScore)} size={12} /></div><small style={{ color: MUTE }}>{strengthLabel(strengthStars(club.leagueStrengthScore))}</small></Link>}
       {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest club news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
       <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
-      <a href={`mailto:hello@playfooty.com.au?subject=${claimSubject}`} className="gn-card gn-card-hover" style={{ padding: 18, background: PINK, color: '#fff', textDecoration: 'none' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Manage this profile</strong></a>
-      <div className="gn-card" style={{ padding: 18, borderStyle: 'dashed' }}><SideLabel>Sponsor placeholder</SideLabel><strong style={{ color: TEXT }}>Partner with {club.clubName}</strong></div>
+      <div className="gn-card" aria-disabled="true" style={{ padding: 18, background: PINK, color: '#fff' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Claiming coming soon</strong></div>
       <style>{`@media(max-width:980px){.club-sidebar{position:static!important;margin-top:18px}.club-sidebar .gn-card{width:100%}}`}</style>
     </aside>
   )

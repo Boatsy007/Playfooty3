@@ -3,10 +3,10 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Users, Target, Briefcase, Heart, Star } from 'lucide-react'
 
 const roles = [
-  { icon: Users,     title: 'A GRADE PLAYERS', desc: "Australia's leading country premiership teams competing for one national title.", accent: '#ff2c91', span: false },
+  { icon: Users,     title: 'SENIOR FOOTBALL', desc: "Australia's leading country premiership teams following one national football story.", accent: '#d71920', span: false },
   { icon: Target,    title: 'COACHES',          desc: 'Coaching groups leading their clubs onto a national stage.',                    accent: '#f4c14d', span: false },
-  { icon: Briefcase, title: 'CLUB OFFICIALS',   desc: 'The committee members, volunteers and administrators who keep Community Football moving.', accent: '#ff2c91', span: false },
-  { icon: Heart,     title: 'FAMILIES',         desc: 'A Gold Coast championship weekend built around the people who support the players all season.', accent: '#4dd9f4', span: false },
+  { icon: Briefcase, title: 'CLUB OFFICIALS',   desc: 'The committee members, volunteers and administrators who keep community football moving.', accent: '#d71920', span: false },
+  { icon: Heart,     title: 'FAMILIES',         desc: 'A future host city championship weekend built around the people who support the players all season.', accent: '#4dd9f4', span: false },
   { icon: Star,      title: 'SUPPORTERS',       desc: 'Club supporters travelling together, celebrating together and creating the event atmosphere.', accent: '#f4c14d', span: true },
 ]
 
@@ -31,10 +31,10 @@ export default function WhyTravel() {
             Who Attends
           </p>
           <h2 className="font-display leading-none mb-4" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', color: '#111111' }}>
-            MORE THAN A<br /><span style={{ color: '#ff2c91' }}>CHAMPIONSHIP.</span>
+            MORE THAN A<br /><span style={{ color: '#d71920' }}>CHAMPIONSHIP.</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '52ch' }}>
-            A national A Grade championship built for the clubs, families and communities behind the game.
+            A national Senior championship built for the clubs, families and communities behind the game.
           </p>
         </motion.div>
       </div>
@@ -82,10 +82,10 @@ export default function WhyTravel() {
               className="font-condensed font-bold text-[10px] tracking-[0.22em] uppercase mb-3 block"
               style={{ color: `${accent}cc` }}
             >
-              {title === 'A GRADE PLAYERS' ? 'Championship Competitors' :
+              {title === 'SENIOR FOOTBALL' ? 'Championship Competitors' :
                title === 'COACHES' ? 'National Stage' :
                title === 'CLUB OFFICIALS' ? 'Community Football' :
-               'Gold Coast'}
+               'future host city'}
             </span>
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(17,17,17,0.42)' }}>
               {desc}
@@ -155,7 +155,7 @@ export default function WhyTravel() {
         style={{ borderTop: '1px solid rgba(17,17,17,0.07)' }}
       >
         <p className="font-condensed font-bold text-[11px] tracking-[0.28em] uppercase text-center" style={{ color: 'rgba(17,17,17,0.3)' }}>
-          Players&nbsp;&nbsp;•&nbsp;&nbsp;Coaches&nbsp;&nbsp;•&nbsp;&nbsp;Officials&nbsp;&nbsp;•&nbsp;&nbsp;Families&nbsp;&nbsp;•&nbsp;&nbsp;Supporters
+          Players&nbsp;&nbsp;•&nbsp;&nbsp;Coaches&nbsp;&nbsp;•&nbsp;&nbsp;Futures&nbsp;&nbsp;•&nbsp;&nbsp;Families&nbsp;&nbsp;•&nbsp;&nbsp;Supporters
         </p>
       </motion.div>
     </section>

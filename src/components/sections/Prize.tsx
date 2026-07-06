@@ -53,7 +53,7 @@ export default function Prize() {
           >
             <div className="border-l-2 pl-8" style={{ borderColor: '#f4c14d' }}>
               <p className="text-white font-semibold text-xl leading-relaxed mb-3">
-                A major prize package will be awarded to the 2027 PlayFooty Champion Club.
+                A major prize package will be awarded to the future PlayFooty Champion Club.
               </p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Full details announced prior to the event.
@@ -72,13 +72,13 @@ export default function Prize() {
             </div>
 
             <button
-              onClick={() => go('#invitation')}
+              onClick={() => go('#update')}
               className="group self-start flex items-center gap-2.5 font-bold text-sm px-8 py-4 rounded-full transition-all duration-200"
-              style={{ background: '#ff2c91', color: '#ffffff' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
+              style={{ background: '#d71920', color: '#ffffff' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#a50f17')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#d71920')}
             >
-              Request Invitation
+              Join updates
               <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />
             </button>
           </motion.div>

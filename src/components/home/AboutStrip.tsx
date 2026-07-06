@@ -14,7 +14,8 @@ export default function AboutStrip() {
             ONE QUESTION.<br /><span style={{ color: PINK }}>SETTLED EVERY WEEK.</span>
           </h2>
           <p style={{ color: MUTE, fontSize: 16, lineHeight: 1.7, margin: '18px 0 0' }}>
-            PlayFooty exists to answer one question better than anyone else: who are the best Community Football clubs and leagues in Australia? Every week of the season we collect A&nbsp;Grade results
+            PlayFooty exists to answer one question better than anyone else: who are the best country
+            football clubs and leagues in Australia? Every week of the season we collect A&nbsp;Grade results
             from country and regional leagues nationwide and rank every club on one national ladder.
             Never on ladder position alone, and always with the reasoning shown.
           </p>

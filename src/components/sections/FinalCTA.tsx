@@ -82,7 +82,7 @@ export default function FinalCTA() {
             transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="text-white/80 text-base md:text-xl font-medium max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            A Grade premiership clubs are invited to compete for the PlayFooty title on the Gold Coast — October 2027.
+            community football clubs are interested to follow the PlayFooty concept on the future host city — Date TBC.
           </motion.p>
 
           {/* CTA */}
@@ -102,13 +102,13 @@ export default function FinalCTA() {
                 onClick={scrollToRegister}
                 className="inline-flex items-center gap-3 bg-white text-navy font-bold text-sm px-10 py-4 rounded-full hover:bg-white/90 transition-colors duration-300"
               >
-                Request Club Invitation
+                Join updates
                 <ArrowRight size={16} />
               </MagneticButton>
             </motion.div>
 
             <p className="text-white/50 text-xs font-semibold tracking-widest uppercase">
-              Invitation only · A Grade premiership clubs · Limited places
+              Update only · community football clubs · Limited places
             </p>
           </motion.div>
         </div>

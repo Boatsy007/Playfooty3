@@ -36,7 +36,7 @@ async function main() {
     const state = await prisma.state.upsert({ where: { code: row.state }, create: { code: row.state, name: row.state }, update: {} })
     const found = await prisma.league.findFirst({ where: { name: row.name, sport: 'FOOTBALL' }, select: { id: true } })
     if (found) { existing++; continue }
-    await prisma.league.create({ data: { name: row.name, shortName: row.name, stateId: state.id, sport: 'FOOTBALL', dataConfidence: 0.75, primarySource: 'MANUAL_ENTRY', importType: 'MANUAL', manualOverride: true, currentSeason: season } })
+    await prisma.league.create({ data: { name: row.name, shortName: row.name, stateId: state.id, sport: 'FOOTBALL', primaryDataSource: 'MANUAL_ENTRY', fallbackDataSources: JSON.stringify(['CSV_UPLOAD', 'OCR_UPLOAD']), manualEntryEnabled: true, syncStatus: 'READY', dataConfidence: 0.75, primarySource: 'MANUAL_ENTRY', importType: 'MANUAL', manualOverride: true, currentSeason: season } })
     created++
   }
   console.log(JSON.stringify({ completed: true, created, existing }, null, 2))

@@ -21,12 +21,12 @@ const days: Day[] = [
   {
     id: 'thu',
     day: 'Day One',
-    date: 'Oct 2027',
+    date: 'Date TBC',
     theme: 'Arrival + Welcome Function',
     events: [
       { time: 'Morning', title: 'Venue Opens', desc: 'Championship venue opens for arrivals', icon: Sun },
-      { time: 'Afternoon', title: 'Club Check-In', desc: 'Official registration for all participating clubs', icon: Sunset },
-      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed at the official PlayFooty opening function', icon: Moon },
+      { time: 'Afternoon', title: 'Club Check-In', desc: 'Future registration for all participating clubs', icon: Sunset },
+      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed at the PlayFooty opening function', icon: Moon },
     ],
   },
   {
@@ -35,7 +35,7 @@ const days: Day[] = [
     date: 'Day 2',
     theme: 'Pool Matches',
     events: [
-      { time: 'Morning', title: 'Pool Play Begins', desc: 'A Grade pool matches get underway', icon: Sun },
+      { time: 'Morning', title: 'Pool Play Begins', desc: 'Senior pool matches get underway', icon: Sun },
       { time: 'Midday', title: 'Lunch Break', desc: 'Food and entertainment on-site for all attendees', icon: Utensils },
       { time: 'Afternoon', title: 'Pool Play Continues', desc: 'Remaining pool rounds played out', icon: Sunset },
       { time: 'Evening', title: 'Club Social', desc: 'Clubs come together for an evening social event', icon: Moon },
@@ -49,7 +49,7 @@ const days: Day[] = [
     events: [
       { time: 'Morning', title: 'Semi-Finals', desc: 'Top clubs from pool play compete for a Grand Final spot', icon: Sun },
       { time: 'Afternoon', title: 'Club Photography & Experiences', desc: 'Professional team and club photography sessions', icon: Sunset },
-      { time: 'Evening', title: 'Gold Coast Evening', desc: 'Experience everything the Gold Coast has to offer', icon: Moon },
+      { time: 'Evening', title: 'future host city Evening', desc: 'Experience everything the future host city has to offer', icon: Moon },
     ],
   },
   {
@@ -60,7 +60,7 @@ const days: Day[] = [
     events: [
       { time: 'Morning', title: 'Grand Final Day Opens', desc: 'The final day of championship begins', icon: Sun },
       { time: 'Midday', title: 'PlayFooty Grand Final', desc: 'One match. One title.', icon: Sunset },
-      { time: 'Evening', title: 'Awards Presentation', desc: 'Official PlayFooty awards honouring the champion club', icon: Moon },
+      { time: 'Evening', title: 'Awards Presentation', desc: 'PlayFooty awards honouring the champion club', icon: Moon },
     ],
   },
 ]

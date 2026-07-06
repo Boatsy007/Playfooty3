@@ -94,7 +94,7 @@ async function main() {
   await prisma.$transaction(async tx => {
     await tx.generatedArticle.updateMany({ where: { id: { in: articles.map(a => a.id) } }, data: { status: 'ARCHIVED' } })
     await tx.leagueSource.updateMany({ where: { id: { in: sourceIds } }, data: { isActive: false, lastStatus: 'ARCHIVED_NETBALL_CLEANUP' } })
-    await tx.league.updateMany({ where: { id: { in: leagueIds } }, data: { archivedAt: new Date(), isActive: false, enabled: false, hidden: true, status: 'ARCHIVED', syncError: 'Archived by PlayFooty netball cleanup' } })
+    await tx.league.updateMany({ where: { id: { in: leagueIds } }, data: { archivedAt: new Date(), isActive: false, enabled: false, hidden: true, status: 'ARCHIVED', syncStatus: 'ARCHIVED_NETBALL_CLEANUP', syncError: 'Archived by PlayFooty netball cleanup', dataSourceSyncError: 'Archived by PlayFooty netball cleanup' } })
     await tx.club.updateMany({ where: { id: { in: clubIds } }, data: { archivedAt: new Date(), isActive: false, approvalStatus: 'ARCHIVED', notes: 'Archived by PlayFooty netball cleanup' } })
     if (hardDelete) {
       await tx.rankingSnapshot.deleteMany({ where: { clubId: { in: clubIds } } })

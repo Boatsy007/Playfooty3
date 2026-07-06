@@ -8,7 +8,7 @@ import { Clock, Zap } from 'lucide-react'
 import { type Article, categoryOf, formatDate, newsPath } from './content'
 
 // Brand tokens (values only — no import of other app modules)
-export const PINK = '#ff2c91'
+export const PINK = '#d71920'
 export const GOLD = '#f4c14d'
 export const GOLD_DK = '#b8860b'
 export const INK = '#111111'
@@ -44,8 +44,8 @@ export function NewsStyles() {
 // image URL later with zero layout change).
 function hash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }
 const DUOS: [string, string, string][] = [
-  ['#ff2c91', '#7a0f43', '#1a0512'], ['#f4c14d', '#8a5a10', '#1a1204'],
-  ['#4dd9f4', '#0f5f70', '#03151a'], ['#0b0e17', '#26305a', '#ff2c91'],
+  ['#d71920', '#7a0f43', '#1a0512'], ['#f4c14d', '#8a5a10', '#1a1204'],
+  ['#4dd9f4', '#0f5f70', '#03151a'], ['#0b0e17', '#26305a', '#d71920'],
   ['#111111', '#3a2140', '#f4c14d'], ['#ff6bb5', '#7a0f43', '#0b0e17'],
 ]
 export function EditorialImage({ seed, ratio = '16 / 10', label, rounded = 14 }: { seed: string; ratio?: string; label?: string; rounded?: number }) {

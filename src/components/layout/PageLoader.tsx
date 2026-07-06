@@ -36,13 +36,13 @@ export default function PageLoader() {
               className="relative"
             >
               <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                <circle cx="32" cy="32" r="31" stroke="#ff2c91" strokeWidth="2.5" />
-                <circle cx="32" cy="32" r="19" stroke="#ff2c91" strokeWidth="1.5" />
-                <path d="M12 22 Q32 12 52 22" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
-                <path d="M12 42 Q32 52 52 42" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
-                <line x1="32" y1="1" x2="32" y2="63" stroke="#ff2c91" strokeWidth="1.5" />
-                <path d="M8 12 Q22 22 8 38" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
-                <path d="M56 12 Q42 22 56 38" stroke="#ff2c91" strokeWidth="1.5" fill="none" />
+                <circle cx="32" cy="32" r="31" stroke="#d71920" strokeWidth="2.5" />
+                <circle cx="32" cy="32" r="19" stroke="#d71920" strokeWidth="1.5" />
+                <path d="M12 22 Q32 12 52 22" stroke="#d71920" strokeWidth="1.5" fill="none" />
+                <path d="M12 42 Q32 52 52 42" stroke="#d71920" strokeWidth="1.5" fill="none" />
+                <line x1="32" y1="1" x2="32" y2="63" stroke="#d71920" strokeWidth="1.5" />
+                <path d="M8 12 Q22 22 8 38" stroke="#d71920" strokeWidth="1.5" fill="none" />
+                <path d="M56 12 Q42 22 56 38" stroke="#d71920" strokeWidth="1.5" fill="none" />
               </svg>
               {/* Gold star */}
               <motion.div
@@ -64,8 +64,8 @@ export default function PageLoader() {
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number,number,number,number], delay: 0.3 }}
                 className="flex items-baseline gap-3"
               >
-                <span className="font-display text-6xl text-white tracking-wider">GOT</span>
-                <span className="font-display text-6xl tracking-wider" style={{ color: '#ff2c91' }}>PlayFooty</span>
+                <span className="font-display text-6xl text-white tracking-wider">PLAY</span>
+                <span className="font-display text-6xl tracking-wider" style={{ color: '#d71920' }}>FOOTY</span>
               </motion.div>
             </div>
 
@@ -75,7 +75,7 @@ export default function PageLoader() {
               transition={{ duration: 0.5, delay: 0.7 }}
               className="text-xs font-bold tracking-[0.25em] uppercase text-white/50"
             >
-              Australia's Home of Community Football
+              Australia’s home of community football
             </motion.p>
 
             {/* Progress bar */}
