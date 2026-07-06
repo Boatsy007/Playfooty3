@@ -1,10 +1,10 @@
 /**
- * Got Netty Admin Panel — hybrid data engine control surface.
+ * PlayFooty Admin Panel — hybrid data engine control surface.
  * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
@@ -23,9 +23,8 @@ function useToast() {
 }
 
 const TABS = [
-  ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
-  ['ocr', 'Image Import'], ['publishing', 'AI Publishing'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
-  ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+  ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'], ['fixtures', 'Fixtures'], ['results', 'Results'],
+  ['rankings', 'Rankings'], ['newsroom', 'Newsroom'], ['reviews', 'Review Queue'], ['system', 'System'],
 ] as const
 type Tab = typeof TABS[number][0]
 
@@ -43,7 +42,7 @@ export default function Admin() {
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
+          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
           <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
@@ -53,18 +52,16 @@ export default function Admin() {
             </button>
           ))}
         </div>
+        <AdminGlobalSearch toast={t.show} go={setTab} />
         {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
-        {tab === 'playhq' && <PlayHQImport toast={t.show} />}
-        {tab === 'csv' && <CsvImport toast={t.show} />}
-        {tab === 'leagues' && <Leagues toast={t.show} />}
+        {tab === 'leagues' && <LeaguesOperations toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
-        {tab === 'ocr' && <ImageImport toast={t.show} />}
-        {tab === 'publishing' && <Publishing toast={t.show} />}
+        {tab === 'fixtures' && <FixtureResultsOps kind="fixtures" toast={t.show} />}
+        {tab === 'results' && <FixtureResultsOps kind="results" toast={t.show} />}
+        {tab === 'newsroom' && <Publishing toast={t.show} />}
         {tab === 'reviews' && <Reviews toast={t.show} />}
         {tab === 'rankings' && <Rankings toast={t.show} />}
-        {tab === 'audit' && <AuditLog toast={t.show} />}
-        {tab === 'backups' && <Backups toast={t.show} />}
-        {tab === 'settings' && <Settings toast={t.show} />}
+        {tab === 'system' && <SystemOps toast={t.show} />}
       </div>
       {t.node}
     </div>
@@ -74,8 +71,22 @@ export default function Admin() {
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
   const [d, setD] = useState<DashboardData | null>(null)
+  const [football, setFootball] = useState<FootballLeague[]>([])
+  const [articles, setArticles] = useState<ArticleRow[]>([])
   useEffect(() => { admin.dashboard().then(setD).catch(e => toast(e.message, false)) }, [])
+  useEffect(() => {
+    Promise.all([
+      admin.listFootballLeagues().catch(() => [] as FootballLeague[]),
+      admin.listArticles('ALL').then(r => r.data).catch(() => [] as ArticleRow[]),
+    ]).then(([leagues, articleRows]) => { setFootball(leagues); setArticles(articleRows) })
+  }, [])
   if (!d) return <div style={box}>Loading…</div>
+  const footballClubs = football.reduce((n, l) => n + (l._count?.clubSeasons ?? 0), 0)
+  const fixtures = football.reduce((n, l) => n + (l._count?.footballFixtures ?? 0), 0)
+  const results = football.reduce((n, l) => n + (l._count?.footballResults ?? 0), 0)
+  const lastSync = football.map(l => l.lastSuccessfulSyncAt ?? l.lastSyncAt).filter(Boolean).sort().at(-1)
+  const latestImport = football.map(l => ({ name: l.name, count: l._count?.footballImports ?? 0, sync: l.lastSyncAt })).filter(x => x.count || x.sync).sort((a, b) => String(b.sync ?? '').localeCompare(String(a.sync ?? '')))[0]
+  const waitingArticles = articles.filter(a => a.status !== 'PUBLISHED').length
   const stat = (label: string, value: number | string, colour = C.text, onClick?: () => void) => (
     <div style={{ ...box, cursor: onClick ? 'pointer' : 'default', minWidth: 130 }} onClick={onClick}>
       <div style={{ fontSize: 28, fontWeight: 800, color: colour }}>{value}</div>
@@ -86,19 +97,22 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        {stat('Active leagues', d.counts.leaguesActive, C.text, () => go('leagues'))}
-        {stat('Archived leagues', d.counts.leaguesArchived, C.mute)}
-        {stat('Clubs', d.counts.clubs, C.text, () => go('clubs'))}
-        {stat('Teams', d.counts.teams)}
+        {stat('Football leagues', football.length, C.text, () => go('leagues'))}
+        {stat('Football clubs', footballClubs || '—', C.text, () => go('clubs'))}
+        {stat('Current season', football[0]?.currentSeason ?? '—')}
+        {stat('Fixtures', fixtures, C.text, () => go('fixtures'))}
+        {stat('Results', results, C.text, () => go('results'))}
         {stat('Pending reviews', d.counts.pendingReviews, d.counts.pendingReviews ? C.gold : C.green, () => go('reviews'))}
-        {stat('Image sources', d.counts.ocrImports)}
+        {stat('Articles waiting', waitingArticles, waitingArticles ? C.gold : C.green, () => go('newsroom'))}
         {stat('Warnings', d.warnings, d.warnings ? C.red : C.green)}
       </div>
       <div style={box}>
-        <b>Status</b>
+        <b>Operations status</b>
         <div style={{ color: C.mute, fontSize: 13, marginTop: 8, display: 'grid', gap: 4 }}>
           <div>Last ranking run: <span style={{ color: C.text }}>{d.lastRun ? `${d.lastRun.weekLabel} · ${d.lastRun.clubCount} clubs · ${fmt(d.lastRun.completedAt)}` : '—'}</span></div>
-          <div>Last scrape: <span style={{ color: C.text }}>{d.lastScrape ? `${d.lastScrape.sourceType} · ${fmt(d.lastScrape.lastScrapedAt)}` : '—'}</span></div>
+          <div>Last sync: <span style={{ color: C.text }}>{lastSync ? fmt(lastSync) : d.lastScrape ? `${d.lastScrape.sourceType} · ${fmt(d.lastScrape.lastScrapedAt)}` : '—'}</span></div>
+          <div>Latest import: <span style={{ color: C.text }}>{latestImport ? `${latestImport.name} · ${latestImport.count} import record(s)` : 'No football imports yet'}</span></div>
+          <div>System health: <span style={{ color: d.warnings || d.counts.pendingReviews ? C.gold : C.green }}>{d.warnings || d.counts.pendingReviews ? 'Attention required' : 'Ready'}</span></div>
         </div>
       </div>
       {d.flaggedLeagues.length > 0 && (
@@ -115,12 +129,256 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={box}>
-          <b>Recently updated leagues</b>
-          <div style={{ marginTop: 8 }}>{d.recentLeagues.map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{fmt(l.lastManualUpdateAt)}</span></div>)}</div>
+          <b>Recent football leagues</b>
+          <div style={{ marginTop: 8 }}>{football.slice(0, 8).map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{l.syncStatus}</span></div>)}</div>
+          {football.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Add the first league from the Leagues workspace.</p>}
         </div>
         <div style={box}>
-          <b>Recently updated clubs</b>
-          <div style={{ marginTop: 8 }}>{d.recentClubs.map(c => <div key={c.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{c.name} <span style={{ float: 'right' }}>{fmt(c.updatedAt)}</span></div>)}</div>
+          <b>Recent published articles</b>
+          <div style={{ marginTop: 8 }}>{articles.filter(a => a.status === 'PUBLISHED').slice(0, 8).map(a => <div key={a.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{a.title} <span style={{ float: 'right' }}>{fmt(a.publishedAt)}</span></div>)}</div>
+          {articles.filter(a => a.status === 'PUBLISHED').length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No published articles yet.</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LeaguesOperations({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>League Operations</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>
+          The league is now the centre of the admin. Configure source settings, run dry syncs, import verified football rows, generate ladders, compare differences, publish approved data and trigger rankings from each selected league.
+        </p>
+      </div>
+      <FootballSources toast={toast} />
+      <details style={box}>
+        <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Legacy league utilities</summary>
+        <p style={{ color: C.mute, fontSize: 13 }}>Existing strength, archive, approval and ladder-edit tools are preserved here until each tool is moved inside the selected league workspace.</p>
+        <Leagues toast={toast} />
+      </details>
+    </div>
+  )
+}
+
+function FixtureResultsOps({ kind, toast }: { kind: 'fixtures' | 'results'; toast: (t: string, ok?: boolean) => void }) {
+  const [leagues, setLeagues] = useState<FootballLeague[]>([])
+  useEffect(() => { admin.listFootballLeagues().then(setLeagues).catch(e => toast(e.message, false)) }, [])
+  const title = kind === 'fixtures' ? 'Fixtures' : 'Results'
+  const total = leagues.reduce((n, l) => n + (kind === 'fixtures' ? (l._count?.footballFixtures ?? 0) : (l._count?.footballResults ?? 0)), 0)
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>{title}</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>
+          {kind === 'fixtures'
+            ? 'Fixture management is driven from each league workspace. Import or manually enter fixtures from Leagues → selected league → Manual verified import.'
+            : 'Result approval is driven from each league workspace. Enter scores, generate ladders from results, compare differences and publish from Leagues.'}
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ ...box, minWidth: 160 }}><div style={{ fontSize: 30, fontWeight: 900 }}>{total}</div><div style={{ color: C.mute, fontSize: 12 }}>{title} recorded</div></div>
+        <div style={{ ...box, minWidth: 160 }}><div style={{ fontSize: 30, fontWeight: 900 }}>{leagues.length}</div><div style={{ color: C.mute, fontSize: 12 }}>Football leagues</div></div>
+      </div>
+      <div style={box}>
+        <b>League status</b>
+        <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr><th style={th}>League</th><th style={th}>Source</th><th style={th}>{title}</th><th style={th}>Sync</th></tr></thead>
+            <tbody>
+              {leagues.map(l => <tr key={l.id}><td style={td}>{l.name}</td><td style={td}>{l.primaryDataSource ?? '—'}</td><td style={td}>{kind === 'fixtures' ? (l._count?.footballFixtures ?? 0) : (l._count?.footballResults ?? 0)}</td><td style={td}>{l.syncStatus}</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+        {leagues.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues are available yet.</p>}
+      </div>
+    </div>
+  )
+}
+
+function SystemOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [section, setSection] = useState<'playhq' | 'csv' | 'ocr' | 'audit' | 'backups' | 'settings'>('playhq')
+  const sections = [
+    ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['ocr', 'Image Import'], ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+  ] as const
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>System</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 12px' }}>Legacy utilities are preserved here so the main admin navigation stays focused on operating leagues.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{sections.map(([id, label]) => <button key={id} style={btn(section === id ? C.pink : '#1b2233')} onClick={() => setSection(id)}>{label}</button>)}</div>
+      </div>
+      {section === 'playhq' && <PlayHQImport toast={toast} />}
+      {section === 'csv' && <CsvImport toast={toast} />}
+      {section === 'ocr' && <ImageImport toast={toast} />}
+      {section === 'audit' && <AuditLog toast={toast} />}
+      {section === 'backups' && <Backups toast={toast} />}
+      {section === 'settings' && <Settings toast={toast} />}
+    </div>
+  )
+}
+
+// ─── PlayFooty football source control centre ────────────────────────────────
+const DATA_SOURCES = ['PLAYHQ_API', 'PLAYHQ_SCRAPER', 'CSV_UPLOAD', 'OCR_UPLOAD', 'MANUAL_ENTRY']
+
+function AdminGlobalSearch({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
+  const [q, setQ] = useState('')
+  const [leagues, setLeagues] = useState<FootballLeague[]>([])
+  const [clubs, setClubs] = useState<AdminClub[]>([])
+  const [articles, setArticles] = useState<ArticleRow[]>([])
+  useEffect(() => {
+    Promise.all([
+      admin.listFootballLeagues().catch(() => [] as FootballLeague[]),
+      admin.listClubs().catch(() => [] as AdminClub[]),
+      admin.listArticles('ALL').then(r => r.data).catch(() => [] as ArticleRow[]),
+    ]).then(([leagueRows, clubRows, articleRows]) => { setLeagues(leagueRows); setClubs(clubRows); setArticles(articleRows) }).catch(e => toast(e.message, false))
+  }, [])
+  const needle = q.trim().toLowerCase()
+  const results = needle.length < 2 ? [] : [
+    ...leagues.filter(l => l.name.toLowerCase().includes(needle)).slice(0, 5).map(l => ({ type: 'League', label: l.name, meta: `${l.state?.code ?? '—'} · ${l.syncStatus}`, tab: 'leagues' as Tab })),
+    ...clubs.filter(c => c.name.toLowerCase().includes(needle)).slice(0, 5).map(c => ({ type: 'Club', label: c.name, meta: c.state?.code ?? '—', tab: 'clubs' as Tab })),
+    ...articles.filter(a => a.title.toLowerCase().includes(needle)).slice(0, 5).map(a => ({ type: 'Article', label: a.title, meta: a.status, tab: 'newsroom' as Tab })),
+  ]
+  return (
+    <div style={{ ...box, marginBottom: 18, padding: 12 }}>
+      <input style={{ ...input, maxWidth: 560 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Search admin: leagues, clubs, fixtures, results, articles…" aria-label="Universal admin search" />
+      {needle.length >= 2 && (
+        <div style={{ display: 'grid', gap: 6, marginTop: 10 }}>
+          {results.length === 0 && <div style={{ color: C.mute, fontSize: 13 }}>No matching admin records found.</div>}
+          {results.map((r, i) => (
+            <button key={`${r.type}-${r.label}-${i}`} onClick={() => { go(r.tab); setQ('') }} style={{ ...input, display: 'flex', justifyContent: 'space-between', textAlign: 'left', cursor: 'pointer' }}>
+              <span><b style={{ color: C.text }}>{r.label}</b> <small style={{ color: C.mute }}>· {r.type}</small></span>
+              <span style={{ color: C.mute }}>{r.meta}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<FootballLeague[]>([])
+  const [selected, setSelected] = useState<FootballLeague | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [form, setForm] = useState({ name: '', state: 'VIC', sourceUrl: '', primaryDataSource: 'MANUAL_ENTRY' })
+  const [manualJson, setManualJson] = useState('[\\n  { "homeName": "Home Club", "awayName": "Away Club", "homeGoals": 10, "homeBehinds": 8, "awayGoals": 8, "awayBehinds": 6, "round": "Round 1" }\\n]')
+  const [dataType, setDataType] = useState('RESULTS')
+
+  const load = () => admin.listFootballLeagues().then(r => { setRows(r); setSelected(s => s ? r.find(x => x.id === s.id) ?? null : r[0] ?? null) }).catch(e => toast(e.message, false))
+  useEffect(() => { void load() }, [])
+
+  const createLeague = async () => {
+    if (!form.name.trim()) return toast('League name required', false)
+    setBusy(true)
+    try { const row = await admin.createFootballLeague(form); toast('Football league created'); await load(); setSelected(row); setForm({ name: '', state: 'VIC', sourceUrl: '', primaryDataSource: 'MANUAL_ENTRY' }) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const saveSource = async (league: FootballLeague) => {
+    setBusy(true)
+    try {
+      const fallbackDataSources = DATA_SOURCES.filter(x => x !== league.primaryDataSource && ['CSV_UPLOAD', 'OCR_UPLOAD', 'MANUAL_ENTRY'].includes(x))
+      const updated = await admin.setFootballSource(league.id, { primaryDataSource: league.primaryDataSource ?? 'MANUAL_ENTRY', fallbackDataSources, sourceUrl: league.sourceUrl ?? '', playhqOrganisationId: league.playhqOrganisationId ?? '', playhqCompetitionId: league.playhqCompetitionId ?? '', playhqSeasonId: league.playhqSeasonId ?? '', playhqGradeId: league.playhqGradeId ?? '' })
+      toast('Data source saved'); setSelected(updated); await load()
+    } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const drySync = async (league: FootballLeague) => {
+    setBusy(true)
+    try { const out = await admin.syncFootballLeague(league.id, { sourceType: league.primaryDataSource ?? 'PLAYHQ_SCRAPER', dryRun: true }); toast(out.note ?? `Sync recorded: ${out.status}`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const importRows = async () => {
+    if (!selected) return
+    let parsed: unknown[]
+    try { parsed = JSON.parse(manualJson) as unknown[] } catch { return toast('Rows must be valid JSON array', false) }
+    setBusy(true)
+    try { const out = await admin.importFootballRows(selected.id, { sourceType: 'MANUAL_ENTRY', dataType, rows: parsed }); toast(`Imported ${out.recordsImported ?? 0} ${dataType.toLowerCase()} rows`); await load() }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const generate = async () => {
+    if (!selected) return
+    setBusy(true)
+    try { const out = await admin.generateFootballLadder(selected.id, { season: '2026', grade: 'Senior Football' }); toast(`Generated ${out.rows ?? out.ladder?.length ?? 0} ladder rows`) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const compare = async () => {
+    if (!selected) return
+    setBusy(true)
+    try { const out = await admin.compareFootballLadder(selected.id); toast(`${out.conflictCount} ladder differences found`) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const publish = async () => {
+    if (!selected) return
+    if (!confirm('Publish approved football results/ladder and trigger rankings recalculation?')) return
+    setBusy(true)
+    try { const out = await admin.publishFootballLeague(selected.id, { season: '2026', grade: 'Senior Football', recalculate: true }); toast(`Published ${out.publishedResults} results and ${out.publishedLadderRows} ladder rows`) }
+    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>PlayFooty Football Data Source Control Centre</b>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>League-by-league source control for football. Manual verified data wins, imports are idempotent, and external syncs degrade to review until PlayHQ API/scraper execution is configured.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 90px 1.4fr 160px auto', gap: 8, alignItems: 'end' }}>
+          <label><small style={{ color: C.mute }}>League</small><input style={input} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Bellarine FNL - Senior Football" /></label>
+          <label><small style={{ color: C.mute }}>State</small><input style={input} value={form.state} onChange={e => setForm({ ...form, state: e.target.value.toUpperCase() })} /></label>
+          <label><small style={{ color: C.mute }}>PlayHQ/source URL</small><input style={input} value={form.sourceUrl} onChange={e => setForm({ ...form, sourceUrl: e.target.value })} placeholder="https://www.playhq.com/..." /></label>
+          <label><small style={{ color: C.mute }}>Primary source</small><select style={input} value={form.primaryDataSource} onChange={e => setForm({ ...form, primaryDataSource: e.target.value })}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></label>
+          <button disabled={busy} style={btn()} onClick={createLeague}>Add football league</button>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px,.9fr) minmax(0,1.1fr)', gap: 16 }}>
+        <div style={box}>
+          <b>Football leagues</b>
+          <div style={{ overflowX: 'auto', marginTop: 8 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={th}>League</th><th style={th}>Source</th><th style={th}>Sync</th><th style={th}>Data</th></tr></thead>
+              <tbody>{rows.map(r => (
+                <tr key={r.id} onClick={() => setSelected(r)} style={{ cursor: 'pointer', background: selected?.id === r.id ? 'rgba(255,44,145,.08)' : undefined }}>
+                  <td style={td}><b>{r.name}</b><div style={{ color: C.mute }}>{r.state?.code ?? '—'} · {r.regionName ?? 'No region'}</div></td>
+                  <td style={td}>{r.primaryDataSource ?? '—'}</td>
+                  <td style={td}><span style={{ color: r.syncStatus === 'SUCCESS' ? C.green : r.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute }}>{r.syncStatus}</span></td>
+                  <td style={td}>{r._count?.footballResults ?? 0} results · {r._count?.footballFixtures ?? 0} fixtures</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={box}>
+          {!selected ? <p style={{ color: C.mute }}>Select a football league to manage its sources.</p> : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <b>{selected.name}</b>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <label><small style={{ color: C.mute }}>Primary source</small><select style={input} value={selected.primaryDataSource ?? 'MANUAL_ENTRY'} onChange={e => setSelected({ ...selected, primaryDataSource: e.target.value })}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></label>
+                <label><small style={{ color: C.mute }}>Source URL</small><input style={input} value={selected.sourceUrl ?? ''} onChange={e => setSelected({ ...selected, sourceUrl: e.target.value })} /></label>
+                <label><small style={{ color: C.mute }}>Organisation ID</small><input style={input} value={selected.playhqOrganisationId ?? ''} onChange={e => setSelected({ ...selected, playhqOrganisationId: e.target.value })} /></label>
+                <label><small style={{ color: C.mute }}>Competition ID</small><input style={input} value={selected.playhqCompetitionId ?? ''} onChange={e => setSelected({ ...selected, playhqCompetitionId: e.target.value })} /></label>
+                <label><small style={{ color: C.mute }}>Season ID</small><input style={input} value={selected.playhqSeasonId ?? ''} onChange={e => setSelected({ ...selected, playhqSeasonId: e.target.value })} /></label>
+                <label><small style={{ color: C.mute }}>Grade ID</small><input style={input} value={selected.playhqGradeId ?? ''} onChange={e => setSelected({ ...selected, playhqGradeId: e.target.value })} /></label>
+              </div>
+              {selected.dataSourceSyncError && <div style={{ color: C.gold, fontSize: 13 }}>{selected.dataSourceSyncError}</div>}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button disabled={busy} style={btn()} onClick={() => saveSource(selected)}>Save source</button>
+                <button disabled={busy} style={btn('#2a3145')} onClick={() => drySync(selected)}>Run dry sync</button>
+                <button disabled={busy} style={btn(C.green)} onClick={generate}>Generate ladder from results</button>
+                <button disabled={busy} style={btn(C.gold)} onClick={compare}>Compare ladders</button>
+                <button disabled={busy} style={btn(C.red)} onClick={publish}>Publish + recalculate</button>
+              </div>
+              <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
+                <b>Manual verified import</b>
+                <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 8px' }}>Paste JSON rows for fixtures, results or ladders. Manual entries are verified and never silently overwritten by external imports.</p>
+                <select style={{ ...input, width: 160, marginBottom: 8 }} value={dataType} onChange={e => setDataType(e.target.value)}>
+                  <option>RESULTS</option><option>FIXTURES</option><option>LADDER</option>
+                </select>
+                <textarea style={{ ...input, minHeight: 130, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} value={manualJson} onChange={e => setManualJson(e.target.value)} />
+                <button disabled={busy} style={{ ...btn(C.green), marginTop: 8 }} onClick={importRows}>Import manual rows</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -265,9 +523,9 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
 
       <div style={box}>
         <b>Import from PlayHQ URL</b>
-        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Paste ANY PlayHQ URL — association, competition, season, grade or ladder. The workflow detects what it is, finds the A&nbsp;Grade Senior Women's ladder, imports the clubs + ladder, and re-ranks. Manual edits and overrides are never overwritten.</p>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Paste ANY PlayHQ URL — association, competition, season, grade, fixtures, results or ladder. The smart importer tries PlayHQ API, rendered PlayHQ scrape, raw parsing, then review/manual fallback. Manual edits and overrides are never overwritten.</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input style={{ ...input, flex: 1, minWidth: 320 }} placeholder="https://www.playhq.com/netball-australia/org/…" value={url}
+          <input style={{ ...input, flex: 1, minWidth: 320 }} placeholder="https://www.playhq.com/afl/org/…" value={url}
             onChange={e => { setUrl(e.target.value); classify(e.target.value) }} onKeyDown={e => e.key === 'Enter' && doImport()} />
           <button disabled={busy || !url.trim()} style={btn(C.green)} onClick={doImport}>{busy ? 'Dispatching…' : 'Import'}</button>
         </div>

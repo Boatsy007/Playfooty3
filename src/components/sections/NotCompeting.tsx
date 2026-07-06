@@ -8,7 +8,7 @@ const features = [
     emoji: '🏨',
     title: 'Group Accommodation Packages',
     desc: 'Stay together with teammates, families and supporters.',
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
   {
     icon: Eye,
@@ -21,20 +21,20 @@ const features = [
     icon: PartyPopper,
     emoji: '🎉',
     title: 'Celebrate Your Season',
-    desc: "Make CNCA your club's annual end-of-season trip.",
-    accent: '#ff2c91',
+    desc: "Make PlayFooty your club's annual end-of-season trip.",
+    accent: '#d71920',
   },
   {
     icon: Sun,
     emoji: '☀️',
-    title: 'Gold Coast Experience',
+    title: 'future host city Experience',
     desc: 'Theme parks, beaches, dining, entertainment and more.',
     accent: '#4dd9f4',
   },
   {
     icon: Users,
     emoji: '💗',
-    title: 'Travel With Your Netball Community',
+    title: 'Travel With Your Football Community',
     desc: 'Bring players, families, supporters and junior teams.',
     accent: '#f4c14d',
   },
@@ -43,7 +43,7 @@ const features = [
     emoji: '🏆',
     title: 'Be Part Of The Championship Weekend',
     desc: "Even if you're not competing, you're still part of the event.",
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
 ]
 
@@ -64,7 +64,7 @@ export default function NotCompeting() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,44,145,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(215,25,32,0.07) 0%, transparent 70%)',
         }}
       />
 
@@ -86,17 +86,17 @@ export default function NotCompeting() {
           {/* Headline */}
           <div className="grid lg:grid-cols-[5fr,4fr] gap-8 lg:gap-16 items-end">
             <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3rem, 8vw, 7.5rem)' }}>
-              NOT COMPETING?<br /><span style={{ color: '#ff2c91' }}>STILL COME.</span>
+              NOT COMPETING?<br /><span style={{ color: '#d71920' }}>STILL COME.</span>
             </h2>
             <div>
               <p className="font-condensed font-bold mb-3" style={{ fontSize: 'clamp(1rem, 1.8vw, 1.3rem)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.3 }}>
-                CNCA isn't just for the clubs chasing the national title.
+                PlayFooty isn't just for the clubs chasing the national title.
               </p>
               <p className="leading-relaxed" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75 }}>
-                While eligible A Grade premier clubs compete for the Country Netball Championships Australia title, clubs from across Australia are encouraged to attend and be part of the championship weekend.
+                While interested community football clubs follow the PlayFooty Championship concept, clubs from across Australia are encouraged to attend and be part of the championship weekend.
               </p>
               <p className="leading-relaxed mt-3" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75 }}>
-                Whether your season ends with a premiership, a grand final loss, a finals campaign or simply a year worth celebrating, CNCA provides an opportunity for players, coaches, families and supporters to enjoy an unforgettable end-of-season trip on the Gold Coast.
+                Whether your season ends with a premiership, a grand final loss, a finals campaign or simply a year worth celebrating, PlayFooty provides an opportunity for players, coaches, families and supporters to enjoy an unforgettable end-of-season trip on the future host city.
               </p>
             </div>
           </div>
@@ -188,15 +188,15 @@ export default function NotCompeting() {
           transition={{ duration: 0.7, delay: 0.2, ease }}
           className="mt-12 rounded-2xl overflow-hidden relative"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,44,145,0.15) 0%, rgba(255,44,145,0.05) 50%, rgba(244,193,77,0.08) 100%)',
-            border: '1px solid rgba(255,44,145,0.2)',
+            background: 'linear-gradient(135deg, rgba(215,25,32,0.15) 0%, rgba(215,25,32,0.05) 50%, rgba(244,193,77,0.08) 100%)',
+            border: '1px solid rgba(215,25,32,0.2)',
           }}
         >
           {/* Subtle corner accent */}
           <div
             className="absolute top-0 right-0 w-64 h-64 pointer-events-none"
             style={{
-              background: 'radial-gradient(ellipse at 100% 0%, rgba(255,44,145,0.12) 0%, transparent 65%)',
+              background: 'radial-gradient(ellipse at 100% 0%, rgba(215,25,32,0.12) 0%, transparent 65%)',
             }}
           />
 
@@ -206,32 +206,32 @@ export default function NotCompeting() {
                 className="font-display text-white leading-none mb-2"
                 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)' }}
               >
-                MAKE CNCA YOUR <span style={{ color: '#ff2c91' }}>2027 CLUB TRIP</span>
+                MAKE PlayFooty YOUR <span style={{ color: '#d71920' }}>future CLUB TRIP</span>
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
-                Not every club will compete for the national title.<br className="hidden sm:block" />
+                Not every club will join a future showcase concept.<br className="hidden sm:block" />
                 Every club is welcome to be part of the weekend.
               </p>
             </div>
 
             <button
-              onClick={() => go('#invitation')}
+              onClick={() => go('#update')}
               className="group inline-flex items-center gap-2.5 font-bold rounded-full shrink-0 transition-all duration-200"
               style={{
-                background: '#ff2c91',
+                background: '#d71920',
                 color: '#ffffff',
                 fontSize: '0.8125rem',
                 padding: '0.9rem 2rem',
                 letterSpacing: '0.06em',
-                boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
+                boxShadow: '0 8px 32px rgba(215,25,32,0.3)',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = '#cc1f6e'
-                e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,44,145,0.45)'
+                e.currentTarget.style.background = '#a50f17'
+                e.currentTarget.style.boxShadow = '0 12px 40px rgba(215,25,32,0.45)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = '#ff2c91'
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,44,145,0.3)'
+                e.currentTarget.style.background = '#d71920'
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(215,25,32,0.3)'
               }}
             >
               REGISTER INTEREST

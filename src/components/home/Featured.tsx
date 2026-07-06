@@ -113,7 +113,7 @@ function FeaturedClub({ clubId }: { clubId: string }) {
                 <div style={{ minWidth: 0 }}>
                   <div className="font-display" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.1rem)', lineHeight: 0.95 }}>{data.clubName.toUpperCase()}</div>
                   <div className="font-condensed" style={{ color: MUTE, fontSize: 12.5, marginTop: 5, letterSpacing: '0.04em' }}>
-                    {data.leagueName ?? 'Country netball'}{data.state ? ` · ${data.state}` : ''}
+                    {data.leagueName ?? 'Country football'}{data.state ? ` · ${data.state}` : ''}
                   </div>
                 </div>
               </div>

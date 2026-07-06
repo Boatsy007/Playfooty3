@@ -1,7 +1,7 @@
 /**
  * Admin Dashboard API
  * ─────────────────────────────────────────────────────────────────────────────
- * Protected endpoints for the CNCA admin dashboard.
+ * Protected endpoints for the PlayFooty admin dashboard.
  *
  * GET  /admin/health          — system health + adapter ping
  * GET  /admin/status          — last job run status + stats

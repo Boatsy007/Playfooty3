@@ -23,7 +23,7 @@ const options = [
     num: '03',
     icon: Sunset,
     title: 'Family Accommodation',
-    desc: 'Family-friendly options near the venue and Gold Coast beaches.',
+    desc: 'Family-friendly options near the venue and future host city beaches.',
   },
   {
     num: '04',

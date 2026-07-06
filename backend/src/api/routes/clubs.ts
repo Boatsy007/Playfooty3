@@ -27,6 +27,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
     const entries = await prisma.rankingEntry.findMany({
       where: {
         runId: run.id,
+        league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
         ...(state  ? { state }       : {}),
         ...(league ? { leagueName: { contains: league, mode: 'insensitive' as const } } : {}),
       },
@@ -62,7 +63,7 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
 
     // Get current ranking (latest run), if this club is ranked.
     const currentEntry = await prisma.rankingEntry.findFirst({
-      where:   { clubId },
+      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
       orderBy: { rankingRun: { completedAt: 'desc' } },
       include: { rankingRun: { select: { id: true, weekLabel: true, season: true, completedAt: true } } },
     })
@@ -77,13 +78,14 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const season = currentEntry?.rankingRun.season
     const cls = await prisma.clubLeagueSeason.findFirst({
-      where:   { clubId, ...(currentEntry ? { season, leagueId: currentEntry.leagueId } : {}) },
+      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, ...(currentEntry ? { season, leagueId: currentEntry.leagueId } : {}) },
       orderBy: { season: 'desc' },
       include: { league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } } },
     })
 
     const league = cls?.league
       ?? (currentEntry ? await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }) : null)
+    if (!currentEntry && !cls) return res.status(404).json({ error: 'Club not found' })
 
     // Current league ladder (for the club page's "current ladder" context), plus
     // the season stats so we can show each rival's record. Ordered by position.
@@ -99,7 +101,7 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
     const ladderNames = new Map((await prisma.club.findMany({ where: { id: { in: ladderRows.map(r => r.clubId) } }, select: { id: true, name: true } })).map(c => [c.id, c.name]))
 
     const history = await prisma.rankingEntry.findMany({
-      where:   { clubId },
+      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
       orderBy: { rankingRun: { completedAt: 'desc' } },
       take:    12,
       include: { rankingRun: { select: { weekLabel: true, completedAt: true } } },
@@ -167,6 +169,7 @@ router.get('/history/:clubId', publicRateLimit, cachePublic(3600), async (req, r
       where: {
         clubId,
         ...(season ? { rankingRun: { season } } : {}),
+        league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       },
       orderBy: { rankingRun: { completedAt: 'desc' } },
       take:    limit,

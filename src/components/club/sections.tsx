@@ -41,7 +41,6 @@ export function ClubHero({ club }: { club: ClubProfile }) {
   const id = clubIdentity(club)
   const rec = club.record
   const place = [club.town, club.leagueName, club.stateName ?? club.state].filter(Boolean).join(' · ')
-
   return (
     <header style={{ position: 'relative', overflow: 'hidden', background: INK, borderBottom: `3px solid ${id.accent}` }}>
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: `
@@ -71,7 +70,7 @@ export function ClubHero({ club }: { club: ClubProfile }) {
             <ClubCrest name={club.clubName} src={club.logoUrl} id={id} />
             <div style={{ minWidth: 0 }}>
               <div className="font-condensed" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, flexWrap: 'wrap' }}>
-                <Tag color={GOLD}>Country netball club</Tag>
+                <Tag color={GOLD}>Country football club</Tag>
                 {club.ranked && <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ranked nationally</span>}
               </div>
               <div style={{ overflow: 'hidden' }}>
@@ -114,8 +113,17 @@ export function ClubHero({ club }: { club: ClubProfile }) {
               <FormPips form={club.recentForm} />
             </span>
           )}
+          <span className="font-condensed club-hero-claim" aria-disabled="true"
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '12px 18px', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', border: '1px solid rgba(255,255,255,0.22)' }}>
+            Claiming coming soon <ArrowRight size={14} />
+          </span>
         </motion.div>
       </div>
+      <style>{`
+        @media (max-width: 720px) {
+          .club-hero-claim { width: 100%; justify-content: center; margin-left: 0!important; min-height: 48px; }
+        }
+      `}</style>
     </header>
   )
 }
@@ -158,9 +166,12 @@ export function ClubSnapshot({ club }: { club: ClubProfile }) {
   const diff = club.goalsFor - club.goalsAgainst
   const tiles: { label: string; value: React.ReactNode; sub?: string; accent?: string }[] = []
   if (club.rank != null) tiles.push({ label: 'National rank', value: `#${club.rank}`, sub: club.previousRank != null ? `was #${club.previousRank}` : 'this week', accent: PINK })
+  if (club.previousRank != null || club.rankMovement !== 0) tiles.push({ label: 'Movement', value: <Move delta={club.rankMovement} />, sub: club.previousRank != null ? `from #${club.previousRank}` : 'this week', accent: club.rankMovement > 0 ? UP : club.rankMovement < 0 ? DOWN : undefined })
   if (club.powerRating != null) tiles.push({ label: 'Power rating', value: club.powerRating.toFixed(1), sub: 'out of 100', accent: GOLD_DK })
   if (club.ladderPosition != null) tiles.push({ label: 'Ladder', value: ordinal(club.ladderPosition), sub: 'in its league' })
   if (club.record.played > 0) tiles.push({ label: 'Record', value: `${club.record.wins}-${club.record.losses}${club.record.draws ? `-${club.record.draws}` : ''}`, sub: `${club.record.played} games` })
+  if (club.recentForm.length > 0) tiles.push({ label: 'Current form', value: <FormPips form={club.recentForm} />, sub: `${club.recentForm.slice(-5).join(' ')}` })
+  if (club.leagueName) tiles.push({ label: 'League', value: club.leagueId ? <Link to={leaguePath(club.leagueId)} style={{ color: TEXT, textDecoration: 'none' }}>{club.leagueName.replace(/\s*-\s*a grade.*/i, '')}</Link> : club.leagueName.replace(/\s*-\s*a grade.*/i, ''), sub: club.stateName ?? club.state ?? undefined })
   if (club.percentage > 0) tiles.push({ label: 'Percentage', value: `${club.percentage.toFixed(0)}%`, sub: diff !== 0 ? `${diff > 0 ? '+' : ''}${diff} goal diff` : undefined, accent: club.percentage >= 100 ? UP : undefined })
   if (club.goalsFor > 0) tiles.push({ label: 'Goals for / against', value: `${club.goalsFor} / ${club.goalsAgainst}`, sub: 'this season' })
   if (club.leagueStrengthScore != null) tiles.push({ label: 'League strength', value: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>{stars}<StarStrength stars={stars} size={11} /></span>, sub: strengthLabel(stars) })
@@ -173,7 +184,7 @@ export function ClubSnapshot({ club }: { club: ClubProfile }) {
           <Reveal key={t.label} delay={i * 0.04}>
             <div className="gn-card" style={{ padding: '16px 18px', height: '100%', borderTop: `3px solid ${t.accent ?? 'rgba(17,17,17,0.14)'}` }}>
               <div className="font-condensed" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT, marginBottom: 8 }}>{t.label}</div>
-              <div className="font-display" style={{ fontSize: 'clamp(1.3rem, 2.4vw, 1.7rem)', lineHeight: 1, color: TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.value}</div>
+              <div className="font-display stat-value" style={{ fontSize: 'clamp(1.3rem, 2.4vw, 1.7rem)', lineHeight: 1, color: TEXT }}>{t.value}</div>
               {t.sub && <div className="font-condensed" style={{ color: MUTE, fontSize: 11.5, marginTop: 6 }}>{t.sub}</div>}
             </div>
           </Reveal>
@@ -181,7 +192,9 @@ export function ClubSnapshot({ club }: { club: ClubProfile }) {
       </div>
       <style>{`
         .csnap-grid { grid-template-columns: repeat(4, 1fr); }
+        .csnap-grid .stat-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         @media (max-width: 960px) { .csnap-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .csnap-grid { grid-template-columns: 1fr; } .csnap-grid .stat-value { white-space: normal; } }
       `}</style>
     </Section>
   )
@@ -370,18 +383,23 @@ export function ClubNews({ club }: { club: ClubProfile }) {
   const norm = (s: string) => s.toLowerCase().trim()
   const key = norm(club.clubName)
   const mine = allArticles().filter(a => a.tags.club && (norm(a.tags.club).includes(key) || key.includes(norm(a.tags.club))))
-  const items = (mine.length ? mine : allArticles().filter(a => club.leagueName && a.tags.league && norm(a.tags.league).includes(norm(club.leagueName.replace(/\s*-\s*a grade.*/i, ''))))).slice(0, 3)
-  const fill = items.length < 3 ? allArticles().filter(a => !items.includes(a)).slice(0, 3 - items.length) : []
-  const list = [...items, ...fill].slice(0, 3)
-  if (list.length === 0) return null
+  const list = mine.slice(0, 3)
 
   return (
     <Section>
       <SectionHead
         title={<>CLUB <span style={{ color: PINK }}>NEWS</span></>}
-        sub={mine.length ? `The latest on ${club.clubName}.` : 'Coverage from around the league and the national game.'}
+        sub={`Articles specifically tagged to ${club.clubName}.`}
         to="/news" toLabel="All stories"
       />
+      {list.length === 0 && (
+        <Reveal>
+          <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
+            <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase' }}>No club stories yet</div>
+            <p style={{ color: MUTE, margin: '8px 0 0', lineHeight: 1.6 }}>When a published article is tagged to {club.clubName}, it will appear here automatically.</p>
+          </div>
+        </Reveal>
+      )}
       <div className="cnews-grid" style={{ display: 'grid', gap: 16 }}>
         {list.map((a, i) => (
           <Reveal key={a.slug} delay={i * 0.05}>
@@ -418,7 +436,6 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
   if (club.websiteUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Website', href: club.websiteUrl })
   if (club.facebookUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Facebook', href: club.facebookUrl })
   if (club.instagramUrl) links.push({ icon: <Globe size={15} aria-hidden />, label: 'Instagram', href: club.instagramUrl })
-  const subject = encodeURIComponent(`Claim club profile: ${club.clubName}`)
 
   return (
     <Section>
@@ -440,23 +457,115 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(60% 100% at 100% 0%, ${id.wash}, transparent 70%)` }} />
             <div style={{ position: 'relative', display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div style={{ maxWidth: 560 }}>
-                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club officials</div>
+                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club administrators</div>
                 <h2 className="font-display" style={{ color: '#fff', fontSize: 'clamp(1.7rem, 4vw, 2.6rem)', lineHeight: 0.95, margin: '0 0 10px' }}>IS THIS YOUR CLUB?</h2>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
                   Claim {club.clubName} to add your logo and colours, home ground, premiership honours, sponsors, photos and links.
                   Your national profile then updates automatically every Monday.
                 </p>
               </div>
-              <a href={`mailto:hello@gotnetty.com.au?subject=${subject}`} className="btn-pink font-condensed"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '1rem 2rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.08em', border: 'none', whiteSpace: 'nowrap' }}>
-                CLAIM THIS CLUB <ArrowRight size={16} />
-              </a>
+              <span className="btn-pink font-condensed" aria-disabled="true"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '1rem 2rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.08em', border: 'none', whiteSpace: 'nowrap', cursor: 'default' }}>
+                CLAIMING COMING SOON <ArrowRight size={16} />
+              </span>
             </div>
           </div>
         </div>
       </Reveal>
     </Section>
   )
+}
+
+
+// ─── Club information / placeholders / related / sidebar ─────────────────────
+export function ClubInfo({ club }: { club: ClubProfile }) {
+  const id = clubIdentity(club)
+  const facts = [
+    club.leagueName && { label: 'League', value: club.leagueName, to: club.leagueId ? leaguePath(club.leagueId) : undefined },
+    club.town && { label: 'Town', value: club.town },
+    (club.stateName ?? club.state) && { label: 'State', value: club.stateName ?? club.state },
+    club.websiteUrl && { label: 'Website', value: 'Official website', href: club.websiteUrl },
+    club.facebookUrl && { label: 'Facebook', value: 'Club Facebook', href: club.facebookUrl },
+    club.instagramUrl && { label: 'Instagram', value: 'Club Instagram', href: club.instagramUrl },
+  ].filter(Boolean) as { label: string; value: string; to?: string; href?: string }[]
+  const hasColours = club.primaryColour || club.secondaryColour
+  if (!facts.length && !hasColours) return null
+  return (
+    <Section>
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Profile details currently available in PlayFooty." />
+      <div className="club-info-grid" style={{ display: 'grid', gap: 14 }}>
+        {facts.map(f => {
+          const body = <><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{f.label}</span><strong style={{ color: TEXT, display: 'block', marginTop: 7, lineHeight: 1.1 }}>{f.value}</strong></>
+          if (f.to) return <Link key={f.label} to={f.to} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none' }}>{body}</Link>
+          if (f.href) return <a key={f.label} href={f.href} target="_blank" rel="noreferrer" className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none' }}>{body}</a>
+          return <div key={f.label} className="gn-card" style={{ padding: 18 }}>{body}</div>
+        })}
+        {hasColours && <div className="gn-card" style={{ padding: 18 }}><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Club colours</span><div style={{ display: 'flex', gap: 8, marginTop: 10 }}>{[club.primaryColour, club.secondaryColour].filter(Boolean).map(c => <span key={c!} title={c!} style={{ width: 42, height: 42, borderRadius: 12, border: `1px solid ${LINE}`, background: c!.startsWith('#') ? c! : `#${c}` }} />)}<span style={{ width: 42, height: 42, borderRadius: 12, background: id.accent, border: `1px solid ${LINE}` }} /></div></div>}
+      </div>
+      <style>{`.club-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:760px){.club-info-grid{grid-template-columns:1fr}.club-info-grid .gn-card{min-height:76px}}`}</style>
+    </Section>
+  )
+}
+
+export function ClubGallery({ club }: { club: ClubProfile }) {
+  return (
+    <Section band>
+      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for ${club.clubName} match-day photos.`} />
+      <div className="gn-card" style={{ padding: 'clamp(24px,4vw,38px)', borderStyle: 'dashed', textAlign: 'center' }}>
+        <div className="font-display" style={{ color: 'rgba(17,17,17,0.14)', fontSize: 'clamp(3rem,9vw,6rem)', lineHeight: .85 }}>PHOTOS</div>
+        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No gallery has been added yet. Claiming is coming soon for clubs that want to add photos and media.</p>
+      </div>
+    </Section>
+  )
+}
+
+export function ClubSponsors({ club }: { club: ClubProfile }) {
+  return (
+    <Section>
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>SPONSORS</span></>} sub="Premium partner placements can appear here once the profile is claimed." />
+      <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
+        <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sponsor-ready space</div>
+        <h3 className="font-display" style={{ color: TEXT, fontSize: 'clamp(1.5rem,3vw,2.3rem)', margin: '10px 0 8px', lineHeight: .95 }}>SUPPORT {club.clubName.toUpperCase()}</h3>
+        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for real club partners without displaying fake sponsors.</p>
+      </div>
+    </Section>
+  )
+}
+
+export function RelatedClubs({ club }: { club: ClubProfile }) {
+  const rows = (club.ladder ?? []).filter(r => r.clubId !== club.clubId).slice(0, 6)
+  if (!rows.length) return null
+  return (
+    <Section band>
+      <SectionHead title={<>RELATED <span style={{ color: PINK }}>CLUBS</span></>} sub={club.leagueName ? `Other clubs in ${club.leagueName}.` : 'Clubs nearby on the current ladder.'} />
+      <div className="related-club-grid" style={{ display: 'grid', gap: 12 }}>
+        {rows.map(r => <Link key={r.clubId} to={teamPath(r.clubId)} className="gn-card gn-card-hover" style={{ display: 'flex', alignItems: 'center', gap: 11, padding: 14, textDecoration: 'none', color: TEXT }}><TeamLogo name={r.clubName} size={34} /><span style={{ minWidth: 0, flex: 1 }}><strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.clubName}</strong><small className="font-condensed" style={{ color: MUTE }}>{r.wins}-{r.losses}{r.draws ? `-${r.draws}` : ''} · {r.percentage ? `${r.percentage.toFixed(0)}%` : 'percentage pending'}</small></span><span className="font-display" style={{ color: PINK }}>#{r.position ?? '·'}</span></Link>)}
+      </div>
+      <style>{`.related-club-grid{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:720px){.related-club-grid{grid-template-columns:1fr}}`}</style>
+    </Section>
+  )
+}
+
+export function ClubSidebar({ club }: { club: ClubProfile }) {
+  const id = clubIdentity(club)
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
+  const news = allArticles().filter(a => a.tags.club && (a.tags.club.toLowerCase().includes(club.clubName.toLowerCase()) || club.clubName.toLowerCase().includes(a.tags.club.toLowerCase()))).slice(0, 2)
+  return (
+    <aside className="club-sidebar" style={{ position: 'sticky', top: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="gn-card" style={{ padding: 18, borderTop: `3px solid ${id.accent}` }}><SideLabel>Latest ranking</SideLabel><strong className="font-display" style={{ fontSize: 34, color: club.rank != null ? PINK : TEXT }}>{club.rank != null ? `#${club.rank}` : 'Pending'}</strong>{club.rank != null && <div style={{ marginTop: 6 }}><Move delta={club.rankMovement} /></div>}</div>
+      {club.ladderPosition != null && <div className="gn-card" style={{ padding: 18 }}><SideLabel>League position</SideLabel><strong className="font-display" style={{ fontSize: 30 }}>{ordinal(club.ladderPosition)}</strong></div>}
+      {club.recentForm.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Recent form</SideLabel><div style={{ marginTop: 10 }}><FormPips form={club.recentForm} /></div></div>}
+      {club.leagueStrengthScore != null && <Link to={club.leagueId ? leaguePath(club.leagueId) : '/leagues'} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>League strength</SideLabel><div style={{ marginTop: 8 }}><StarStrength stars={strengthStars(club.leagueStrengthScore)} size={12} /></div><small style={{ color: MUTE }}>{strengthLabel(strengthStars(club.leagueStrengthScore))}</small></Link>}
+      {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest club news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
+      <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
+      <div className="gn-card" aria-disabled="true" style={{ padding: 18, background: PINK, color: '#fff' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Claiming coming soon</strong></div>
+      <style>{`@media(max-width:980px){.club-sidebar{position:static!important;margin-top:18px}.club-sidebar .gn-card{width:100%}}`}</style>
+    </aside>
+  )
+}
+function SideLabel({ children, color = FAINT }: { children: React.ReactNode; color?: string }) {
+  return <div className="font-condensed" style={{ color, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>{children}</div>
 }
 
 // shared

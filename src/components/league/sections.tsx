@@ -19,7 +19,7 @@ const INK = '#0c0e13'
 // ─── Per-league identity ──────────────────────────────────────────────────────
 // Each league gets a deterministic accent hue from its name, so Gippsland,
 // Bellarine and Hampden each feel like their own destination while staying
-// unmistakably Got Netty. No invented branding: it is a stable visual identity
+// unmistakably PlayFooty. No invented branding: it is a stable visual identity
 // until real league colours/logos are uploaded via the admin portal.
 const LEAGUE_HUES = [356, 24, 204, 262, 152, 190, 318, 42]
 function leagueHash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }
@@ -156,6 +156,7 @@ export function LeagueHero({ league, facts }: { league: LeagueDetail; facts: Lea
   const updated = league.lastSyncedAt ?? league.strengthCalculatedAt
   const id = leagueAccent(league.name)
   const why = whyRankedBullets(league, facts)
+  const clubCount = league.ladder.length || league.rankedTeams.length
 
   return (
     <header style={{ position: 'relative', overflow: 'hidden', background: INK, borderBottom: `3px solid ${id.accent}` }}>
@@ -220,6 +221,13 @@ export function LeagueHero({ league, facts }: { league: LeagueDetail; facts: Lea
                 </span>
               )}
             </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: reduced ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.38, ease: EASE }}
+              className="league-hero-facts" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 10, marginTop: 22, maxWidth: 680 }}>
+              {clubCount > 0 && <HeroMini label="Clubs tracked" value={String(clubCount)} />}
+              {facts.leader && <HeroMini label="Ladder leader" value={facts.leader.clubName} />}
+              {facts.bestClub && <HeroMini label="Top national club" value={`#${facts.bestClub.rank} ${facts.bestClub.clubName}`} />}
+            </motion.div>
           </div>
 
           {/* National rank block */}
@@ -255,8 +263,26 @@ export function LeagueHero({ league, facts }: { league: LeagueDetail; facts: Lea
             ))}
           </motion.div>
         )}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.55, delay: 0.58 }}
+          className="league-hero-actions" style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
+          <a href="#ladder" className="font-condensed" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 999, background: PINK, color: '#fff', padding: '0 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>View ladder</a>
+          <a href="#clubs" className="font-condensed" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.16)', padding: '0 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Clubs</a>
+          <a href="#news" className="font-condensed" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.16)', padding: '0 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>News</a>
+        </motion.div>
       </div>
+      <style>{`
+        @media(max-width:720px){.league-hero-facts{grid-template-columns:1fr!important}.league-hero-actions a{flex:1 1 100%;}}
+      `}</style>
     </header>
+  )
+}
+
+function HeroMini({ label, value }: { label: string; value: string }) {
+  return (
+    <span style={{ minWidth: 0, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: '11px 12px' }}>
+      <span className="font-condensed" style={{ display: 'block', color: 'rgba(255,255,255,0.42)', fontSize: 10, fontWeight: 900, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{label}</span>
+      <strong className="font-display" style={{ display: 'block', color: '#fff', fontSize: 18, lineHeight: 1, marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value.toUpperCase()}</strong>
+    </span>
   )
 }
 
@@ -284,14 +310,16 @@ export function LeagueSubnav() {
 // ─── Snapshot cards ───────────────────────────────────────────────────────────
 export function LeagueSnapshot({ league, facts }: { league: LeagueDetail; facts: LeagueFacts }) {
   const tiles: { label: string; value: React.ReactNode; sub?: string; accent?: string }[] = []
+  const updated = league.lastSyncedAt ?? league.strengthCalculatedAt
   if (facts.nationalRank != null) tiles.push({ label: 'National rank', value: `#${facts.nationalRank}`, sub: `of ${facts.leagueCount} leagues`, accent: PINK })
   tiles.push({ label: 'Strength', value: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{facts.stars}<StarStrength stars={facts.stars} size={11} /></span>, sub: strengthLabel(facts.stars), accent: GOLD_DK })
-  tiles.push({ label: 'Clubs', value: String(league.ladder.length || league.rankedTeams.length), sub: `${league.rankedTeams.length} nationally ranked` })
+  tiles.push({ label: 'Clubs tracked', value: String(league.ladder.length || league.rankedTeams.length), sub: `${league.rankedTeams.length} nationally ranked` })
   if (facts.avgRating != null) tiles.push({ label: 'Average club rating', value: facts.avgRating.toFixed(1), sub: facts.medianRating != null ? `median ${facts.medianRating.toFixed(1)}` : undefined })
   if (facts.bestClub) tiles.push({ label: 'Highest ranked club', value: `#${facts.bestClub.rank}`, sub: facts.bestClub.clubName, accent: GOLD_DK })
   if (facts.leader) tiles.push({ label: 'Ladder leader', value: facts.leader.clubName.split(' ').slice(0, 2).join(' '), sub: `${facts.leader.wins}-${facts.leader.losses} this season`, accent: UP })
+  if (facts.top25 > 0) tiles.push({ label: 'Top 25 clubs', value: String(facts.top25), sub: 'national elite', accent: PINK })
   if (facts.top100 > 0) tiles.push({ label: 'Top 100 clubs', value: String(facts.top100), sub: facts.top25 > 0 ? `${facts.top25} in the Top 25` : 'nationally ranked', accent: PINK })
-  tiles.push({ label: 'Tracked since', value: '2026', sub: league.primarySource === 'MANUAL_IMAGE' ? 'via ladder imagery' : 'live ladder data' })
+  if (updated) tiles.push({ label: 'Recently updated', value: new Date(updated).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }), sub: league.primarySource === 'MANUAL_IMAGE' ? 'via ladder imagery' : 'live ladder data' })
 
   return (
     <Section id="snapshot" pad={false}>
@@ -300,7 +328,7 @@ export function LeagueSnapshot({ league, facts }: { league: LeagueDetail; facts:
           <Reveal key={t.label} delay={i * 0.04}>
             <div className="gn-card" style={{ padding: '16px 18px', height: '100%', borderTop: `3px solid ${t.accent ?? 'rgba(17,17,17,0.14)'}` }}>
               <div className="font-condensed" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: FAINT, marginBottom: 8 }}>{t.label}</div>
-              <div className="font-display" style={{ fontSize: 'clamp(1.3rem, 2.4vw, 1.7rem)', lineHeight: 1, color: TEXT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.value}</div>
+              <div className="font-display snap-value" style={{ fontSize: 'clamp(1.3rem, 2.4vw, 1.7rem)', lineHeight: 1, color: TEXT }}>{t.value}</div>
               {t.sub && <div className="font-condensed" style={{ color: MUTE, fontSize: 11.5, marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.sub}</div>}
             </div>
           </Reveal>
@@ -308,7 +336,9 @@ export function LeagueSnapshot({ league, facts }: { league: LeagueDetail; facts:
       </div>
       <style>{`
         .snap-grid { grid-template-columns: repeat(4, 1fr); }
+        .snap-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         @media (max-width: 960px) { .snap-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .snap-grid { grid-template-columns: 1fr; } .snap-value { white-space: normal; } }
       `}</style>
     </Section>
   )
@@ -329,8 +359,9 @@ export function LeagueStrength({ league, facts }: { league: LeagueDetail; facts:
   return (
     <Section id="strength" band>
       <SectionHead
-        kicker="Why this rating"
-        title={<>LEAGUE <span style={{ color: PINK }}>STRENGTH</span></>}
+        kicker="Why this league is ranked here"
+        title={<>RANKED <span style={{ color: PINK }}>HERE</span></>}
+        sub="Strength distribution, depth and nationally ranked clubs from the current data."
       />
       <div className="str-grid" style={{ display: 'grid', gap: 18 }}>
         <Reveal>
@@ -409,16 +440,14 @@ export function LeagueNews({ leagueName }: { leagueName: string }) {
   const norm = (s: string) => s.toLowerCase().replace(/\s*-\s*a grade.*$/i, '').trim()
   const key = norm(leagueName)
   const mine = allArticles().filter(a => a.tags.league && norm(a.tags.league).includes(key))
-  const general = allArticles().filter(a => !mine.includes(a)).slice(0, 3)
   const lead = mine[0]
-  const rest = (lead ? mine.slice(1) : []).concat(lead ? [] : []).slice(0, 3)
-  const fill = rest.length < 3 ? general.slice(0, 3 - rest.length) : []
+  const rest = (lead ? mine.slice(1) : mine).slice(0, 3)
 
   return (
     <Section id="news" band>
       <SectionHead
         title={<>LEAGUE <span style={{ color: PINK }}>NEWS</span></>}
-        sub={lead ? `The latest coverage of the ${leagueName}.` : 'Country netball coverage from across the network.'}
+        sub={`Articles specifically tagged to the ${leagueName}.`}
         to="/news" toLabel="All stories"
       />
       <div className="lnews-grid" style={{ display: 'grid', gap: 16 }}>
@@ -435,7 +464,7 @@ export function LeagueNews({ leagueName }: { leagueName: string }) {
           </Reveal>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[...rest, ...fill].map((a, i) => (
+          {rest.map((a, i) => (
             <Reveal key={a.slug} delay={0.05 + i * 0.05}>
               <Link to={newsPath(a.slug)} className="gn-card gn-card-hover" style={{ display: 'flex', gap: 13, padding: 11, textDecoration: 'none', color: TEXT }}>
                 <span style={{ width: 86, flexShrink: 0 }}><EditorialImage seed={a.heroSeed} ratio="1 / 1" rounded={9} /></span>
@@ -447,9 +476,10 @@ export function LeagueNews({ leagueName }: { leagueName: string }) {
               </Link>
             </Reveal>
           ))}
-          {!lead && [...rest, ...fill].length === 0 && (
-            <div className="gn-card" style={{ padding: 26 }}>
-              <span className="font-condensed" style={{ color: MUTE, fontSize: 13 }}>League coverage begins as stories are published.</span>
+          {!lead && rest.length === 0 && (
+            <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
+              <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase' }}>No league stories yet</div>
+              <p style={{ color: MUTE, margin: '8px 0 0', lineHeight: 1.6 }}>When a published article is tagged to the {leagueName}, it will appear here automatically.</p>
             </div>
           )}
         </div>
@@ -507,6 +537,55 @@ export function RelatedLeagues({ league, allLeagues }: { league: LeagueDetail; a
       </Reveal>
     </Section>
   )
+}
+
+// ─── Desktop sidebar ─────────────────────────────────────────────────────────
+export function LeagueSidebar({ league, facts }: { league: LeagueDetail; facts: LeagueFacts }) {
+  const id = leagueAccent(league.name)
+  const [, bump] = useState(0)
+  useEffect(() => { loadPublished().then(() => bump(x => x + 1)) }, [])
+  const norm = (s: string) => s.toLowerCase().replace(/\s*-\s*a grade.*$/i, '').trim()
+  const key = norm(league.name)
+  const news = allArticles().filter(a => a.tags.league && norm(a.tags.league).includes(key)).slice(0, 2)
+  const strongest = league.rankedTeams.slice(0, 4)
+
+  return (
+    <aside className="league-sidebar" style={{ position: 'sticky', top: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="gn-card" style={{ padding: 18, borderTop: `3px solid ${id.accent}` }}>
+        <SideLabel>National league rank</SideLabel>
+        <strong className="font-display" style={{ fontSize: 34, color: facts.nationalRank != null ? PINK : TEXT }}>{facts.nationalRank != null ? `#${facts.nationalRank}` : 'Pending'}</strong>
+        {facts.leagueCount > 0 && <small className="font-condensed" style={{ display: 'block', color: MUTE, marginTop: 5 }}>of {facts.leagueCount} tracked leagues</small>}
+      </div>
+      <div className="gn-card" style={{ padding: 18 }}>
+        <SideLabel>Strength rating</SideLabel>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <strong className="font-display" style={{ fontSize: 30 }}>{facts.stars}/5</strong>
+          <StarStrength stars={facts.stars} size={12} />
+        </div>
+        <small style={{ color: MUTE }}>{strengthLabel(facts.stars)}</small>
+      </div>
+      {facts.leader && <Link to={teamPath(facts.leader.clubId)} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>Ladder leader</SideLabel><strong style={{ display: 'block', lineHeight: 1.1 }}>{facts.leader.clubName}</strong><small style={{ color: MUTE }}>{facts.leader.wins}-{facts.leader.losses}{facts.leader.draws ? `-${facts.leader.draws}` : ''} · {facts.leader.points} pts</small></Link>}
+      {strongest.length > 0 && (
+        <div className="gn-card" style={{ padding: 18 }}>
+          <SideLabel>Strongest clubs</SideLabel>
+          {strongest.map(t => (
+            <Link key={t.clubId} to={teamPath(t.clubId)} style={{ display: 'flex', alignItems: 'center', gap: 9, color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}>
+              <TeamLogo name={t.clubName} size={28} />
+              <span style={{ minWidth: 0, flex: 1 }}><strong style={{ display: 'block', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.clubName}</strong><small style={{ color: MUTE }}>#{t.rank} · {t.powerRating.toFixed(1)}</small></span>
+            </Link>
+          ))}
+        </div>
+      )}
+      {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest league news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
+      <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
+      <div className="gn-card" aria-disabled="true" style={{ padding: 18, background: PINK, color: '#fff' }}><SideLabel color="rgba(255,255,255,0.72)">Claim league</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Claiming coming soon</strong></div>
+      <style>{`@media(max-width:980px){.league-sidebar{position:static!important;margin-top:18px}}`}</style>
+    </aside>
+  )
+}
+
+function SideLabel({ children, color = FAINT }: { children: React.ReactNode; color?: string }) {
+  return <div className="font-condensed" style={{ color, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>{children}</div>
 }
 
 // ─── Club search (league-scoped, instant) ────────────────────────────────────
@@ -619,13 +698,14 @@ export function LeagueHighlights({ league, facts }: { league: LeagueDetail; fact
 // ─── League statistics ────────────────────────────────────────────────────────
 export function LeagueStats({ league, facts }: { league: LeagueDetail; facts: LeagueFacts }) {
   const rows: { label: string; value: string; sub?: string }[] = []
+  if (facts.bestClub) rows.push({ label: 'Strongest club', value: facts.bestClub.clubName, sub: `#${facts.bestClub.rank} nationally` })
+  if (facts.leader) rows.push({ label: 'Ladder leader', value: facts.leader.clubName, sub: `${facts.leader.points} points` })
   if (facts.avgRating != null) rows.push({ label: 'Average club rating', value: facts.avgRating.toFixed(1) })
-  if (facts.medianRating != null) rows.push({ label: 'Median club rating', value: facts.medianRating.toFixed(1) })
-  if (facts.bestClub) rows.push({ label: 'Highest rated club', value: facts.bestClub.powerRating.toFixed(1), sub: facts.bestClub.clubName })
-  if (facts.lowestClub && facts.lowestClub !== facts.bestClub) rows.push({ label: 'Lowest rated club', value: facts.lowestClub.powerRating.toFixed(1), sub: facts.lowestClub.clubName })
-  if (facts.avgPercent != null) rows.push({ label: 'Average percentage', value: `${facts.avgPercent.toFixed(0)}%` })
+  if (facts.bestClub) rows.push({ label: 'Highest rating', value: facts.bestClub.powerRating.toFixed(1), sub: facts.bestClub.clubName })
+  if (facts.lowestClub && facts.lowestClub.clubId !== facts.bestClub?.clubId) rows.push({ label: 'Lowest rating', value: facts.lowestClub.powerRating.toFixed(1), sub: facts.lowestClub.clubName })
+  if (facts.biggestClimber) rows.push({ label: 'Most improved club', value: facts.biggestClimber.clubName, sub: `up ${facts.biggestClimber.rankMovement} places` })
+  if (facts.bestForm) rows.push({ label: 'Best form', value: facts.bestForm.clubName, sub: `${winStreak(facts.bestForm.recentForm)} straight wins` })
   if (facts.depth != null) rows.push({ label: 'League depth', value: `${facts.depth.toFixed(1)} pts`, sub: 'gap between halves, lower is deeper' })
-  if (facts.balance != null) rows.push({ label: 'Competitive balance', value: `${facts.balance}/100`, sub: 'higher is more even' })
   rows.push({ label: 'Clubs tracked', value: String(league.ladder.length || league.rankedTeams.length), sub: league.currentSeason ?? undefined })
 
   return (

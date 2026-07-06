@@ -5,11 +5,11 @@ import { Swords, Users, Heart, ChevronRight } from 'lucide-react'
 const groups = [
   {
     icon: Swords,
-    label: 'A Grade Players',
+    label: 'Senior Players',
     tag: 'Competes',
-    tagColor: '#ff2c91',
+    tagColor: '#d71920',
     headline: 'YOUR TEAM.\nONE SHOT.',
-    desc: 'Your A Grade side goes head-to-head with the best country clubs in Australia. Premiership on the line. National title at stake.',
+    desc: 'Your Senior side goes head-to-head with the best country clubs in Australia. Premiership on the line. National title at stake.',
     stat: '14 Players',
     statLabel: 'per squad',
   },
@@ -29,7 +29,7 @@ const groups = [
     tag: 'Celebrates',
     tagColor: '#4dd9f4',
     headline: 'THE CROWD\nTHAT MATTERS.',
-    desc: 'Cheer from the stands, take in the Gold Coast and celebrate a season\'s worth of effort alongside every club in the country.',
+    desc: 'Cheer from the stands, take in the future host city and celebrate a season\'s worth of effort alongside every club in the country.',
     stat: 'No limit',
     statLabel: 'on supporters',
   },
@@ -48,7 +48,7 @@ export default function BringTheClub() {
 
       {/* Atmospheric glows */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,44,145,0.08) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(215,25,32,0.08) 0%, transparent 70%)' }} />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(244,193,77,0.06) 0%, transparent 70%)' }} />
 
@@ -63,17 +63,17 @@ export default function BringTheClub() {
           className="mb-20"
         >
           <div className="flex items-center gap-4 mb-6">
-            <div className="h-[3px] w-10 bg-[#ff2c91]" />
-            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#ff2c91]">Who It's For</span>
+            <div className="h-[3px] w-10 bg-[#d71920]" />
+            <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-[#d71920]">Who It's For</span>
           </div>
           <div className="grid lg:grid-cols-[1fr,auto] items-end gap-8">
             <h2 className="font-display leading-none text-white"
               style={{ fontSize: 'clamp(3.5rem, 8vw, 8rem)' }}>
               BRING THE<br />
-              <span style={{ color: '#ff2c91' }}>WHOLE CLUB</span>
+              <span style={{ color: '#d71920' }}>WHOLE CLUB</span>
             </h2>
             <p className="text-white/50 text-lg leading-relaxed max-w-sm lg:pb-3">
-              The A Grade team competes. Every other member of your club travels, cheers and celebrates.
+              The Senior team competes. Every other member of your club travels, cheers and celebrates.
             </p>
           </div>
         </motion.div>
@@ -155,11 +155,11 @@ export default function BringTheClub() {
           <button
             onClick={scrollToRegister}
             className="group shrink-0 flex items-center gap-3 font-bold text-sm px-8 py-4 rounded-full transition-all duration-300"
-            style={{ background: '#ff2c91', color: '#ffffff' }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
+            style={{ background: '#d71920', color: '#ffffff' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#a50f17')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#d71920')}
           >
-            Request Invitation
+            Join updates
             <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
           </button>
         </motion.div>

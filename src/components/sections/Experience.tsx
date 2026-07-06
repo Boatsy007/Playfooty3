@@ -7,7 +7,7 @@ const lineup = [
   { cat: 'SOUNDS',    label: 'Live Entertainment' },
   { cat: 'CELEBRATE', label: 'Awards Presentation' },
   { cat: 'EAT',       label: 'Food Trucks & Festival Zone' },
-  { cat: 'EXPLORE',   label: 'Gold Coast Experiences' },
+  { cat: 'EXPLORE',   label: 'future host city Experiences' },
   { cat: 'CAPTURED',  label: 'Professional Photography' },
   { cat: 'LIVE',      label: 'Livestream Coverage' },
   { cat: 'TRAVEL',    label: 'Club Travel Packages' },
@@ -18,7 +18,7 @@ export default function Experience() {
   const prefersReduced = useReducedMotion()
 
   return (
-    <section id="experience" className="overflow-hidden" style={{ background: '#ff2c91' }}>
+    <section id="experience" className="overflow-hidden" style={{ background: '#d71920' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-20 lg:py-28">
 
         {/* Header */}
@@ -39,7 +39,7 @@ export default function Experience() {
             </h2>
           </div>
           <p className="text-white/60 text-sm leading-relaxed max-w-xs pb-1">
-            Four days of competition, celebration and connection on the Gold Coast.
+            Four days of competition, celebration and connection on the future host city.
           </p>
         </motion.div>
 
@@ -80,7 +80,7 @@ export default function Experience() {
               <span
                 className="shrink-0 ml-4 font-condensed font-bold text-xs tracking-[0.18em] uppercase px-3 py-1.5 rounded-full transition-all duration-300"
                 style={{
-                  color: hovered === i ? '#ff2c91' : 'rgba(255,255,255,0.8)',
+                  color: hovered === i ? '#d71920' : 'rgba(255,255,255,0.8)',
                   background: hovered === i ? '#ffffff' : 'rgba(255,255,255,0.15)',
                   border: '1px solid rgba(255,255,255,0.3)',
                 }}

@@ -109,6 +109,23 @@ model League {
   facebookUrl        String?
   logoUrl            String?
 
+  // ── PlayFooty football data-source control centre ────────────────────────
+  // Additive fields only: existing netball/ranking systems continue to use the
+  // legacy provenance fields above until they are migrated deliberately.
+  sport                    String   @default("NETBALL") // NETBALL | FOOTBALL
+  primaryDataSource        String?  // PLAYHQ_API | PLAYHQ_SCRAPER | CSV_UPLOAD | OCR_UPLOAD | MANUAL_ENTRY
+  fallbackDataSources      String?  // JSON string array of the same source constants
+  playhqOrganisationId     String?
+  playhqCompetitionId      String?
+  playhqSeasonId           String?
+  scrapeEnabled            Boolean  @default(false)
+  apiEnabled               Boolean  @default(false)
+  manualEntryEnabled       Boolean  @default(false)
+  lastSyncAt               DateTime?
+  lastSuccessfulSyncAt     DateTime?
+  syncStatus               String   @default("NOT_CONFIGURED") // NOT_CONFIGURED | READY | RUNNING | SUCCESS | FAILED | NEEDS_REVIEW
+  dataSourceSyncError      String?
+
   // ── Never-destroy: soft-delete / archive / approval ──────────────────────
   archivedAt     DateTime?                            // soft-deleted / archived
   approvalStatus String    @default("APPROVED")       // PENDING | APPROVED | REJECTED
@@ -128,11 +145,153 @@ model League {
   clubSeasons  ClubLeagueSeason[]
   matches      Match[]
   rankingEntries RankingEntry[]
+  footballFixtures FootballFixture[]
+  footballResults  FootballResult[]
+  footballLadderEntries FootballLadderEntry[]
+  footballImports FootballDataImport[]
 
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   @@map("leagues")
+}
+
+// ─── PlayFooty football data-source control centre ───────────────────────────
+
+model FootballDataImport {
+  id              String   @id @default(uuid())
+  leagueId        String
+  sourceType      String   // PLAYHQ_API | PLAYHQ_SCRAPER | CSV_UPLOAD | OCR_UPLOAD | MANUAL_ENTRY
+  dataType        String   // FIXTURES | RESULTS | LADDER | TEAMS | GRADES | ROUNDS
+  sourceUrl       String?
+  payloadHash     String
+  dryRun          Boolean  @default(false)
+  status          String   @default("PENDING") // PENDING | PREVIEWED | COMMITTED | CONFLICT | FAILED | PUBLISHED
+  recordsFound    Int      @default(0)
+  recordsImported Int      @default(0)
+  conflictsFound  Int      @default(0)
+  confidence      Float    @default(0.5)
+  error           String?
+  payload         String?
+  scrapedAt       DateTime?
+  createdBy       String   @default("admin")
+  createdAt       DateTime @default(now())
+  publishedAt     DateTime?
+
+  league   League @relation(fields: [leagueId], references: [id])
+  conflicts FootballDataConflict[]
+
+  @@unique([leagueId, sourceType, dataType, payloadHash])
+  @@index([leagueId, dataType, status])
+  @@map("football_data_imports")
+}
+
+model FootballDataConflict {
+  id        String   @id @default(uuid())
+  importId  String
+  leagueId  String
+  entityType String  // FIXTURE | RESULT | LADDER
+  entityKey  String
+  existing   String?
+  incoming   String
+  status     String  @default("PENDING") // PENDING | APPROVED | REJECTED | MERGED
+  reason     String?
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+
+  import FootballDataImport @relation(fields: [importId], references: [id])
+
+  @@index([leagueId, status])
+  @@map("football_data_conflicts")
+}
+
+model FootballFixture {
+  id          String   @id @default(uuid())
+  leagueId    String
+  season      String
+  grade       String   @default("Senior Football")
+  round       String?
+  homeClubId  String?
+  awayClubId  String?
+  homeName    String
+  awayName    String
+  matchDate   DateTime?
+  venue       String?
+  sourceType  String
+  sourceUrl   String?
+  verified    Boolean  @default(false)
+  externalId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@unique([leagueId, season, grade, round, homeName, awayName])
+  @@index([leagueId, season, grade])
+  @@map("football_fixtures")
+}
+
+model FootballResult {
+  id           String   @id @default(uuid())
+  leagueId     String
+  season       String
+  grade        String   @default("Senior Football")
+  round        String?
+  homeClubId   String?
+  awayClubId   String?
+  homeName     String
+  awayName     String
+  homeGoals    Int      @default(0)
+  homeBehinds  Int      @default(0)
+  homePoints   Int      @default(0)
+  awayGoals    Int      @default(0)
+  awayBehinds  Int      @default(0)
+  awayPoints   Int      @default(0)
+  matchDate    DateTime?
+  venue        String?
+  sourceType   String
+  sourceUrl    String?
+  verified     Boolean  @default(false)
+  published    Boolean  @default(false)
+  externalId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@unique([leagueId, season, grade, round, homeName, awayName])
+  @@index([leagueId, season, grade, published])
+  @@map("football_results")
+}
+
+model FootballLadderEntry {
+  id              String   @id @default(uuid())
+  leagueId        String
+  season          String
+  grade           String   @default("Senior Football")
+  position        Int
+  clubId          String?
+  clubName        String
+  played          Int      @default(0)
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  draws           Int      @default(0)
+  pointsFor       Int      @default(0)
+  pointsAgainst   Int      @default(0)
+  percentage      Float    @default(0)
+  premiershipPoints Int    @default(0)
+  sourceType      String
+  verified        Boolean  @default(false)
+  published       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  league League @relation(fields: [leagueId], references: [id])
+
+  @@unique([leagueId, season, grade, clubName])
+  @@index([leagueId, season, grade, published])
+  @@map("football_ladder_entries")
 }
 
 // URL/endpoint for each data source per league

@@ -36,9 +36,11 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
           <div className="font-condensed lad-grid" style={{ display: 'grid', gap: 10, alignItems: 'center', padding: '12px clamp(12px, 2vw, 22px)', borderBottom: `2px solid ${TEXT}`, fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: FAINT }}>
             <span>Pos</span><span>Club</span>
             <span className="hide-sm" style={{ textAlign: 'center' }}>P</span>
-            <span style={{ textAlign: 'center' }}>W-L{league.ladder.some(r => r.draws > 0) ? '-D' : ''}</span>
-            <span className="hide-sm" style={{ textAlign: 'center' }}>GF / GA</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>W</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>L</span>
+            <span className="hide-sm" style={{ textAlign: 'center' }}>D</span>
             <span className="hide-sm" style={{ textAlign: 'right' }}>%</span>
+            <span className="hide-sm" style={{ textAlign: 'right' }}>Nat.</span>
             <span className="hide-sm" style={{ textAlign: 'center' }}>Form</span>
             <span style={{ textAlign: 'right' }}>Pts</span>
           </div>
@@ -82,11 +84,13 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
                   </span>
                 </span>
                 <span className="hide-sm" style={{ textAlign: 'center', color: MUTE, fontSize: 13 }}>{r.played}</span>
-                <span className="font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.wins}-{r.losses}{r.draws > 0 ? `-${r.draws}` : ''}</span>
-                <span className="hide-sm" style={{ textAlign: 'center', fontSize: 12.5, color: TEXT }}>{r.goalsFor}<span style={{ color: FAINT }}> / {r.goalsAgainst}</span></span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.wins}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.losses}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'center', fontSize: 15.5 }}>{r.draws}</span>
                 <span className="hide-sm" style={{ textAlign: 'right', fontSize: 13, fontWeight: 700, color: r.percentage >= 100 ? TEXT : MUTE }}>{r.percentage ? r.percentage.toFixed(0) : '·'}</span>
+                <span className="hide-sm font-display" style={{ textAlign: 'right', fontSize: 15.5, color: ranked ? PINK : FAINT }}>{ranked ? `#${ranked.rank}` : '·'}</span>
                 <span className="hide-sm" style={{ display: 'flex', justifyContent: 'center' }}>{ranked?.recentForm?.length ? <FormPips form={ranked.recentForm} /> : <span style={{ color: FAINT }}>·</span>}</span>
-                <span className="font-display" style={{ textAlign: 'right', fontSize: 19, color: isLeader ? GOLD_DK : TEXT }}>{r.points}</span>
+                <span className="font-display" style={{ textAlign: 'right', fontSize: 19, color: isLeader ? GOLD_DK : TEXT }}>{r.points}<small className="show-sm" style={{ display: 'none', color: MUTE, fontSize: 11, marginLeft: 6 }}>{r.wins}-{r.losses}{r.draws > 0 ? `-${r.draws}` : ''}</small></span>
               </button>
             )
           })}
@@ -101,8 +105,8 @@ export function LeagueLadder({ league, query, onQuery }: { league: LeagueDetail;
         </div>
       </Reveal>
       <style>{`
-        .lad-grid { grid-template-columns: 44px minmax(0,1fr) 40px 72px 88px 52px 118px 52px; }
-        @media (max-width: 820px) { .lad-grid { grid-template-columns: 34px minmax(0,1fr) 64px 46px; } }
+        .lad-grid { grid-template-columns: 44px minmax(0,1fr) 40px 38px 38px 38px 52px 58px 118px 52px; }
+        @media (max-width: 820px) { .lad-grid { grid-template-columns: 34px minmax(0,1fr) 64px; } .show-sm{display:inline!important} }
       `}</style>
     </Section>
   )
@@ -130,6 +134,7 @@ export function ClubRankingCards({ league, query, totalRanked }: { league: Leagu
           </span>
         </div>
       )}
+      {teams.length > 0 && <RankedClubTable teams={teams} posByClub={posByClub} />}
       <div className="crc-grid" style={{ display: 'grid', gap: 14 }}>
         {teams.map((t, i) => (
           <Reveal key={t.clubId} delay={Math.min(i, 6) * 0.04}>
@@ -138,9 +143,33 @@ export function ClubRankingCards({ league, query, totalRanked }: { league: Leagu
         ))}
       </div>
       <style>{`
-        .crc-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .crc-grid { display:none!important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .ranked-table-wrap{overflow:auto}.ranked-table{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;overflow:hidden}.ranked-table th{background:#062a5f;color:#fff;text-align:left;padding:12px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em}.ranked-table td{padding:13px 14px;border-bottom:1px solid ${LINE};vertical-align:middle}.ranked-table tr.top25{background:linear-gradient(90deg,rgba(215,25,32,.07),transparent 42%)}.ranked-club-cell{display:flex;align-items:center;gap:10px;min-width:0}.ranked-club-cell span{min-width:0}.ranked-club-cell b,.ranked-club-cell small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ranked-club-cell small{color:${MUTE};font-size:11px}.ranked-rank{font-size:23px;color:${PINK};font-weight:950;letter-spacing:-.06em}.ranked-rating{font-size:20px;color:${TEXT};font-weight:950}.ranked-table a{color:inherit;text-decoration:none}
+        @media (max-width: 760px) { .ranked-table-wrap{display:none}.crc-grid { display:grid!important; } }
       `}</style>
     </Section>
+  )
+}
+
+function RankedClubTable({ teams, posByClub }: { teams: LeagueRankedTeam[]; posByClub: Map<string, number | null> }) {
+  return (
+    <Reveal>
+      <div className="gn-card ranked-table-wrap" style={{ overflow: 'hidden' }}>
+        <table className="ranked-table">
+          <thead><tr><th>National Rank</th><th>Move</th><th>Club</th><th>Rating</th><th>Ladder</th><th>Form</th></tr></thead>
+          <tbody>{teams.map(t => (
+            <tr key={t.clubId} className={t.rank <= 25 ? 'top25' : ''}>
+              <td><Link to={teamPath(t.clubId)} className="ranked-rank">#{t.rank}</Link></td>
+              <td><Move delta={t.rankMovement ?? 0} /></td>
+              <td><Link to={teamPath(t.clubId)} className="ranked-club-cell"><TeamLogo name={t.clubName} size={38} /><span><b>{t.clubName}</b><small>{t.state}</small></span></Link></td>
+              <td><span className="ranked-rating">{t.powerRating.toFixed(1)}</span></td>
+              <td>{posByClub.get(t.clubId) != null ? ordinalPos(posByClub.get(t.clubId)!) : '—'}</td>
+              <td>{t.recentForm && t.recentForm.length > 0 ? <FormPips form={t.recentForm as FormResult[]} /> : <span style={{ color: FAINT }}>—</span>}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </Reveal>
   )
 }
 

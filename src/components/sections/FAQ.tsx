@@ -4,53 +4,53 @@ import { Plus } from 'lucide-react'
 
 const faqs = [
   {
-    q: 'Who is eligible to compete at CNCA?',
-    a: 'CNCA is open to A Grade premiership clubs from country and regional netball leagues across Australia. If your club holds an A Grade premiership from your local competition, you are eligible to request an invitation. Eligibility is assessed on a case-by-case basis.',
+    q: 'Who can follow the PlayFooty future showcase?',
+    a: 'PlayFooty is a future-facing showcase concept. No qualification, registration or invitation process is currently live; updates would be published once real criteria exist.',
     cat: 'Eligibility',
   },
   {
-    q: 'Can non-competing clubs attend CNCA as spectators?',
-    a: 'Absolutely. CNCA is a whole-of-community event and every club in Australia is encouraged to attend — regardless of whether they are competing. Whether you want to watch the national championship, celebrate your season or simply use CNCA as your club\'s annual Gold Coast trip, everyone is welcome.',
+    q: 'Can non-competing clubs attend PlayFooty as spectators?',
+    a: 'Absolutely. PlayFooty is a whole-of-community event and every club in Australia is encouraged to attend — regardless of whether they are competing. Whether you want to watch the national championship, celebrate your season or simply use PlayFooty as your club\'s annual future host city trip, everyone is welcome.',
     cat: 'Eligibility',
   },
   {
-    q: 'What states and territories are represented at CNCA?',
-    a: 'CNCA draws clubs from country and regional leagues across all Australian states and territories — New South Wales, Victoria, Queensland, Western Australia, South Australia, Tasmania, Northern Territory and the Australian Capital Territory.',
+    q: 'What states and territories are represented at PlayFooty?',
+    a: 'PlayFooty draws clubs from country and regional leagues across all Australian states and territories — New South Wales, Victoria, Queensland, Western Australia, South Australia, Tasmania, Northern Territory and the Australian Capital Territory.',
     cat: 'Event',
   },
   {
-    q: 'When and where is CNCA 2027?',
-    a: 'CNCA 2027 is held on the Gold Coast, Queensland in October 2027. The championship runs across four days with competition, events and celebrations scheduled throughout the weekend.',
+    q: 'When and where is PlayFooty future?',
+    a: 'The PlayFooty future showcase has no confirmed date or host city. The championship runs across four days with competition, events and celebrations scheduled throughout the weekend.',
     cat: 'Event',
   },
   {
     q: 'What happens during the championship weekend?',
-    a: 'The CNCA weekend is more than a netball competition. The four-day program includes the national championship, an opening function, a club awards night, live entertainment, a festival food zone and full access to Gold Coast experiences and tourism. It is designed as a complete end-of-season celebration.',
+    a: 'The PlayFooty weekend is more than a football competition. The four-day program includes the national championship, an opening function, a club awards night, live entertainment, a festival food zone and full access to future host city experiences and tourism. It is designed as a complete end-of-season celebration.',
     cat: 'Event',
   },
   {
-    q: 'Is CNCA just for A Grade players?',
-    a: 'No. CNCA is a whole-of-club event. The weekend is designed for A Grade players, coaches, club officials, committee members, volunteers, families, supporters and junior players attending as spectators. Everyone in your club community is part of CNCA.',
+    q: 'Is PlayFooty just for Senior players?',
+    a: 'No. PlayFooty is a whole-of-club event. The weekend is designed for Senior players, coaches, club futures, committee members, volunteers, families, supporters and junior players attending as spectators. Everyone in your club community is part of PlayFooty.',
     cat: 'Eligibility',
   },
   {
-    q: 'How do I request an invitation for my club?',
-    a: 'Complete the invitation request form on this website. You will be asked for your contact details, club name, league, state and season information. Our team will be in touch within 2 business days to confirm your eligibility and next steps.',
-    cat: 'Invitations',
+    q: 'How do I request an update for my club?',
+    a: 'Complete the interest update form on this website. You will be asked for your contact details, club name, league, state and season information. Our team will be in touch within 2 business days to confirm your eligibility and next steps.',
+    cat: 'Updates',
   },
   {
     q: 'Are group accommodation packages available?',
-    a: 'Yes. CNCA will partner with Gold Coast accommodation providers to offer group packages for competing and attending clubs. Accommodation information and booking details will be shared with clubs following their invitation request.',
+    a: 'Accommodation partnerships are not live. If a future event proceeds, real accommodation information would be published only after providers are confirmed.',
     cat: 'Travel & Accommodation',
   },
   {
     q: 'What is the format of the national championship?',
-    a: 'Full competition format details will be confirmed and communicated to invited clubs. The championship is designed for A Grade competition across the four-day event.',
+    a: 'Full competition format details will be confirmed and communicated to interested clubs. The championship is designed for Senior competition across the four-day event.',
     cat: 'Competition',
   },
   {
-    q: 'How many clubs will compete at CNCA?',
-    a: 'The championship field is invitation-only and places are limited. Invitations will be extended to eligible A Grade premiership clubs from across Australia. Exact numbers will be confirmed as the event develops.',
+    q: 'How many clubs may participate at PlayFooty?',
+    a: 'The championship field is future-facing and no places are currently open. Updates will be extended to interested community football clubs from across Australia. Exact numbers will be confirmed as the event develops.',
     cat: 'Competition',
   },
 ]
@@ -82,10 +82,10 @@ export default function FAQ() {
             Frequently Asked Questions
           </p>
           <h2 className="font-display leading-none mb-4" style={{ fontSize: 'clamp(3rem, 7vw, 6.5rem)', color: '#111111' }}>
-            EVERYTHING<br />YOU NEED TO <span style={{ color: '#ff2c91' }}>KNOW.</span>
+            EVERYTHING<br />YOU NEED TO <span style={{ color: '#d71920' }}>KNOW.</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '52ch' }}>
-            Got a question about CNCA? Find the answers here — or reach out to our team directly.
+            Got a question about PlayFooty? Find the answers here — or reach out to our team directly.
           </p>
         </motion.div>
 
@@ -142,7 +142,7 @@ export default function FAQ() {
                         className="font-display block leading-tight"
                         style={{
                           fontSize: 'clamp(1rem, 1.8vw, 1.35rem)',
-                          color: isOpen ? '#ff2c91' : '#111111',
+                          color: isOpen ? '#d71920' : '#111111',
                           transition: 'color 0.2s',
                         }}
                       >
@@ -153,7 +153,7 @@ export default function FAQ() {
                       animate={{ rotate: isOpen ? 45 : 0 }}
                       transition={{ duration: 0.2, ease }}
                       className="shrink-0 mt-1"
-                      style={{ color: isOpen ? '#ff2c91' : 'rgba(17,17,17,0.35)' }}
+                      style={{ color: isOpen ? '#d71920' : 'rgba(17,17,17,0.35)' }}
                     >
                       <Plus size={18} />
                     </motion.div>
@@ -202,9 +202,9 @@ export default function FAQ() {
           <a
             href="mailto:info@cnca.com.au"
             className="font-bold text-sm transition-colors duration-200"
-            style={{ color: '#ff2c91' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#cc1f6e')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#ff2c91')}
+            style={{ color: '#d71920' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#a50f17')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#d71920')}
           >
             Contact our team →
           </a>
