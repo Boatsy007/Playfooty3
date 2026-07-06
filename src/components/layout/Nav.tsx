@@ -76,11 +76,11 @@ export default function Nav() {
         className="fixed top-0 left-0 right-0 z-50"
         style={{
           height: NAV_H,
-          background: scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.96)',
+          background: scrolled ? 'rgba(4,31,66,0.97)' : '#041F42',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: scrolled ? '1px solid rgba(17,17,17,0.07)' : '1px solid transparent',
-          boxShadow: scrolled ? '0 2px 24px rgba(0,0,0,0.07)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent',
+          boxShadow: scrolled ? '0 2px 24px rgba(0,0,0,0.25)' : 'none',
           transition: 'background 0.35s, border-color 0.35s, box-shadow 0.35s',
         }}
         role="navigation"
@@ -109,9 +109,9 @@ export default function Nav() {
                 transition={{ duration: 0.45, delay: 0.08 + i * 0.05, ease }}
                 onClick={() => go(l.href, l.route)}
                 className="relative px-4 py-2.5 text-[14.5px] font-semibold tracking-wide transition-colors duration-200 group"
-                style={{ color: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
-                onMouseEnter={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); if (!isActive) e.currentTarget.style.color = '#111111' }}
-                onMouseLeave={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); e.currentTarget.style.color = isActive ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                style={{ color: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? '#ff2c91' : 'rgba(255,255,255,0.72)' }}
+                onMouseEnter={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); if (!isActive) e.currentTarget.style.color = '#ffffff' }}
+                onMouseLeave={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); e.currentTarget.style.color = isActive ? '#ff2c91' : 'rgba(255,255,255,0.72)' }}
               >
                 {l.label}
                 {/* Animated underline */}
@@ -130,7 +130,7 @@ export default function Nav() {
                   className="absolute bottom-0 left-3.5 right-3.5 rounded-full opacity-0 group-hover:opacity-100 group-hover:scale-x-100"
                   style={{
                     height: '2px',
-                    background: 'rgba(17,17,17,0.15)',
+                    background: 'rgba(255,255,255,0.28)',
                     transform: 'scaleX(0)',
                     transformOrigin: 'left',
                     transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1), opacity 0.2s',
@@ -169,8 +169,8 @@ export default function Nav() {
 
           {/* Mobile hamburger */}
           <motion.button
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl"
-            style={{ background: open ? 'rgba(17,17,17,0.06)' : 'transparent' }}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl text-white"
+            style={{ background: open ? 'rgba(255,255,255,0.12)' : 'transparent' }}
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-label={open ? 'Close menu' : 'Open menu'}
