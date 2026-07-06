@@ -3,10 +3,10 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 
 const attendees = [
-  { num: '01', title: 'PLAYERS', desc: 'A Grade premiers competing for the national title.', color: '#ff2c91' },
+  { num: '01', title: 'PLAYERS', desc: 'community clubs following the future showcase concept.', color: '#d71920' },
   { num: '02', title: 'COACHES', desc: 'Leading clubs and coaching staff from across Australia.', color: '#f4c14d' },
   { num: '03', title: 'CLUB OFFICIALS', desc: 'Committee members, administrators and volunteers.', color: '#4dd9f4' },
-  { num: '04', title: 'FAMILIES', desc: 'Support the journey and enjoy the Gold Coast.', color: '#ff2c91' },
+  { num: '04', title: 'FAMILIES', desc: 'Support the journey and enjoy the future host city.', color: '#d71920' },
   { num: '05', title: 'SUPPORTERS', desc: 'Celebrate the season together.', color: '#f4c14d' },
 ]
 
@@ -33,7 +33,7 @@ export default function HowItWorks() {
               MORE THAN THE<br />PLAYING GROUP
             </h2>
             <p className="text-sm leading-relaxed max-w-xs lg:pb-2" style={{ color: 'rgba(17,17,17,0.5)' }}>
-              CNCA brings together everyone who contributes to country netball.
+              PlayFooty brings together everyone who contributes to community football.
             </p>
           </div>
         </motion.div>
@@ -88,15 +88,15 @@ export default function HowItWorks() {
               THE CHAMPIONSHIP WEEKEND
             </p>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Competition by day. Celebration by night. Gold Coast, October 2027.
+              Competition by day. Celebration by night. future host city, Date TBC.
             </p>
           </div>
           <button
-            onClick={() => go('#invitation')}
+            onClick={() => go('#update')}
             className="group shrink-0 flex items-center gap-2.5 font-bold text-sm px-7 py-3.5 rounded-full transition-all duration-200"
-            style={{ background: '#ff2c91', color: '#ffffff' }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
+            style={{ background: '#d71920', color: '#ffffff' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#a50f17')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#d71920')}
           >
             Register Interest
             <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />

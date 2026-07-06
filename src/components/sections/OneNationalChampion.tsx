@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 
 const prizes = [
   'National Championship Trophy',
-  'Official CNCA Champion Recognition',
+  'PlayFooty Champion Recognition',
   'Major Prize Package',
   'National Exposure',
   'Championship Legacy',
@@ -44,17 +44,17 @@ export default function OneNationalChampion() {
             transition={{ duration: 0.8, ease }}
           >
             <h2 className="font-display text-white leading-none mb-6" style={{ fontSize: 'clamp(3.5rem, 9vw, 9rem)' }}>
-              ONE<br />NATIONAL<br /><span style={{ color: '#ff2c91' }}>CHAMPION</span>
+              ONE<br />NATIONAL<br /><span style={{ color: '#d71920' }}>CHAMPION</span>
             </h2>
             <p className="leading-relaxed mb-10" style={{ fontSize: 'clamp(0.95rem, 1.6vw, 1.05rem)', color: 'rgba(255,255,255,0.42)', maxWidth: '40ch' }}>
-              Only one club will leave the Gold Coast as the inaugural CNCA National Champion.
+              Only one club will leave the future host city as the inaugural PlayFooty National Champion.
             </p>
             <button
-              onClick={() => go('#invitation')}
+              onClick={() => go('#update')}
               className="group inline-flex items-center gap-2.5 font-bold rounded-full transition-all duration-200"
-              style={{ background: '#ff2c91', color: '#ffffff', fontSize: '0.875rem', padding: '1rem 2.5rem', letterSpacing: '0.06em' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#cc1f6e')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#ff2c91')}
+              style={{ background: '#d71920', color: '#ffffff', fontSize: '0.875rem', padding: '1rem 2.5rem', letterSpacing: '0.06em' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#a50f17')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#d71920')}
             >
               REQUEST INVITATION
               <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" />

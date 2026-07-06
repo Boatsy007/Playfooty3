@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 const roles = [
   {
     num: '01',
-    role: 'A Grade Players',
+    role: 'Senior Players',
     desc: 'Take the court for the national title',
     competes: true,
   },
@@ -34,7 +34,7 @@ const roles = [
   {
     num: '06',
     role: 'Club Community',
-    desc: 'Turn a premiership into a Gold Coast celebration',
+    desc: 'Turn a premiership into a future host city celebration',
     competes: false,
   },
 ]
@@ -71,14 +71,14 @@ export default function WhoItsFor() {
               CLUB
             </h2>
             <p className="text-white/50 text-base leading-relaxed max-w-xs mb-10">
-              The A Grade team competes. Everyone else travels, supports and celebrates on the Gold Coast.
+              The Senior team competes. Everyone else travels, supports and celebrates on the future host city.
             </p>
 
             {/* Legend */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-pink" />
-                <span className="text-xs text-white/60 font-semibold uppercase tracking-widest">A Grade competes</span>
+                <span className="text-xs text-white/60 font-semibold uppercase tracking-widest">Senior competes</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-white/30" />

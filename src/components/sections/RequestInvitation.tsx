@@ -20,7 +20,7 @@ interface FormData {
 
 const states = ['NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'NT', 'ACT']
 const premiershipOptions = [
-  "Yes — we won our A Grade premiership",
+  "Yes — we won our community football season",
   "We are a strong runner-up this season",
   "We are in contention — season not yet finished",
   "Not sure — we'd like to find out more",
@@ -32,7 +32,7 @@ const accommodationOptions = [
   "Not sure yet",
 ]
 
-export default function RequestInvitation() {
+export default function RequestUpdate() {
   const [submitted, setSubmitted] = useState(false)
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>()
 
@@ -55,15 +55,15 @@ export default function RequestInvitation() {
           >
             <SectionLabel>Apply Now</SectionLabel>
             <h2 className="text-3xl md:text-4xl font-extrabold text-navy-700 tracking-tight leading-tight mb-4">
-              Request Club Invitation
+              Join updates
             </h2>
             <p className="text-base text-navy-400 leading-relaxed mb-8">
-              Tell us about your club and we'll be in touch with invitation details, competition format and accommodation options. Places are limited and invitation-only.
+              Tell us about your club and we'll be in touch with future event updates, competition format and accommodation options. No places are currently open and future-facing.
             </p>
 
             <div className="space-y-4 mb-8">
               {[
-                { icon: Lock, text: 'Invitation-only — A Grade premiership clubs first' },
+                { icon: Lock, text: 'Future-facing — community football clubs first' },
                 { icon: Mail, text: "We'll be in touch with full event information" },
                 { icon: Users, text: 'Accommodation enquiries handled separately' },
               ].map(({ icon: Icon, text }) => (
@@ -80,11 +80,11 @@ export default function RequestInvitation() {
               <p className="text-xs font-bold text-navy-400 uppercase tracking-widest mb-3">Event Details</p>
               <div className="space-y-2">
                 {[
-                  ['Name', 'Country Netball Championships Australia'],
-                  ['Short Name', 'CNCA'],
-                  ['Date', 'October 2027'],
-                  ['Location', 'Gold Coast, Queensland'],
-                  ['Competition', 'A Grade — Invitation Only'],
+                  ['Name', 'PlayFooty Championship'],
+                  ['Short Name', 'PlayFooty'],
+                  ['Date', 'Date TBC'],
+                  ['Location', 'future host city, Queensland'],
+                  ['Competition', 'Senior — Update Only'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-3 text-sm">
                     <span className="text-navy-400 flex-shrink-0">{label}</span>
@@ -114,7 +114,7 @@ export default function RequestInvitation() {
                 </div>
                 <h3 className="text-2xl font-extrabold text-navy-700 mb-3">Request Received</h3>
                 <p className="text-navy-400 leading-relaxed max-w-sm mx-auto">
-                  Thank you for your interest in CNCA 2027. We'll be in touch with invitation details, competition format and accommodation information.
+                  Thank you for your interest in PlayFooty future. We'll be in touch with future event updates, competition format and accommodation information.
                 </p>
               </motion.div>
             ) : (
@@ -135,7 +135,7 @@ export default function RequestInvitation() {
                     <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Club Name *</label>
                     <input
                       {...register('clubName', { required: true })}
-                      placeholder="e.g. Mudgee Netball Club"
+                      placeholder="e.g. Mudgee Football Club"
                       className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.clubName ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
@@ -146,7 +146,7 @@ export default function RequestInvitation() {
                     <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">League / Association *</label>
                     <input
                       {...register('league', { required: true })}
-                      placeholder="e.g. Central Western Netball"
+                      placeholder="e.g. Central Western Football"
                       className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.league ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
@@ -184,7 +184,7 @@ export default function RequestInvitation() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">A Grade Premiership Status *</label>
+                  <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Community Clubship Status *</label>
                   <select
                     {...register('premiership', { required: true })}
                     className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 bg-white ${errors.premiership ? 'border-red-400' : 'border-navy-200'}`}
@@ -228,11 +228,11 @@ export default function RequestInvitation() {
                 </div>
 
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Submitting...' : 'Request Club Invitation'}
+                  {isSubmitting ? 'Submitting...' : 'Join updates'}
                 </Button>
 
                 <p className="text-center text-xs text-navy-400">
-                  Your details are used solely to assess invitation eligibility and respond to your enquiry.
+                  Your details are used solely to assess update eligibility and respond to your enquiry.
                 </p>
               </form>
             )}

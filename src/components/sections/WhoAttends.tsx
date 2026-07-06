@@ -52,7 +52,7 @@ export default function WhoAttends() {
             className="font-display text-white leading-none"
             style={{ fontSize: 'clamp(4rem, 14vw, 13rem)', textShadow: '0 4px 40px rgba(0,0,0,0.5)' }}
           >
-            THE WHOLE<br /><span style={{ color: '#ff2c91' }}>CLUB</span>
+            THE WHOLE<br /><span style={{ color: '#d71920' }}>CLUB</span>
           </h2>
         </motion.div>
 
@@ -75,7 +75,7 @@ export default function WhoAttends() {
               {i < roles.length - 1 && (
                 <span
                   className="mx-3 lg:mx-5 font-condensed font-bold"
-                  style={{ color: '#ff2c91', fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}
+                  style={{ color: '#d71920', fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}
                 >
                   ·
                 </span>

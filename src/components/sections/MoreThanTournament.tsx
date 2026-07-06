@@ -5,13 +5,13 @@ import SectionLabel from '../ui/SectionLabel'
 const features = [
   {
     icon: Trophy,
-    title: 'A Grade Championship',
-    desc: 'A Grade premiership clubs compete for the CNCA title — the national standard for country netball excellence.',
+    title: 'Senior Championship',
+    desc: 'community football clubs follow the PlayFooty concept — the national standard for community football excellence.',
   },
   {
     icon: PartyPopper,
     title: 'Welcome Function',
-    desc: 'All clubs, coaches, families and supporters welcomed together at the official CNCA welcome event.',
+    desc: 'All clubs, coaches, families and supporters welcomed together at the PlayFooty welcome event.',
   },
   {
     icon: Music,
@@ -21,7 +21,7 @@ const features = [
   {
     icon: Award,
     title: 'Awards Presentation',
-    desc: 'A formal presentation ceremony honouring the CNCA champion club and standout players of the championship.',
+    desc: 'A formal presentation ceremony honouring the PlayFooty champion club and standout players of the championship.',
   },
   {
     icon: Camera,
@@ -36,16 +36,16 @@ const features = [
   {
     icon: Hotel,
     title: 'Accommodation Packages',
-    desc: 'Group accommodation options available for teams, supporters and families travelling to the Gold Coast.',
+    desc: 'Group accommodation options available for teams, supporters and families travelling to the future host city.',
   },
   {
     icon: Users,
     title: 'Supporter Experience',
-    desc: 'Designed for the whole club to attend. Families, partners and supporters are a central part of the CNCA weekend.',
+    desc: 'Designed for the whole club to attend. Families, partners and supporters are a central part of the PlayFooty weekend.',
   },
   {
     icon: Palmtree,
-    title: 'Gold Coast Weekend',
+    title: 'future host city Weekend',
     desc: 'Extend your trip and explore the beaches, attractions and dining of Australia\'s favourite holiday destination.',
   },
 ]
@@ -75,7 +75,7 @@ export default function MoreThanTournament() {
             More Than A Tournament
           </h2>
           <p className="text-lg text-navy-400 max-w-xl mx-auto leading-relaxed">
-            CNCA is built around the A Grade championship, but the weekend is designed for every person who makes your club what it is.
+            PlayFooty is built around the Senior championship, but the weekend is designed for every person who makes your club what it is.
           </p>
         </motion.div>
 

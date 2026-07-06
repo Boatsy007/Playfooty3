@@ -1,9 +1,9 @@
 import { motion, useReducedMotion } from 'framer-motion'
 
 const stats = [
-  { num: '100+',   numSize: 'clamp(3rem, 7vw, 6.5rem)', label: 'Leagues & Associations', sub: 'Country and regional netball across Australia',  accent: '#ff2c91' },
+  { num: '100+',   numSize: 'clamp(3rem, 7vw, 6.5rem)', label: 'Leagues & Associations', sub: 'Country and regional football across Australia',  accent: '#d71920' },
   { num: '8',      numSize: 'clamp(4rem, 9vw, 8rem)',   label: 'States & Territories',   sub: 'One national picture',                            accent: '#f4c14d' },
-  { num: 'Weekly', numSize: 'clamp(2.4rem, 5vw, 5rem)', label: 'Ranking Updates',        sub: 'Recalculated from live ladder data',              accent: '#ff2c91' },
+  { num: 'Weekly', numSize: 'clamp(2.4rem, 5vw, 5rem)', label: 'Ranking Updates',        sub: 'Recalculated from live ladder data',              accent: '#d71920' },
   { num: '1',      numSize: 'clamp(4rem, 9vw, 8rem)',   label: 'National No. 1',         sub: 'Settled on the court, tracked here',              accent: '#4dd9f4' },
 ]
 
@@ -23,10 +23,10 @@ export default function Stats() {
           transition={{ duration: 0.7, ease }}
         >
           <h2 className="font-display leading-none mb-4" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', color: '#111111' }}>
-            ONE NATIONAL<br /><span style={{ color: '#ff2c91' }}>PICTURE</span>
+            ONE NATIONAL<br /><span style={{ color: '#d71920' }}>PICTURE</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '52ch' }}>
-            Got Netty tracks A Grade country netball from leagues across Australia and ranks every club on one national ladder — updated every week of the season.
+            PlayFooty tracks Senior community football from leagues across Australia and ranks every club on one national ladder — updated every week of the season.
           </p>
         </motion.div>
       </div>

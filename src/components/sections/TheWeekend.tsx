@@ -7,7 +7,7 @@ const events = [
   { num: '03', title: 'Awards Night' },
   { num: '04', title: 'Live Entertainment' },
   { num: '05', title: 'Festival Food Zone' },
-  { num: '06', title: 'Gold Coast Experiences' },
+  { num: '06', title: 'future host city Experiences' },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -46,13 +46,13 @@ export default function TheWeekend() {
           className="max-w-4xl"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-xs uppercase mb-5" style={{ color: '#f4c14d' }}>
-            Gold Coast · October 2027
+            future host city · Date TBC
           </p>
           <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(3rem, 9vw, 9rem)' }}>
-            THE <span style={{ color: '#ff2c91' }}>EVENT</span><br />EXPERIENCE
+            THE <span style={{ color: '#d71920' }}>EVENT</span><br />EXPERIENCE
           </h2>
           <p className="leading-relaxed" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.45)', maxWidth: '52ch' }}>
-            Four days of championship netball, club celebrations and Gold Coast experiences. More than a tournament, this is the annual gathering of Australia's country netball community.
+            Four days of championship football, club celebrations and future host city experiences. More than a tournament, this is the annual gathering of Australia's community football community.
           </p>
         </motion.div>
 
@@ -71,13 +71,13 @@ export default function TheWeekend() {
               onMouseLeave={() => setHovered(null)}
               className="py-4 sm:py-5 pr-4 sm:pr-6 cursor-default"
               style={{
-                borderTop: `1px solid ${hovered === i ? 'rgba(255,44,145,0.65)' : 'rgba(255,255,255,0.15)'}`,
+                borderTop: `1px solid ${hovered === i ? 'rgba(215,25,32,0.65)' : 'rgba(255,255,255,0.15)'}`,
                 transition: 'border-color 0.25s',
               }}
             >
               <span
                 className="font-condensed font-bold tracking-[0.2em] block mb-2 transition-colors duration-250"
-                style={{ fontSize: '0.7rem', color: hovered === i ? '#ff2c91' : 'rgba(255,255,255,0.38)' }}
+                style={{ fontSize: '0.7rem', color: hovered === i ? '#d71920' : 'rgba(255,255,255,0.38)' }}
               >
                 {num}
               </span>

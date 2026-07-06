@@ -61,7 +61,7 @@ export default function StatCards({ entries, leagues, strongestLeague, biggestCl
     <Section>
       <SectionHead
         title={<>BY THE <span style={{ color: PINK }}>NUMBERS</span></>}
-        sub={weekLabel ? `The state of country netball, ${weekLabel}.` : 'The state of country netball this week.'}
+        sub={weekLabel ? `The state of community football, ${weekLabel}.` : 'The state of community football this week.'}
       />
 
       <div className="stat-grid" style={{ display: 'grid', gap: 16 }}>

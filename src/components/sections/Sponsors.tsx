@@ -3,35 +3,35 @@ import { ChevronRight } from 'lucide-react'
 
 const tiers = [
   {
-    tier: 'Major Partner',
+    tier: 'Future Major Partner',
     label: 'MAJOR PARTNER',
-    desc: 'The naming rights partner of the Country Netball Championships Australia. Premium brand exposure across all championship assets, digital platforms and event activations.',
+    desc: 'Future naming-rights opportunity for the PlayFooty Championship concept. No sponsor is currently presented as live.',
     accent: '#f4c14d',
     placeholder: { width: 260, height: 80, label: 'Your Brand Here' },
     size: 'lg',
   },
   {
-    tier: 'Official Partners',
-    label: 'OFFICIAL PARTNERS',
-    desc: 'Core partnership tier — category exclusivity, on-court branding, digital presence and championship access.',
-    accent: '#ff2c91',
+    tier: 'Future Partners',
+    label: 'FUTURE PARTNERS',
+    desc: 'Future partnership tier — category, digital and event concepts shown for sponsor discussions only.',
+    accent: '#d71920',
     placeholders: [
-      { width: 160, height: 56, label: 'Official Accommodation' },
-      { width: 160, height: 56, label: 'Official Apparel' },
-      { width: 160, height: 56, label: 'Official Ball' },
+      { width: 160, height: 56, label: 'Future Accommodation' },
+      { width: 160, height: 56, label: 'Future Apparel' },
+      { width: 160, height: 56, label: 'Future Ball' },
     ],
     size: 'md',
   },
   {
     tier: 'Championship Partners',
     label: 'CHAMPIONSHIP PARTNERS',
-    desc: 'Supporting partner opportunities across media, nutrition, recovery, travel and more.',
+    desc: 'Future supporting partner opportunities across media, travel and community storytelling.',
     accent: '#4dd9f4',
     placeholders: [
-      { width: 120, height: 48, label: 'Official Airline' },
-      { width: 120, height: 48, label: 'Official Media' },
-      { width: 120, height: 48, label: 'Official Recovery' },
-      { width: 120, height: 48, label: 'Official Nutrition' },
+      { width: 120, height: 48, label: 'Future Airline' },
+      { width: 120, height: 48, label: 'Future Media' },
+      { width: 120, height: 48, label: 'Future Recovery' },
+      { width: 120, height: 48, label: 'Future Nutrition' },
     ],
     size: 'sm',
   },
@@ -39,11 +39,11 @@ const tiers = [
 
 const opportunities = [
   { title: 'Championship Naming Rights', desc: 'Own the event name. The ultimate sponsorship asset in grassroots Australian sport.' },
-  { title: 'Digital & Social Media', desc: 'Premium placement across the CNCA website and all championship social channels.' },
+  { title: 'Digital & Social Media', desc: 'Premium placement across the PlayFooty website and all championship social channels.' },
   { title: 'On-Court Branding', desc: 'Court-side signage, banner placement and uniform branding throughout the championship.' },
   { title: 'Event Activation Space', desc: 'Dedicated activation zones within the championship precinct for the full four days.' },
-  { title: 'Category Exclusivity', desc: 'Own your category. No competing brands within your partnership tier and space.' },
-  { title: 'Community & Legacy', desc: "Associate your brand with Australia's growing country netball community." },
+  { title: 'Category Exclusivity', desc: 'Category exclusivity can be scoped once real partner packages exist.' },
+  { title: 'Community & Legacy', desc: "Associate your brand with Australia's growing community football community." },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -68,15 +68,15 @@ export default function Sponsors() {
               Partnership Opportunities
             </p>
             <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3rem, 8vw, 7.5rem)' }}>
-              BECOME A<br /><span style={{ color: '#ff2c91' }}>CNCA PARTNER.</span>
+              BECOME A<br /><span style={{ color: '#d71920' }}>PlayFooty PARTNER.</span>
             </h2>
           </div>
           <div>
             <p style={{ fontSize: 'clamp(1rem, 1.6vw, 1.1rem)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
-              CNCA is Australia's national country netball championship — a premium, invitation-only event reaching clubs, families and communities from every state and territory.
+              PlayFooty is Australia's national community football championship — a premium, future-facing event reaching clubs, families and communities from every state and territory.
             </p>
             <p className="mt-3" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.7 }}>
-              Partner with CNCA and align your brand with community, aspiration and the spirit of grassroots Australian sport.
+              Partner with PlayFooty and align your brand with community, aspiration and the spirit of grassroots Australian sport.
             </p>
           </div>
         </motion.div>
@@ -176,7 +176,7 @@ export default function Sponsors() {
                   paddingLeft: i % 3 !== 0 ? '2rem' : '0',
                 }}
               >
-                <div className="w-1 h-4 mb-3 rounded-full" style={{ background: '#ff2c91' }} />
+                <div className="w-1 h-4 mb-3 rounded-full" style={{ background: '#d71920' }} />
                 <h3 className="font-display text-white leading-none mb-2" style={{ fontSize: 'clamp(0.95rem, 1.5vw, 1.2rem)' }}>
                   {title.toUpperCase()}
                 </h3>
@@ -200,20 +200,20 @@ export default function Sponsors() {
             href="mailto:info@cnca.com.au"
             className="group inline-flex items-center gap-2.5 font-bold rounded-full transition-all duration-200"
             style={{
-              background: '#ff2c91',
+              background: '#d71920',
               color: '#ffffff',
               fontSize: '0.8125rem',
               padding: '1rem 2rem',
               letterSpacing: '0.06em',
-              boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
+              boxShadow: '0 8px 32px rgba(215,25,32,0.3)',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#cc1f6e'
-              e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,44,145,0.45)'
+              e.currentTarget.style.background = '#a50f17'
+              e.currentTarget.style.boxShadow = '0 12px 40px rgba(215,25,32,0.45)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#ff2c91'
-              e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,44,145,0.3)'
+              e.currentTarget.style.background = '#d71920'
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(215,25,32,0.3)'
             }}
           >
             ENQUIRE ABOUT PARTNERSHIP

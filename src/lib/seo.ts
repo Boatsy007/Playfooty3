@@ -5,7 +5,7 @@
  */
 import { useEffect } from 'react'
 
-const SITE = 'https://gotnetty.com.au'
+const SITE = 'https://playfooty.com.au'
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)

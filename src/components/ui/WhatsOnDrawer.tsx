@@ -2,13 +2,13 @@ import { Drawer } from 'vaul'
 import { Calendar, MapPin, Lock, Trophy, Music, Utensils, Camera, Award, Users, Tv } from 'lucide-react'
 
 const lineup = [
-  { icon: Trophy,  cat: 'COMPETE',   label: 'National Championship',      color: '#ff2c91' },
+  { icon: Trophy,  cat: 'COMPETE',   label: 'National Championship',      color: '#d71920' },
   { icon: Users,   cat: 'SOCIAL',    label: 'Opening Function',           color: '#f4c14d' },
   { icon: Music,   cat: 'SOUNDS',    label: 'Live Entertainment',         color: '#4dd9f4' },
-  { icon: Award,   cat: 'CELEBRATE', label: 'Awards Presentation',        color: '#ff2c91' },
+  { icon: Award,   cat: 'CELEBRATE', label: 'Awards Presentation',        color: '#d71920' },
   { icon: Utensils,cat: 'EAT',       label: 'Food Trucks & Festival Zone',color: '#f4c14d' },
-  { icon: MapPin,  cat: 'EXPLORE',   label: 'Gold Coast Experiences',     color: '#4dd9f4' },
-  { icon: Camera,  cat: 'CAPTURED',  label: 'Professional Photography',   color: '#ff2c91' },
+  { icon: MapPin,  cat: 'EXPLORE',   label: 'future host city Experiences',     color: '#4dd9f4' },
+  { icon: Camera,  cat: 'CAPTURED',  label: 'Professional Photography',   color: '#d71920' },
   { icon: Tv,      cat: 'LIVE',      label: 'Livestream Coverage',        color: '#f4c14d' },
   { icon: MapPin,  cat: 'TRAVEL',    label: 'Club Travel Packages',       color: '#4dd9f4' },
 ]
@@ -42,8 +42,8 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
               <Drawer.Title className="font-display text-white leading-none mb-1" style={{ fontSize: '2.2rem' }}>
                 THE WEEKEND
               </Drawer.Title>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#ff2c91' }}>
-                Gold Coast · October 2027
+              <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#d71920' }}>
+                future host city · Date TBC
               </p>
             </div>
 
@@ -72,13 +72,13 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
               ))}
 
               {/* Info block */}
-              <div className="mt-5 mb-2 rounded-2xl p-5" style={{ background: 'rgba(255,44,145,0.08)', border: '1px solid rgba(255,44,145,0.2)' }}>
+              <div className="mt-5 mb-2 rounded-2xl p-5" style={{ background: 'rgba(215,25,32,0.08)', border: '1px solid rgba(215,25,32,0.2)' }}>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {[
-                    { icon: Calendar, text: 'October 2027' },
-                    { icon: MapPin,   text: 'Gold Coast, QLD' },
-                    { icon: Lock,     text: 'Invite Only' },
-                    { icon: Trophy,   text: 'A Grade Premiers' },
+                    { icon: Calendar, text: 'Date TBC' },
+                    { icon: MapPin,   text: 'future host city, QLD' },
+                    { icon: Lock,     text: 'Future Concept' },
+                    { icon: Trophy,   text: 'Community Clubs' },
                   ].map(({ icon: I, text }) => (
                     <span key={text} className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
                       style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)' }}>
@@ -88,7 +88,7 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
                   ))}
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  A Grade premiers from across Australia competing for the national title. Gold Coast, October 2027.
+                  community clubs from across Australia following the future showcase concept. future host city, Date TBC.
                 </p>
               </div>
             </div>
@@ -98,11 +98,11 @@ export default function WhatsOnDrawer({ open, onClose }: Props) {
               <button
                 onClick={() => {
                   onClose()
-                  setTimeout(() => document.querySelector('#invitation')?.scrollIntoView({ behavior: 'smooth' }), 300)
+                  setTimeout(() => document.querySelector('#update')?.scrollIntoView({ behavior: 'smooth' }), 300)
                 }}
                 className="btn-pink w-full py-4 rounded-2xl font-bold text-sm"
               >
-                Request an Invitation
+                Join updates
               </button>
             </div>
           </div>

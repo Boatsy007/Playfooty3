@@ -6,7 +6,7 @@ const experiences = [
     num: '01',
     title: 'Surfers Paradise',
     sub: 'Iconic Beach Destination',
-    desc: "The Gold Coast's world-famous strip — white sand beaches, surf, cafes and an electric atmosphere that becomes home base for the championship weekend.",
+    desc: "The future host city's world-famous strip — white sand beaches, surf, cafes and an electric atmosphere that becomes home base for the championship weekend.",
     accent: '#4dd9f4',
   },
   {
@@ -18,16 +18,16 @@ const experiences = [
   },
   {
     num: '03',
-    title: 'TopGolf Gold Coast',
+    title: 'TopGolf future host city',
     sub: 'Group Entertainment',
     desc: 'Multi-level driving range with food, drinks and serious fun. The go-to for club nights out — whether you play golf or not.',
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
   {
     num: '04',
     title: 'Dining & Nightlife',
     sub: 'Food & Entertainment',
-    desc: "From beachside breakfast spots to rooftop bars and award-winning restaurants — the Gold Coast's dining scene matches any major city.",
+    desc: "From beachside breakfast spots to rooftop bars and award-winning restaurants — the future host city's dining scene matches any major city.",
     accent: '#4dd9f4',
   },
   {
@@ -39,10 +39,10 @@ const experiences = [
   },
   {
     num: '06',
-    title: 'Gold Coast Hinterland',
+    title: 'future host city Hinterland',
     sub: 'Natural Escape',
     desc: 'Escape to the ancient Lamington National Park rainforest — waterfalls, glowworms and breathtaking views. Thirty minutes from the coast.',
-    accent: '#ff2c91',
+    accent: '#d71920',
   },
 ]
 
@@ -70,11 +70,11 @@ export default function GoldCoast() {
           </p>
           <div className="grid lg:grid-cols-[5fr,4fr] gap-8 lg:gap-16 items-end">
             <h2 className="font-display leading-none" style={{ fontSize: 'clamp(3rem, 8vw, 8rem)', color: '#111111' }}>
-              GOLD COAST,<br /><span style={{ color: '#ff2c91' }}>QUEENSLAND.</span>
+              HOST CITY,<br /><span style={{ color: '#d71920' }}>TBC.</span>
             </h2>
             <div>
               <p style={{ fontSize: 'clamp(1rem, 1.6vw, 1.15rem)', color: 'rgba(17,17,17,0.55)', lineHeight: 1.65, fontWeight: 500 }}>
-                Australia's premier holiday destination is the host of the inaugural CNCA championship — and there's never been a better reason to visit.
+                Australia's premier holiday destination is the host of the inaugural PlayFooty championship — and there's never been a better reason to visit.
               </p>
             </div>
           </div>
@@ -143,14 +143,14 @@ export default function GoldCoast() {
       >
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 60% 100% at 100% 50%, rgba(255,44,145,0.08) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(ellipse 60% 100% at 100% 50%, rgba(215,25,32,0.08) 0%, transparent 70%)' }}
         />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-8 py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <p className="font-display text-white leading-none" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 2rem)' }}>
-            CNCA IS YOUR REASON TO MAKE THE TRIP.
+            PlayFooty IS YOUR REASON TO MAKE THE TRIP.
           </p>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)', maxWidth: '40ch', lineHeight: 1.7 }}>
-            The Gold Coast is always a good idea. The national championship makes it unmissable.
+            The future host city is always a good idea. The national championship makes it unmissable.
           </p>
         </div>
       </motion.div>
