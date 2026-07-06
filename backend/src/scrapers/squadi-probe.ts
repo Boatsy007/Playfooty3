@@ -16,7 +16,7 @@ const ORG = '90ee190a-b612-400c-bc11-3f0e220957a2' // Hampden FNL (from the CF e
 
 async function get(url: string): Promise<any> {
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'CNCA-Rankings/1.0 (contact@cnca.com.au)', 'Accept': 'application/json' },
+    headers: { 'User-Agent': 'PlayFooty-Rankings/1.0 (hello@playfooty.com.au)', 'Accept': 'application/json' },
     signal: AbortSignal.timeout(25000),
   })
   const text = await res.text()

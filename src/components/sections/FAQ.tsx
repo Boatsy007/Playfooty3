@@ -200,7 +200,7 @@ export default function FAQ() {
             Can't find what you're looking for?
           </p>
           <a
-            href="mailto:info@cnca.com.au"
+            href="mailto:info@playfooty.com.au"
             className="font-bold text-sm transition-colors duration-200"
             style={{ color: '#d71920' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#a50f17')}

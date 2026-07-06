@@ -70,7 +70,7 @@ export class PlayHQPlaywrightAdapter {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(10_000),
         headers: {
-          'User-Agent':      'CNCA-Rankings/1.0 (contact@cnca.com.au; sports data research)',
+          'User-Agent':      'PlayFooty-Rankings/1.0 (hello@playfooty.com.au; sports data research)',
           'Accept':          'text/html,application/xhtml+xml',
           'Accept-Language': 'en-AU,en;q=0.9',
         },

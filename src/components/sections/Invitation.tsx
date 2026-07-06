@@ -85,8 +85,8 @@ export default function Update() {
                 { label: 'Date', value: 'Date TBC' },
                 { label: 'Location', value: 'future host city, Queensland' },
                 { label: 'Eligibility', value: 'Community Clubship Clubs' },
-                { label: 'Website', value: 'cnca.com.au' },
-                { label: 'Email', value: 'info@cnca.com.au' },
+                { label: 'Website', value: 'playfooty.com.au' },
+                { label: 'Email', value: 'info@playfooty.com.au' },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <span className="font-condensed font-bold text-xs tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>

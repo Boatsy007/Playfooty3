@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "generated_articles" (
   "weekLabel"      TEXT,
   "seoTitle"       TEXT,
   "seoDescription" TEXT,
-  "author"         TEXT NOT NULL DEFAULT 'Got Netty',
+  "author"         TEXT NOT NULL DEFAULT 'PlayFooty',
   "createdAt"      TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt"      TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "publishedAt"    TIMESTAMP(3),

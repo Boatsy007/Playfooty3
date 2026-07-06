@@ -1,11 +1,9 @@
-name: Nightly maintenance (backup + data-quality sweep)
+name: PlayFooty maintenance (manual backup + data-quality sweep)
 
-# Runs every night: takes an automatic NIGHTLY backup of the core tables and
-# sweeps for data-quality issues (duplicate clubs, missing logos, orphan clubs,
-# stale leagues), raising review-queue items. Never mutates data.
+# Manual-only maintenance. The legacy automatic weekly/nightly update path is
+# disabled for PlayFooty so old legacy community-football sync jobs cannot run on a cron.
+# Use workflow_dispatch after confirming the football maintenance window.
 on:
-  schedule:
-    - cron: '0 16 * * *'   # 16:00 UTC ≈ 2–3am AEST/AEDT
   workflow_dispatch: {}
 
 jobs:
@@ -17,8 +15,6 @@ jobs:
       DIRECT_URL:   ${{ secrets.DIRECT_URL }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: claude/acnc-event-website-jt0kjq
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
       - name: Install dependencies
@@ -27,6 +23,6 @@ jobs:
       - name: Generate Prisma client
         working-directory: backend
         run: npx prisma generate
-      - name: Run nightly maintenance
+      - name: Run PlayFooty maintenance sweep
         working-directory: backend
         run: npx tsx src/jobs/nightly-maintenance.ts

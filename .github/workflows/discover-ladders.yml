@@ -1,7 +1,7 @@
-name: Discover A Grade Women's Ladders (preview)
+name: PlayFooty ladder discovery preview
 
-# Preview-only PlayHQ discovery crawl. Crawls the Netball Australia association
-# directory and samples a few associations' season/grade/ladder structure.
+# Preview-only PlayHQ discovery crawl. Samples association season/grade/ladder
+# structure for controlled PlayFooty backfills.
 # Writes NOTHING to the database — download the "discovery-preview" artifact.
 on:
   workflow_dispatch:
@@ -21,8 +21,8 @@ on:
         required: false
         default: ''
         type: string
-      agrade_slug:
-        description: 'Phase 3 — extract Senior Women A Grade ladders for this association slug'
+      grade_slug:
+        description: 'Optional grade slug for ladder extraction in this association'
         required: false
         default: ''
         type: string
@@ -54,7 +54,7 @@ jobs:
 
       - name: Run discovery preview
         working-directory: backend
-        run: npx tsx src/discovery/discovery-trigger.ts --max-pages=${{ inputs.max_pages }} --drilldown=${{ inputs.drilldown }} --assoc-slug=${{ inputs.assoc_slug }} --agrade-slug=${{ inputs.agrade_slug }}
+        run: npx tsx src/discovery/discovery-trigger.ts --max-pages=${{ inputs.max_pages }} --drilldown=${{ inputs.drilldown }} --assoc-slug=${{ inputs.assoc_slug }} --agrade-slug=${{ inputs.grade_slug }}
 
       - name: Upload preview artifact
         if: always()

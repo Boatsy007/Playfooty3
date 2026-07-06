@@ -1,14 +1,15 @@
 /**
- * PlayFooty Admin Panel — hybrid data engine control surface.
- * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
- * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
+ * PlayFooty Admin Panel — League Control Centre for football operations.
+ * Password-gated (admin key stored locally). Football-first navigation groups
+ * league sources, imports, reviews, newsroom and system tools.
  */
 import { useEffect, useState, type CSSProperties } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
+import PlayFootyLogo from '../components/layout/PlayFootyLogo'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type FootballImportResult, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
 
-const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
+const C = { bg: '#041f42', panel: '#082a55', panel2: '#0d376c', line: 'rgba(255,255,255,0.14)', text: '#f7fbff', mute: '#a8b8cf', pink: '#d71920', gold: '#f4c14d', green: '#35c66b', red: '#ff5470', navy: '#041f42' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16 }
-const input: CSSProperties = { background: '#0d1220', border: `1px solid ${C.line}`, color: C.text, borderRadius: 6, padding: '7px 9px', fontSize: 13, width: '100%' }
+const input: CSSProperties = { background: '#061a35', border: `1px solid ${C.line}`, color: C.text, borderRadius: 6, padding: '7px 9px', fontSize: 13, width: '100%' }
 const btn = (bg = C.pink): CSSProperties => ({ background: bg, color: bg === C.gold ? '#111' : '#fff', border: 'none', borderRadius: 6, padding: '7px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer' })
 const th: CSSProperties = { textAlign: 'left', padding: '8px 10px', color: C.mute, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1px solid ${C.line}` }
 const td: CSSProperties = { padding: '8px 10px', borderBottom: `1px solid ${C.line}`, fontSize: 13 }
@@ -42,7 +43,13 @@ export default function Admin() {
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+            <PlayFootyLogo height={52} maxWidth={210} />
+            <div>
+              <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>League Control Centre</h1>
+              <p style={{ margin: '3px 0 0', color: C.mute, fontSize: 12 }}>PlayFooty football operations · imports · reviews · newsroom</p>
+            </div>
+          </div>
           <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
@@ -63,8 +70,28 @@ export default function Admin() {
         {tab === 'rankings' && <Rankings toast={t.show} />}
         {tab === 'system' && <SystemOps toast={t.show} />}
       </div>
+      <AdminStyles />
       {t.node}
     </div>
+  )
+}
+
+function AdminStyles() {
+  return (
+    <style>{`
+      @media (max-width: 820px) {
+        body { overflow-x: hidden; }
+        button, input, select, textarea { min-height: 42px; }
+        table { min-width: 640px; }
+        div[style*="grid-template-columns: 2fr 90px 1.4fr 160px auto"],
+        div[style*="grid-template-columns: minmax(360px,.9fr) minmax(0,1.1fr)"],
+        div[style*="grid-template-columns: 1fr 1fr"],
+        div[style*="grid-template-columns: 120px 1fr 1fr 150px"],
+        div[style*="grid-template-columns: 1fr 1fr 1fr 1fr"] {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    `}</style>
   )
 }
 
@@ -221,6 +248,8 @@ function SystemOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
 
 // ─── PlayFooty football source control centre ────────────────────────────────
 const DATA_SOURCES = ['PLAYHQ_API', 'PLAYHQ_SCRAPER', 'CSV_UPLOAD', 'OCR_UPLOAD', 'MANUAL_ENTRY']
+const LEAGUE_TABS = ['Overview', 'Source Setup', 'Season Import', 'Round Backfill', 'Fixtures', 'Results', 'Ladder', 'Clubs', 'Rankings', 'Articles', 'Reviews', 'Settings'] as const
+type LeagueTab = typeof LEAGUE_TABS[number]
 
 function AdminGlobalSearch({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
   const [q, setQ] = useState('')
@@ -265,6 +294,10 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   const [form, setForm] = useState({ name: '', state: 'VIC', sourceUrl: '', primaryDataSource: 'MANUAL_ENTRY' })
   const [manualJson, setManualJson] = useState('[\\n  { "homeName": "Home Club", "awayName": "Away Club", "homeGoals": 10, "homeBehinds": 8, "awayGoals": 8, "awayBehinds": 6, "round": "Round 1" }\\n]')
   const [dataType, setDataType] = useState('RESULTS')
+  const [leagueTab, setLeagueTab] = useState<LeagueTab>('Overview')
+  const [lastSyncResult, setLastSyncResult] = useState<FootballImportResult | null>(null)
+  const [ocrMeta, setOcrMeta] = useState({ uploadType: 'results screenshot', season: '2026', grade: 'Senior Football', round: '' })
+  const [rounds, setRounds] = useState([{ id: 'round-1', name: 'Round 1', resultsUrl: '', fixtureUrl: '', dateRange: '', selected: true, status: 'Not imported' }])
 
   const load = () => admin.listFootballLeagues().then(r => { setRows(r); setSelected(s => s ? r.find(x => x.id === s.id) ?? null : r[0] ?? null) }).catch(e => toast(e.message, false))
   useEffect(() => { void load() }, [])
@@ -285,7 +318,7 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   }
   const drySync = async (league: FootballLeague) => {
     setBusy(true)
-    try { const out = await admin.syncFootballLeague(league.id, { sourceType: league.primaryDataSource ?? 'PLAYHQ_SCRAPER', dryRun: true }); toast(out.note ?? `Sync recorded: ${out.status}`); await load() }
+    try { const out = await admin.syncFootballLeague(league.id, { sourceType: league.primaryDataSource ?? 'PLAYHQ_SCRAPER', dryRun: true, sourceUrl: league.sourceUrl ?? undefined }); setLastSyncResult(out); toast(out.note ?? `Sync recorded: ${out.status}`); await load() }
     catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const importRows = async () => {
@@ -293,8 +326,22 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
     let parsed: unknown[]
     try { parsed = JSON.parse(manualJson) as unknown[] } catch { return toast('Rows must be valid JSON array', false) }
     setBusy(true)
-    try { const out = await admin.importFootballRows(selected.id, { sourceType: 'MANUAL_ENTRY', dataType, rows: parsed }); toast(`Imported ${out.recordsImported ?? 0} ${dataType.toLowerCase()} rows`); await load() }
+    try { const out = await admin.importFootballRows(selected.id, { sourceType: 'MANUAL_ENTRY', dataType, rows: parsed }); setLastSyncResult(out); toast(`Imported ${out.recordsImported ?? 0} ${dataType.toLowerCase()} rows`); await load() }
     catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const addRound = () => setRounds(rs => [...rs, { id: `round-${Date.now()}`, name: `Round ${rs.length + 1}`, resultsUrl: '', fixtureUrl: '', dateRange: '', selected: true, status: 'Not imported' }])
+  const updateRound = (id: string, patch: Partial<(typeof rounds)[number]>) => setRounds(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r))
+  const runRoundImport = async (round: (typeof rounds)[number], mode: 'results' | 'fixtures' | 'both', dryRun = true) => {
+    if (!selected) return
+    const url = mode === 'fixtures' ? round.fixtureUrl : round.resultsUrl || round.fixtureUrl
+    if (!url.trim()) return toast(`Add a ${mode === 'fixtures' ? 'fixture' : 'results'} URL for ${round.name}`, false)
+    setBusy(true)
+    try {
+      const out = await admin.syncFootballLeague(selected.id, { sourceType: selected.primaryDataSource ?? 'PLAYHQ_SCRAPER', dryRun, sourceUrl: url.trim() })
+      setLastSyncResult(out); updateRound(round.id, { status: out.status })
+      toast(`${round.name}: ${out.source ?? 'smart ingest'} · ${out.groups?.reduce((n, g) => n + g.rows, 0) ?? out.recordsFound ?? 0} rows`)
+      await load()
+    } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const generate = async () => {
     if (!selected) return
@@ -337,7 +384,7 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th style={th}>League</th><th style={th}>Source</th><th style={th}>Sync</th><th style={th}>Data</th></tr></thead>
               <tbody>{rows.map(r => (
-                <tr key={r.id} onClick={() => setSelected(r)} style={{ cursor: 'pointer', background: selected?.id === r.id ? 'rgba(255,44,145,.08)' : undefined }}>
+                <tr key={r.id} onClick={() => { setSelected(r); setLeagueTab('Overview') }} style={{ cursor: 'pointer', background: selected?.id === r.id ? 'rgba(215,25,32,.14)' : undefined }}>
                   <td style={td}><b>{r.name}</b><div style={{ color: C.mute }}>{r.state?.code ?? '—'} · {r.regionName ?? 'No region'}</div></td>
                   <td style={td}>{r.primaryDataSource ?? '—'}</td>
                   <td style={td}><span style={{ color: r.syncStatus === 'SUCCESS' ? C.green : r.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute }}>{r.syncStatus}</span></td>
@@ -351,14 +398,50 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
         <div style={box}>
           {!selected ? <p style={{ color: C.mute }}>Select a football league to manage its sources.</p> : (
             <div style={{ display: 'grid', gap: 12 }}>
-              <b>{selected.name}</b>
+              <div>
+                <b style={{ fontSize: 18 }}>{selected.name}</b>
+                <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 0' }}>League Control Centre · results are the source of truth · manual verified data always wins.</p>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {LEAGUE_TABS.map(x => <button key={x} style={btn(leagueTab === x ? C.pink : C.panel2)} onClick={() => setLeagueTab(x)}>{x}</button>)}
+              </div>
+              {leagueTab === 'Overview' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 8 }}>
+                  {[
+                    ['Source', selected.primaryDataSource ?? 'MANUAL_ENTRY'],
+                    ['Season', selected.currentSeason ?? '—'],
+                    ['Fixtures', selected._count?.footballFixtures ?? 0],
+                    ['Results', selected._count?.footballResults ?? 0],
+                    ['Ladders', selected._count?.footballLadderEntries ?? 0],
+                    ['Reviews', selected.syncStatus === 'NEEDS_REVIEW' ? 'Needs review' : selected.syncStatus],
+                  ].map(([label, value]) => <div key={String(label)} style={{ ...box, padding: 12 }}><small style={{ color: C.mute }}>{label}</small><div style={{ fontWeight: 800 }}>{String(value)}</div></div>)}
+                  <div style={{ ...box, padding: 12, gridColumn: '1/-1' }}>
+                    <b>Operator checklist</b>
+                    <ul style={{ margin: '8px 0 0', paddingLeft: 18, color: C.mute, fontSize: 13 }}>
+                      <li>Confirm source URL and PlayHQ IDs where available.</li>
+                      <li>Backfill results by round, then generate and compare the ladder.</li>
+                      <li>Review conflicts before publishing results and recalculating rankings.</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+              {leagueTab === 'Source Setup' && (
+                <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <label><small style={{ color: C.mute }}>Primary source</small><select style={input} value={selected.primaryDataSource ?? 'MANUAL_ENTRY'} onChange={e => setSelected({ ...selected, primaryDataSource: e.target.value })}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></label>
                 <label><small style={{ color: C.mute }}>Source URL</small><input style={input} value={selected.sourceUrl ?? ''} onChange={e => setSelected({ ...selected, sourceUrl: e.target.value })} /></label>
+                <label><small style={{ color: C.mute }}>Ladder URL</small><input style={input} value={selected.sourceUrl ?? ''} onChange={e => setSelected({ ...selected, sourceUrl: e.target.value })} placeholder="PlayHQ ladder URL or shared source URL" /></label>
+                <label><small style={{ color: C.mute }}>Season fixture URL</small><input style={input} value={selected.sourceUrl ?? ''} onChange={e => setSelected({ ...selected, sourceUrl: e.target.value })} placeholder="PlayHQ fixtures URL or shared source URL" /></label>
+                <label><small style={{ color: C.mute }}>Default results URL pattern</small><input style={{ ...input, opacity: 0.7 }} disabled placeholder="Not persisted yet — use Round Backfill URLs" /></label>
+                <label><small style={{ color: C.mute }}>Default fixture URL pattern</small><input style={{ ...input, opacity: 0.7 }} disabled placeholder="Not persisted yet — use Round Backfill URLs" /></label>
                 <label><small style={{ color: C.mute }}>Organisation ID</small><input style={input} value={selected.playhqOrganisationId ?? ''} onChange={e => setSelected({ ...selected, playhqOrganisationId: e.target.value })} /></label>
                 <label><small style={{ color: C.mute }}>Competition ID</small><input style={input} value={selected.playhqCompetitionId ?? ''} onChange={e => setSelected({ ...selected, playhqCompetitionId: e.target.value })} /></label>
                 <label><small style={{ color: C.mute }}>Season ID</small><input style={input} value={selected.playhqSeasonId ?? ''} onChange={e => setSelected({ ...selected, playhqSeasonId: e.target.value })} /></label>
                 <label><small style={{ color: C.mute }}>Grade ID</small><input style={input} value={selected.playhqGradeId ?? ''} onChange={e => setSelected({ ...selected, playhqGradeId: e.target.value })} /></label>
+              </div>
+              <div style={{ ...box, padding: 12, background: C.panel2 }}>
+                <b>Smart ingestion hierarchy</b>
+                <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>PlayHQ API → rendered PlayHQ scrape → raw JSON/HTML parser → OCR, CSV or manual review fallback. Rendered PlayHQ scrape requires GitHub Actions runner configuration.</p>
               </div>
               {selected.dataSourceSyncError && <div style={{ color: C.gold, fontSize: 13 }}>{selected.dataSourceSyncError}</div>}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -368,6 +451,70 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
                 <button disabled={busy} style={btn(C.gold)} onClick={compare}>Compare ladders</button>
                 <button disabled={busy} style={btn(C.red)} onClick={publish}>Publish + recalculate</button>
               </div>
+                </>
+              )}
+              {lastSyncResult && (
+                <div style={{ ...box, padding: 12, borderColor: lastSyncResult.status === 'NEEDS_REVIEW' ? C.gold : C.green }}>
+                  <b>Last smart ingest</b>
+                  <div style={{ color: C.mute, fontSize: 12, marginTop: 6 }}>Strategy: <span style={{ color: C.text }}>{lastSyncResult.source ?? 'manual/import'}</span> · Confidence: <span style={{ color: C.text }}>{lastSyncResult.confidence != null ? `${Math.round(lastSyncResult.confidence * 100)}%` : '—'}</span> · Rows: <span style={{ color: C.text }}>{lastSyncResult.groups?.reduce((n, g) => n + g.rows, 0) ?? lastSyncResult.recordsFound ?? 0}</span> · URL: <span style={{ color: C.text }}>{lastSyncResult.sourceUrl ?? '—'}</span></div>
+                  {lastSyncResult.warnings?.map((w, i) => <div key={i} style={{ color: C.gold, fontSize: 12 }}>⚠ {w}</div>)}
+                </div>
+              )}
+              {leagueTab === 'Round Backfill' && (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button style={btn()} onClick={addRound}>Add Round</button>
+                    <button disabled={busy} style={btn(C.green)} onClick={() => rounds.filter(r => r.selected).forEach(r => void runRoundImport(r, 'results', false))}>Import selected rounds</button>
+                    <button disabled={busy} style={btn('#2a3145')} onClick={() => rounds.forEach(r => void runRoundImport(r, 'fixtures', true))}>Import fixtures only</button>
+                    <button disabled={busy} style={btn(C.gold)} onClick={generate}>Generate ladder</button>
+                    <button disabled={busy} style={btn(C.red)} onClick={publish}>Publish season</button>
+                  </div>
+                  {rounds.map(r => (
+                    <div key={r.id} style={{ ...box, padding: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr 150px', gap: 8 }}>
+                        <label><small style={{ color: C.mute }}>Round</small><input style={input} value={r.name} onChange={e => updateRound(r.id, { name: e.target.value })} /></label>
+                        <label><small style={{ color: C.mute }}>Results URL</small><input style={input} value={r.resultsUrl} onChange={e => updateRound(r.id, { resultsUrl: e.target.value })} placeholder="Paste round results URL" /></label>
+                        <label><small style={{ color: C.mute }}>Fixture URL</small><input style={input} value={r.fixtureUrl} onChange={e => updateRound(r.id, { fixtureUrl: e.target.value })} placeholder="Paste round fixture URL" /></label>
+                        <label><small style={{ color: C.mute }}>Date range</small><input style={input} value={r.dateRange} onChange={e => updateRound(r.id, { dateRange: e.target.value })} placeholder="5–7 Jul" /></label>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+                        <label style={{ color: C.mute, fontSize: 12 }}><input type="checkbox" checked={r.selected} onChange={e => updateRound(r.id, { selected: e.target.checked })} /> selected</label>
+                        <span style={{ color: C.mute, fontSize: 12 }}>Status: {r.status}</span>
+                        <button disabled={busy} style={btn(C.green)} onClick={() => runRoundImport(r, 'results', false)}>Import results</button>
+                        <button disabled={busy} style={btn('#2a3145')} onClick={() => runRoundImport(r, 'fixtures', false)}>Import fixtures</button>
+                        <button disabled={busy} style={btn(C.gold)} onClick={() => runRoundImport(r, 'both', true)}>Review</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {['Season Import', 'Fixtures', 'Results', 'Ladder', 'Clubs', 'Rankings', 'Articles', 'Reviews', 'Settings'].includes(leagueTab) && (
+                <div style={{ ...box, padding: 12 }}>
+                  <b>{leagueTab}</b>
+                  <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>{leagueTab === 'Results' ? 'Results are the source of truth for wins, losses, draws, points for, points against, percentage, form, ladder, rankings, profiles, snapshots and articles.' : 'This league-aware workspace uses existing backend data where available and keeps missing capabilities visible instead of inventing fake data.'}</p>
+                </div>
+              )}
+              {leagueTab === 'Fixtures' && <p style={{ color: C.mute, fontSize: 12 }}>Fixture imports support home team, away team, date, time, venue, round, grade and home/away fields through smart URL/manual row ingestion.</p>}
+              {leagueTab === 'Results' && <p style={{ color: C.mute, fontSize: 12 }}>Football result rows support goals, behinds and total points. Total points are goals × 6 + behinds when totals are missing.</p>}
+              {leagueTab === 'Ladder' && <p style={{ color: C.mute, fontSize: 12 }}>Imported ladders are validation/fallback only. Generate the ladder from results, compare differences, then publish approved rows.</p>}
+              {leagueTab === 'Season Import' && (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ ...box, padding: 12 }}>
+                    <b>OCR / image upload inside league</b>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, marginTop: 8 }}>
+                      <select style={input} value={ocrMeta.uploadType} onChange={e => setOcrMeta({ ...ocrMeta, uploadType: e.target.value })}><option>ladder screenshot</option><option>results screenshot</option><option>fixture screenshot</option></select>
+                      <input style={input} value={ocrMeta.season} onChange={e => setOcrMeta({ ...ocrMeta, season: e.target.value })} placeholder="Season" />
+                      <input style={input} value={ocrMeta.grade} onChange={e => setOcrMeta({ ...ocrMeta, grade: e.target.value })} placeholder="Grade" />
+                      <input style={input} value={ocrMeta.round} onChange={e => setOcrMeta({ ...ocrMeta, round: e.target.value })} placeholder="Round" />
+                    </div>
+                    <p style={{ color: C.gold, fontSize: 12 }}>Existing OCR endpoint can attach the selected league; typed fixture/result metadata is shown here but needs backend support before it can be persisted with the OCR import.</p>
+                  </div>
+                  <div style={{ ...box, padding: 12 }}>
+                    <b>CSV / manual fallback</b>
+                    <p style={{ color: C.mute, fontSize: 12 }}>Example result row: Round 4, Sale, 12, 8, 80, Moe, 10, 7, 67, Sale Oval. Use manual JSON below for league-scoped imports; CSV is available under System until a league-scoped CSV endpoint is added.</p>
+                  </div>
+                </div>
+              )}
               <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
                 <b>Manual verified import</b>
                 <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 8px' }}>Paste JSON rows for fixtures, results or ladders. Manual entries are verified and never silently overwritten by external imports.</p>
@@ -888,7 +1035,8 @@ function Login({ onIn }: { onIn: () => void }) {
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui' }}>
       <div style={{ ...box, width: 340 }}>
-        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
+        <div style={{ marginBottom: 14 }}><PlayFootyLogo height={54} maxWidth={220} /></div>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
         <p style={{ color: C.mute, fontSize: 13, marginTop: 0 }}>Enter the admin key to continue.</p>
         <input style={input} type="password" placeholder="Admin key" value={k} onChange={e => setK(e.target.value)} onKeyDown={e => e.key === 'Enter' && k && (setKey(k), onIn())} />
         <button style={{ ...btn(), width: '100%', marginTop: 12 }} onClick={() => { if (k) { setKey(k); onIn() } }}>Unlock</button>

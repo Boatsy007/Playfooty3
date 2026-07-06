@@ -197,7 +197,7 @@ export default function Sponsors() {
           className="flex flex-col sm:flex-row sm:items-center gap-5"
         >
           <a
-            href="mailto:info@cnca.com.au"
+            href="mailto:info@playfooty.com.au"
             className="group inline-flex items-center gap-2.5 font-bold rounded-full transition-all duration-200"
             style={{
               background: '#d71920',
@@ -220,7 +220,7 @@ export default function Sponsors() {
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform duration-200" />
           </a>
           <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.28)' }}>
-            info@cnca.com.au · Sponsorship packages available now
+            info@playfooty.com.au · Sponsorship packages available now
           </p>
         </motion.div>
 

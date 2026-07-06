@@ -1,5 +1,5 @@
 /**
- * CNCA Rankings API Server
+ * PlayFooty Rankings API Server
  * ─────────────────────────────────────────────────────────────────────────────
  * Express server exposing the rankings data API and admin endpoints.
  * Deployed as a Vercel serverless function (api/index.ts re-exports this).
@@ -91,7 +91,7 @@ app.use((_req, res) => {
 // ── Start (skip in serverless; Vercel imports this module directly) ──────────
 if (process.env.VERCEL !== '1') {
   app.listen(PORT, () => {
-    logger.info(`CNCA Rankings API listening on port ${PORT}`)
+    logger.info(`PlayFooty Rankings API listening on port ${PORT}`)
   })
 }
 

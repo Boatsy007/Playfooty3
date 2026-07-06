@@ -1,7 +1,7 @@
 {
   "name": "cnca-rankings-backend",
   "version": "1.0.0",
-  "description": "CNCA National Power Rankings — automated data collection and ranking engine",
+  "description": "PlayFooty community football rankings — automated data collection and ranking engine",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {

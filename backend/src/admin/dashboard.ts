@@ -134,7 +134,7 @@ router.post('/review-queue/:id/reject', async (req, res) => {
 })
 
 // POST /admin/pilot
-// Seeds NGFNL 2026 A Grade Netball data and generates a ranking run.
+// Seeds NGFNL 2026 senior football demo data and generates a ranking run.
 // Safe to call multiple times — upserts reference data idempotently.
 router.post('/pilot', async (req, res) => {
   try {
@@ -164,7 +164,7 @@ router.post('/pilot', async (req, res) => {
 })
 
 // POST /admin/scrape
-// Scrapes every configured PlayHQ league's A Grade Netball ladder, stores the
+// Scrapes every configured PlayHQ league's senior football ladder, stores the
 // data, and re-runs the ranking engine across all of them. Ladder URLs come
 // from each league's config (playhq-scrape.ts) or its env var override.
 router.post('/scrape', async (req, res) => {

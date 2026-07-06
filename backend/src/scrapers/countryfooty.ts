@@ -100,7 +100,7 @@ function isLeagueCompetition(name: string): boolean {
 async function api<T>(path: string, token: string): Promise<T | null> {
   try {
     const res = await fetch(`${API}${path}`, {
-      headers: { Authorization: token, Accept: 'application/json', 'User-Agent': 'CNCA-Rankings/1.0 (contact@cnca.com.au)' },
+      headers: { Authorization: token, Accept: 'application/json', 'User-Agent': 'PlayFooty-Rankings/1.0 (hello@playfooty.com.au)' },
       signal: AbortSignal.timeout(25_000),
     })
     if (!res.ok) return null

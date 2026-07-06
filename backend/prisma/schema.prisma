@@ -1,4 +1,4 @@
-// CNCA Rankings Engine — Prisma Schema
+// PlayFooty Rankings Engine — Prisma Schema
 // Target: Supabase (PostgreSQL)
 // Run: npx prisma migrate dev --name init
 // ─────────────────────────────────────────────────────────────────────────────
@@ -338,7 +338,7 @@ model Club {
   facebookUrl     String?
   instagramUrl    String?
 
-  // CNCA status
+  // PlayFooty legacy status
   cncaQualified    Boolean @default(false)
   invitationStatus String? // null | INVITED | CONFIRMED | DECLINED | WAITLIST
 
@@ -704,7 +704,7 @@ model GeneratedArticle {
   weekLabel   String?
   seoTitle    String?
   seoDescription String?
-  author      String    @default("Got Netty")
+  author      String    @default("PlayFooty")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?

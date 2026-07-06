@@ -24,7 +24,7 @@ export interface ManualLadderInput {
 export class ManualAdapter extends BaseAdapter {
   readonly name        = 'Manual Entry'
   readonly sourceType  = 'MANUAL_ENTRY' as const
-  readonly description = 'Data entered manually by CNCA administrators via dashboard or structured JSON'
+  readonly description = 'Data entered manually by PlayFooty administrators via dashboard or structured JSON'
 
   async ping(): Promise<boolean> { return true }
 

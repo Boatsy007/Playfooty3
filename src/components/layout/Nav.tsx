@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import PlayFootyLogo from './PlayFootyLogo'
 
 const NAV_H = 96 // px — tall enough for the full logo
 const HEADER_NAVY = '#041f42'
@@ -98,7 +99,7 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src="/logo.webp" alt="PlayFooty" style={{ height: 62, width: 'auto', maxWidth: 300, display: 'block', objectFit: 'contain' }} />
+            <PlayFootyLogo height={62} maxWidth={300} />
           </button>
 
           {/* Desktop links */}

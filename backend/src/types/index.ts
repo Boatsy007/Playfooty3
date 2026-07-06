@@ -1,5 +1,5 @@
 /**
- * CNCA Rankings Engine — Shared Type Definitions
+ * PlayFooty Rankings Engine — Shared Type Definitions
  * ─────────────────────────────────────────────────────────────────────────────
  * All types shared across adapters, engine, API and jobs live here.
  * Never import domain types from individual modules — always from this barrel.

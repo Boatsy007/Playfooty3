@@ -47,7 +47,7 @@ export class PlayHQAdapter extends BaseAdapter {
     try {
       const res = await fetch('https://www.playhq.com', {
         signal: AbortSignal.timeout(5000),
-        headers: { 'User-Agent': 'CNCA-Rankings/1.0 (contact@cnca.com.au)' },
+        headers: { 'User-Agent': 'PlayFooty-Rankings/1.0 (hello@playfooty.com.au)' },
       })
       return res.ok
     } catch {
@@ -141,7 +141,7 @@ export class PlayHQAdapter extends BaseAdapter {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(this.timeoutMs),
         headers: {
-          'User-Agent': 'CNCA-Rankings/1.0 (contact@cnca.com.au)',
+          'User-Agent': 'PlayFooty-Rankings/1.0 (hello@playfooty.com.au)',
           'Accept':     'text/html,application/xhtml+xml',
         },
       })

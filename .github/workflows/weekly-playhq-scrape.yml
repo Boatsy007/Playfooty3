@@ -1,9 +1,9 @@
-name: Weekly PlayHQ Scrape — Country Netball Leagues
+name: PlayFooty PlayHQ scrape (manual legacy runner)
 
 # RETIRED as the scheduled source of truth. Auto-discovery ("Discover + Import
-# A Grade Women's Ladders") now owns every league, so the weekly cron is disabled
-# to stop it recreating parallel manual league/club rows. Kept as manual-dispatch
-# only for emergencies; prefer the discovery workflow for routine updates.
+# football ladders") now owns every league, so the legacy cron is disabled
+# to stop it recreating old league/club rows. Kept as manual-dispatch only for
+# controlled PlayFooty backfills; prefer the League Control Centre for routine updates.
 on:
   # schedule:
   #   - cron: '0 13 * * 1'   # (disabled — discovery is now the source of truth)
@@ -67,4 +67,4 @@ jobs:
           echo "## PlayHQ Scrape Result" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Date**: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "- **Leagues**: Gippsland League, Geelong & District FNL, Bellarine FNL (A Grade Netball 2026)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: Manual PlayFooty legacy runner; confirm source URLs before use." >> $GITHUB_STEP_SUMMARY

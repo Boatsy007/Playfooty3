@@ -87,7 +87,7 @@ function nationalRoundup(entries: Entry[], week: string): Draft {
   const leader = top[0]
   const risers = entries.filter(e => e.previousRank != null && e.rankMovement > 0).sort((a, b) => b.rankMovement - a.rankMovement)
   const body: Block[] = []
-  body.push({ type: 'p', text: `${leader.clubName} sit on top of Australian country netball this week, leading the national rankings with a power rating of ${leader.powerRating.toFixed(1)} out of the ${entries.length} ranked A Grade clubs.` })
+  body.push({ type: 'p', text: `${leader.clubName} sit on top of Australian community football this week, leading the national rankings with a power rating of ${leader.powerRating.toFixed(1)} out of the ${entries.length} ranked senior football clubs.` })
   body.push({ type: 'h', text: 'The national top five' })
   body.push({ type: 'p', text: top.slice(0, 5).map((e, i) => `${i + 1}. ${e.clubName} (${e.leagueName ? shortLeague(e.leagueName) : e.state}, ${e.powerRating.toFixed(1)})`).join('  ·  ') })
   if (risers[0] && risers[0].rankMovement > 0) {
@@ -99,11 +99,11 @@ function nationalRoundup(entries: Entry[], week: string): Draft {
     slug: `national-roundup-${week ? slugify(week) : 'latest'}`,
     kind: 'NATIONAL_ROUNDUP', category: 'rankings', heroSeed: 'national-roundup',
     title: `National roundup: ${leader.clubName} lead the country`,
-    subtitle: `The week at the top of Australia's country netball rankings${week ? `, ${week}` : ''}.`,
-    summary: `${leader.clubName} top the national country netball rankings with a rating of ${leader.powerRating.toFixed(1)}${risers[0] && risers[0].rankMovement > 0 ? `, while ${risers[0].clubName} were the week's biggest climber.` : '.'}`,
+    subtitle: `The week at the top of Australia's community football rankings${week ? `, ${week}` : ''}.`,
+    summary: `${leader.clubName} top the national country footy rankings with a rating of ${leader.powerRating.toFixed(1)}${risers[0] && risers[0].rankMovement > 0 ? `, while ${risers[0].clubName} were the week's biggest climber.` : '.'}`,
     body, tags: { state: 'National' },
-    seoTitle: `National Country Netball Rankings Roundup ${week ?? ''} | Got Netty`.trim(),
-    seoDescription: `This week's country netball national rankings: ${leader.clubName} lead from ${top[1]?.clubName ?? ''}. Biggest movers, the national top five and more on Got Netty.`,
+    seoTitle: `National Country Footy Rankings Roundup ${week ?? ''} | PlayFooty`.trim(),
+    seoDescription: `This week's country footy national rankings: ${leader.clubName} lead from ${top[1]?.clubName ?? ''}. Biggest movers, the national top five and more on PlayFooty.`,
   }
 }
 
@@ -130,8 +130,8 @@ function biggestMovers(entries: Entry[], week: string): Draft | null {
     subtitle: `Who climbed and who slipped on the national ladder${week ? `, ${week}` : ''}.`,
     summary: lead ? `${lead.clubName} were the week's biggest riser, up ${lead.rankMovement} to #${lead.rank}. The full list of risers and fallers.` : 'The full list of risers and fallers on the national ladder this week.',
     body, tags: { state: 'National' },
-    seoTitle: `Country Netball Rankings: Biggest Movers ${week ?? ''} | Got Netty`.trim(),
-    seoDescription: `The biggest risers and fallers in Australian country netball this week${lead ? `, led by ${lead.clubName}` : ''}. National ranking movement on Got Netty.`,
+    seoTitle: `Country Footy Rankings: Biggest Movers ${week ?? ''} | PlayFooty`.trim(),
+    seoDescription: `The biggest risers and fallers in Australian community football this week${lead ? `, led by ${lead.clubName}` : ''}. National ranking movement on PlayFooty.`,
   }
 }
 
@@ -140,7 +140,7 @@ function strongestLeagues(leagues: LeagueWithState[], entries: Entry[], week: st
   const ranked = leagues.filter(l => entries.some(e => e.leagueName === l.name)).sort((a, b) => b.strengthScore - a.strengthScore)
   if (ranked.length < 3) return null
   const body: Block[] = []
-  body.push({ type: 'p', text: `${shortLeague(ranked[0].name)} is the strongest country netball competition in the land this week, on a strength rating of ${(ranked[0].strengthScore / 20).toFixed(1)} out of 5.` })
+  body.push({ type: 'p', text: `${shortLeague(ranked[0].name)} is the strongest country footy competition in the land this week, on a strength rating of ${(ranked[0].strengthScore / 20).toFixed(1)} out of 5.` })
   body.push({ type: 'h', text: 'The national top five leagues' })
   for (let i = 0; i < Math.min(5, ranked.length); i++) {
     const l = ranked[i]
@@ -153,11 +153,11 @@ function strongestLeagues(leagues: LeagueWithState[], entries: Entry[], week: st
     slug: `strongest-leagues-${week ? slugify(week) : 'latest'}`,
     kind: 'STRONGEST_LEAGUES', category: 'league-news', heroSeed: 'strongest-leagues',
     title: `Strongest leagues: ${shortLeague(ranked[0].name)} lead the way`,
-    subtitle: `The national country netball league strength picture${week ? `, ${week}` : ''}.`,
-    summary: `${shortLeague(ranked[0].name)} is rated the strongest country netball league in Australia this week, ahead of ${shortLeague(ranked[1].name)} and ${shortLeague(ranked[2].name)}.`,
+    subtitle: `The national country footy league strength picture${week ? `, ${week}` : ''}.`,
+    summary: `${shortLeague(ranked[0].name)} is rated the strongest country footy league in Australia this week, ahead of ${shortLeague(ranked[1].name)} and ${shortLeague(ranked[2].name)}.`,
     body, tags: { state: 'National' },
-    seoTitle: `Strongest Country Netball Leagues ${week ?? ''} | Got Netty`.trim(),
-    seoDescription: `Australia's strongest country netball leagues ranked: ${shortLeague(ranked[0].name)}, ${shortLeague(ranked[1].name)}, ${shortLeague(ranked[2].name)} and more, by national strength rating.`,
+    seoTitle: `Strongest Country Footy Leagues ${week ?? ''} | PlayFooty`.trim(),
+    seoDescription: `Australia's strongest country footy leagues ranked: ${shortLeague(ranked[0].name)}, ${shortLeague(ranked[1].name)}, ${shortLeague(ranked[2].name)} and more, by national strength rating.`,
   }
 }
 
@@ -182,7 +182,7 @@ function leagueRoundup(league: LeagueWithState, clubs: Entry[], week: string): D
     subtitle: `Where the ${name} clubs stand nationally${week ? `, ${week}` : ''}.`,
     summary: `${best.clubName} are the top nationally ranked ${name} club at #${best.rank}${riser && riser.rankMovement > 0 ? `, while ${riser.clubName} were the league's biggest climber.` : '.'}`,
     body, tags: { state: league.state?.code ?? undefined, league: league.name, leagueId: league.id },
-    seoTitle: `${name} Netball Roundup ${week ?? ''}: Rankings & Movers | Got Netty`.trim(),
-    seoDescription: `${name} country netball roundup: ${best.clubName} lead nationally at #${best.rank}. National rankings, movers and the league picture on Got Netty.`,
+    seoTitle: `${name} Footy Roundup ${week ?? ''}: Rankings & Movers | PlayFooty`.trim(),
+    seoDescription: `${name} country footy roundup: ${best.clubName} lead nationally at #${best.rank}. National rankings, movers and the league picture on PlayFooty.`,
   }
 }

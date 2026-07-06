@@ -42,7 +42,7 @@ const stateList = [
 
 export default function Testimonials() {
   return (
-    <section id="why-cnca" className="bg-white overflow-hidden">
+    <section id="why-playfooty" className="bg-white overflow-hidden">
       {/* State ticker */}
       <div className="bg-navy-700 py-3 overflow-hidden">
         <motion.div

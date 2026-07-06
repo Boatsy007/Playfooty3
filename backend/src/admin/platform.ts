@@ -531,7 +531,7 @@ router.post('/football/leagues/:id/sync', async (req, res) => {
     await createFootballReview(league.id, 'FOOTBALL_SMART_INGEST_REVIEW', smart.message ?? 'Smart URL ingestion requires review/manual fallback.', payload, smart.confidence)
     await prisma.league.update({ where: { id: league.id }, data: { syncStatus: 'NEEDS_REVIEW', dataSourceSyncError: smart.message ?? smart.warnings.join('; '), syncError: smart.message ?? smart.warnings.join('; '), lastSyncAt: now } })
     await audit('FOOTBALL_SMART_INGEST_REVIEW', 'FootballDataImport', imp.id, payload, smart.source)
-    return res.status(202).json({ data: { importId: imp.id, dryRun, status: 'NEEDS_REVIEW', note: smart.message ?? 'No rows imported; routed to review.', warnings: smart.warnings, workflow: smart.workflow } })
+    return res.status(202).json({ data: { importId: imp.id, dryRun, status: 'NEEDS_REVIEW', source: smart.source, sourceUrl, confidence: smart.confidence, importedAt: now.toISOString(), note: smart.message ?? 'No rows imported; routed to review.', warnings: smart.warnings, workflow: smart.workflow } })
   }
 
   const commits = []
@@ -541,7 +541,7 @@ router.post('/football/leagues/:id/sync', async (req, res) => {
   const imported = commits.reduce((sum, c) => sum + c.recordsImported, 0)
   await prisma.league.update({ where: { id: league.id }, data: { lastSuccessfulSyncAt: dryRun ? league.lastSuccessfulSyncAt : new Date(), syncStatus: dryRun ? 'READY' : 'SUCCESS', dataSourceSyncError: null, syncError: null, dataConfidence: smart.confidence, sourceUrl } })
   await audit('FOOTBALL_SMART_INGEST', 'League', league.id, { sourceUrl, source: smart.source, dryRun, commits, warnings: smart.warnings }, smart.source)
-  res.status(202).json({ data: { dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', source: smart.source, groups: smart.groups.map(g => ({ dataType: g.dataType, rows: g.rows.length })), recordsImported: imported, warnings: smart.warnings } })
+  res.status(202).json({ data: { dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', source: smart.source, sourceUrl, confidence: smart.confidence, importedAt: now.toISOString(), groups: smart.groups.map(g => ({ dataType: g.dataType, rows: g.rows.length })), recordsImported: imported, warnings: smart.warnings } })
 })
 
 router.post('/football/leagues/:id/import', async (req, res) => {

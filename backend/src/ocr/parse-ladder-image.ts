@@ -22,7 +22,7 @@ export interface OcrLadderResult {
   notes:  string | null
 }
 
-const PROMPT = `You are reading an Australian country netball LADDER (standings table) from an image.
+const PROMPT = `You are reading an Australian community football LADDER (standings table) from an image.
 Extract it EXACTLY as shown. Return ONLY valid minified JSON, no prose, shaped:
 {"league": string|null, "grade": string|null, "rows": [{"position": number, "team": string, "played": number, "wins": number, "losses": number, "draws": number, "goalsFor": number, "goalsAgainst": number, "percentage": number, "points": number}], "notes": string|null}
 Rules:

@@ -1,6 +1,6 @@
 name: Data Audit & Cleanup (rename → deactivate sub-grades → dedupe → re-rank)
 
-# Enforces the CNCA data model on the existing database and re-ranks. No crawl,
+# Enforces the PlayFooty data model on the existing database and re-ranks. No crawl,
 # so it runs in ~1-2 minutes. Safe: deactivates (never deletes) leagues, keeps
 # clubs + history. Fails if any ineligible/mis-named league remains active.
 on:
