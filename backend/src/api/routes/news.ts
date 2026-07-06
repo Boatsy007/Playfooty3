@@ -24,13 +24,19 @@ function shape(a: Awaited<ReturnType<typeof prisma.generatedArticle.findFirst>>)
   }
 }
 
+function isFootballArticle(a: Awaited<ReturnType<typeof prisma.generatedArticle.findFirst>>) {
+  if (!a) return false
+  const haystack = [a.title, a.subtitle, a.summary, a.body, a.tags, a.author].filter(Boolean).join(' ')
+  return !/(netball|go netty|got netty|cnca|country netball|a grade netball)/i.test(haystack)
+}
+
 router.get('/', publicRateLimit, cachePublic(300), async (req, res) => {
   try {
     const { category, league } = req.query as Record<string, string>
-    const items = await prisma.generatedArticle.findMany({
+    const items = (await prisma.generatedArticle.findMany({
       where: { status: 'PUBLISHED', ...(category ? { category } : {}) },
       orderBy: { publishedAt: 'desc' }, take: 60,
-    })
+    })).filter(isFootballArticle)
     let data = items.map(shape).filter(Boolean)
     if (league) data = data.filter(a => { try { return JSON.parse((items.find(i => i.slug === a!.slug)?.tags) || '{}').league === league } catch { return false } })
     res.json({ data, meta: { total: data.length } })
@@ -42,6 +48,7 @@ router.get('/', publicRateLimit, cachePublic(300), async (req, res) => {
 router.get('/:slug', publicRateLimit, cachePublic(300), async (req, res) => {
   try {
     const a = await prisma.generatedArticle.findFirst({ where: { slug: req.params.slug, status: 'PUBLISHED' } })
+    if (a && !isFootballArticle(a)) return res.status(404).json({ error: 'Article not found' })
     if (!a) return res.status(404).json({ error: 'Article not found' })
     res.json({ data: shape(a) })
   } catch {
