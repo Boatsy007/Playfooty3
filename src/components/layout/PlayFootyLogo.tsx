@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react'
 
+export const PLAYFOOTY_LOGO_SRC = '/logo.webp'
+
 type PlayFootyLogoProps = {
   height?: number
   maxWidth?: number
@@ -9,15 +11,19 @@ type PlayFootyLogoProps = {
 export default function PlayFootyLogo({ height = 62, maxWidth = 300, style }: PlayFootyLogoProps) {
   return (
     <img
-      src="/logo.webp"
+      src={PLAYFOOTY_LOGO_SRC}
       alt="PlayFooty"
       decoding="async"
+      loading="eager"
       style={{
         display: 'block',
         height,
         width: 'auto',
         maxWidth,
         objectFit: 'contain',
+        maxHeight: '100%',
+        flexShrink: 0,
+        userSelect: 'none',
         ...style,
       }}
     />

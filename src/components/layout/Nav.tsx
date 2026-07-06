@@ -99,7 +99,7 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <PlayFootyLogo height={62} maxWidth={300} />
+            <PlayFootyLogo height={62} maxWidth={360} />
           </button>
 
           {/* Desktop links */}

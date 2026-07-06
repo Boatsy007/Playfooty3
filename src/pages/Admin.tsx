@@ -44,7 +44,7 @@ export default function Admin() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-            <PlayFootyLogo height={52} maxWidth={210} />
+            <PlayFootyLogo height={52} maxWidth={260} />
             <div>
               <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>League Control Centre</h1>
               <p style={{ margin: '3px 0 0', color: C.mute, fontSize: 12 }}>PlayFooty football operations · imports · reviews · newsroom</p>
@@ -1035,7 +1035,7 @@ function Login({ onIn }: { onIn: () => void }) {
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui' }}>
       <div style={{ ...box, width: 340 }}>
-        <div style={{ marginBottom: 14 }}><PlayFootyLogo height={54} maxWidth={220} /></div>
+        <div style={{ marginBottom: 14 }}><PlayFootyLogo height={54} maxWidth={260} /></div>
         <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
         <p style={{ color: C.mute, fontSize: 13, marginTop: 0 }}>Enter the admin key to continue.</p>
         <input style={input} type="password" placeholder="Admin key" value={k} onChange={e => setK(e.target.value)} onKeyDown={e => e.key === 'Enter' && k && (setKey(k), onIn())} />
