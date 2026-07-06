@@ -70,7 +70,7 @@ export function ClubHero({ club }: { club: ClubProfile }) {
             <ClubCrest name={club.clubName} src={club.logoUrl} id={id} />
             <div style={{ minWidth: 0 }}>
               <div className="font-condensed" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, flexWrap: 'wrap' }}>
-                <Tag color={GOLD}>Country netball club</Tag>
+                <Tag color={GOLD}>Country football club</Tag>
                 {club.ranked && <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ranked nationally</span>}
               </div>
               <div style={{ overflow: 'hidden' }}>
@@ -457,7 +457,7 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(60% 100% at 100% 0%, ${id.wash}, transparent 70%)` }} />
             <div style={{ position: 'relative', display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <div style={{ maxWidth: 560 }}>
-                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club officials</div>
+                <div className="font-condensed" style={{ color: GOLD, fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Club administrators</div>
                 <h2 className="font-display" style={{ color: '#fff', fontSize: 'clamp(1.7rem, 4vw, 2.6rem)', lineHeight: 0.95, margin: '0 0 10px' }}>IS THIS YOUR CLUB?</h2>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
                   Claim {club.clubName} to add your logo and colours, home ground, premiership honours, sponsors, photos and links.
@@ -492,7 +492,7 @@ export function ClubInfo({ club }: { club: ClubProfile }) {
   if (!facts.length && !hasColours) return null
   return (
     <Section>
-      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Verified profile details currently available on Go Netty." />
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Profile details currently available in PlayFooty." />
       <div className="club-info-grid" style={{ display: 'grid', gap: 14 }}>
         {facts.map(f => {
           const body = <><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{f.label}</span><strong style={{ color: TEXT, display: 'block', marginTop: 7, lineHeight: 1.1 }}>{f.value}</strong></>
@@ -510,10 +510,10 @@ export function ClubInfo({ club }: { club: ClubProfile }) {
 export function ClubGallery({ club }: { club: ClubProfile }) {
   return (
     <Section band>
-      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for official ${club.clubName} match-day photos.`} />
+      <SectionHead title={<>PHOTO <span style={{ color: PINK }}>GALLERY</span></>} sub={`A future home for ${club.clubName} match-day photos.`} />
       <div className="gn-card" style={{ padding: 'clamp(24px,4vw,38px)', borderStyle: 'dashed', textAlign: 'center' }}>
         <div className="font-display" style={{ color: 'rgba(17,17,17,0.14)', fontSize: 'clamp(3rem,9vw,6rem)', lineHeight: .85 }}>PHOTOS</div>
-        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No official gallery has been added yet. Club officials can claim this profile to add photos and media.</p>
+        <p style={{ color: MUTE, maxWidth: 560, margin: '12px auto 0', lineHeight: 1.6 }}>No gallery has been added yet. Claiming is coming soon for clubs that want to add photos and media.</p>
       </div>
     </Section>
   )
@@ -526,7 +526,7 @@ export function ClubSponsors({ club }: { club: ClubProfile }) {
       <div className="gn-card" style={{ padding: 'clamp(22px,4vw,34px)', borderStyle: 'dashed', background: '#fbfdff' }}>
         <div className="font-condensed" style={{ color: PINK, fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sponsor-ready space</div>
         <h3 className="font-display" style={{ color: TEXT, fontSize: 'clamp(1.5rem,3vw,2.3rem)', margin: '10px 0 8px', lineHeight: .95 }}>SUPPORT {club.clubName.toUpperCase()}</h3>
-        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for official club partners without displaying fake sponsors.</p>
+        <p style={{ color: MUTE, margin: 0, lineHeight: 1.6 }}>No sponsors are listed yet. This section is ready for real club partners without displaying fake sponsors.</p>
       </div>
     </Section>
   )

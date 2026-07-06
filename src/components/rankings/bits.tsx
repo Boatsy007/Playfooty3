@@ -1,7 +1,7 @@
 /**
  * Shared presentational bits for the rankings product, in the bright editorial
  * style matching the homepage: white/off-white pages, black display headings,
- * hot-pink highlights, gold for podium/leader accents.
+ * red highlights, gold for podium/leader accents.
  */
 import { TrendingUp, TrendingDown, Minus, Star } from 'lucide-react'
 import type { FormResult } from '../../lib/rankings'
@@ -13,7 +13,7 @@ export const TEXT = '#111111'
 export const MUTE = 'rgba(17,17,17,0.45)'
 export const FAINT = 'rgba(17,17,17,0.32)'
 export const LINE = 'rgba(17,17,17,0.09)'
-export const PINK = '#ff2c91'
+export const PINK = '#d71920'
 export const GOLD = '#f4c14d'
 export const GOLD_DK = '#b8860b'
 export const CYAN = '#4dd9f4'
@@ -68,7 +68,7 @@ export function QualBadge({ qualified, small }: { qualified: boolean; small?: bo
       border: `1px solid ${qualified ? 'rgba(244,193,77,0.5)' : LINE}`,
     }}>
       <span style={{ width: 6, height: 6, borderRadius: 999, background: qualified ? GOLD : 'rgba(17,17,17,0.25)' }} />
-      {qualified ? 'Top 32 Nationally' : 'Nationally Ranked'}
+      {qualified ? 'Top 32 Ranked' : 'Nationally Ranked'}
     </span>
   )
 }
@@ -91,8 +91,8 @@ export function Label({ children }: { children: React.ReactNode }) {
 // otherwise a deterministic initials badge. Used across rankings, profiles,
 // league pages, directory and search so a club reads consistently everywhere.
 const CREST_DUOS: [string, string][] = [
-  ['#ff2c91', '#7a0f43'], ['#f4c14d', '#8a5a10'], ['#4dd9f4', '#0f5f70'],
-  ['#111111', '#3a2140'], ['#ff6bb5', '#7a0f43'], ['#0b0e17', '#26305a'],
+  ['#d71920', '#7f1016'], ['#f4c14d', '#8a5a10'], ['#4dd9f4', '#0f5f70'],
+  ['#111111', '#3a2140'], ['#ff6bb5', '#7f1016'], ['#0b0e17', '#26305a'],
 ]
 function crestHash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }
 export function TeamLogo({ name, size = 34, src }: { name: string; size?: number; src?: string }) {

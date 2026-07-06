@@ -60,11 +60,11 @@ export default function HomeSearch({ entries, leagues }: { entries: RankingEntry
     <Section>
       <SectionHead
         title={<>FIND YOUR <span style={{ color: PINK }}>CLUB</span></>}
-        sub="Every ranked club, team and league in the country. Start typing."
+        sub="Every ranked club, team and league in the PlayFooty prototype. Start typing."
       />
       <Reveal>
         <div ref={boxRef} style={{ position: 'relative', maxWidth: 720 }}>
-          <div className="gn-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 8px 4px 22px', borderRadius: 999, borderColor: focused ? PINK : undefined, boxShadow: focused ? '0 2px 4px rgba(17,17,17,0.05), 0 24px 48px -18px rgba(255,44,145,0.25)' : undefined }}>
+          <div className="gn-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '4px 8px 4px 22px', borderRadius: 999, borderColor: focused ? PINK : undefined, boxShadow: focused ? '0 2px 4px rgba(17,17,17,0.05), 0 24px 48px -18px rgba(215,25,32,0.25)' : undefined }}>
             <Search size={19} color={focused ? PINK : MUTE} aria-hidden />
             <input
               value={q}

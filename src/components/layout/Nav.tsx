@@ -92,11 +92,11 @@ export default function Nav() {
           {/* Logo */}
           <button
             onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }) }}
-            aria-label="Got Netty home"
+            aria-label="PlayFooty home"
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src="/logo.webp" alt="Got Netty" style={{ height: 85, width: 'auto', objectFit: 'contain' }} />
+            <span className="font-display leading-none tracking-[-0.06em]" style={{ fontSize: 34, color: '#062a5f', fontWeight: 950 }}>PLAY<span style={{ color: '#d71920' }}>FOOTY</span></span>
           </button>
 
           {/* Desktop links */}
@@ -109,9 +109,9 @@ export default function Nav() {
                 transition={{ duration: 0.45, delay: 0.08 + i * 0.05, ease }}
                 onClick={() => go(l.href, l.route)}
                 className="relative px-4 py-2.5 text-[14.5px] font-semibold tracking-wide transition-colors duration-200 group"
-                style={{ color: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                style={{ color: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? '#d71920' : 'rgba(17,17,17,0.55)' }}
                 onMouseEnter={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); if (!isActive) e.currentTarget.style.color = '#111111' }}
-                onMouseLeave={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); e.currentTarget.style.color = isActive ? '#ff2c91' : 'rgba(17,17,17,0.55)' }}
+                onMouseLeave={e => { const isActive = activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href); e.currentTarget.style.color = isActive ? '#d71920' : 'rgba(17,17,17,0.55)' }}
               >
                 {l.label}
                 {/* Animated underline */}
@@ -119,7 +119,7 @@ export default function Nav() {
                   className="absolute bottom-0 left-3.5 right-3.5 rounded-full"
                   style={{
                     height: '2px',
-                    background: '#ff2c91',
+                    background: '#d71920',
                     transform: (activeLink === l.href || (l.href.startsWith('/') && location.pathname === l.href)) ? 'scaleX(1)' : 'scaleX(0)',
                     transformOrigin: 'left',
                     transition: 'transform 0.25s cubic-bezier(0.22,1,0.36,1)',
@@ -149,18 +149,18 @@ export default function Nav() {
               onClick={() => go('/rankings', '/rankings')}
               className="ml-4 font-bold rounded-full text-white text-[13px] tracking-wide"
               style={{
-                background: '#ff2c91',
+                background: '#d71920',
                 padding: '0.6rem 1.4rem',
-                boxShadow: '0 4px 20px rgba(255,44,145,0.3)',
+                boxShadow: '0 4px 20px rgba(215,25,32,0.3)',
                 transition: 'background 0.2s, box-shadow 0.2s',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = '#cc1f6e'
-                e.currentTarget.style.boxShadow = '0 8px 28px rgba(255,44,145,0.4)'
+                e.currentTarget.style.background = '#a50f17'
+                e.currentTarget.style.boxShadow = '0 8px 28px rgba(215,25,32,0.4)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = '#ff2c91'
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,44,145,0.3)'
+                e.currentTarget.style.background = '#d71920'
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(215,25,32,0.3)'
               }}
             >
               View Rankings
@@ -219,7 +219,7 @@ export default function Nav() {
             <div style={{ height: NAV_H }} />
 
             {/* Pink accent line */}
-            <div style={{ height: '2px', background: 'linear-gradient(to right, #ff2c91, #f4c14d, #ff2c91)' }} />
+            <div style={{ height: '2px', background: 'linear-gradient(to right, #d71920, #f4c14d, #d71920)' }} />
 
             {/* Links */}
             <nav className="flex flex-col px-6 pt-6 pb-10 overflow-y-auto" style={{ maxHeight: `calc(100vh - ${NAV_H + 2}px)` }}>
@@ -234,7 +234,7 @@ export default function Nav() {
                   style={{ borderBottom: '1px solid rgba(17,17,17,0.07)' }}
                 >
                   <span
-                    className="font-display leading-none transition-colors duration-200 group-active:text-[#ff2c91]"
+                    className="font-display leading-none transition-colors duration-200 group-active:text-[#d71920]"
                     style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', color: '#111111' }}
                   >
                     {l.label.toUpperCase()}
@@ -255,14 +255,14 @@ export default function Nav() {
                   onClick={() => go('/rankings', '/rankings')}
                   className="w-full font-bold rounded-2xl text-white text-base py-4"
                   style={{
-                    background: '#ff2c91',
-                    boxShadow: '0 8px 32px rgba(255,44,145,0.3)',
+                    background: '#d71920',
+                    boxShadow: '0 8px 32px rgba(215,25,32,0.3)',
                   }}
                 >
                   View National Rankings
                 </button>
                 <p className="text-center text-xs" style={{ color: 'rgba(17,17,17,0.3)' }}>
-                  Got Netty · Australia's Home of Country Netball
+                  PlayFooty · Australia’s home of community football
                 </p>
               </motion.div>
             </nav>

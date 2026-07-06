@@ -1,5 +1,5 @@
 /**
- * Club page (Phase 4): the highest-traffic page on Got Netty and each club's
+ * Club page (Phase 4): the highest-traffic page on PlayFooty and each club's
  * premium digital home. Hero identity, snapshot, current ladder, rankings
  * journey, the rating explained, club news, and a claim CTA. Every figure is
  * real; missing data is invited, never invented. Route stays /team/:clubId.
@@ -28,8 +28,8 @@ export default function TeamProfile() {
   const data = club.data
 
   useSeo({
-    title: data ? seoTitle(data) : 'Club | Got Netty',
-    description: data ? seoDesc(data) : 'Country netball club profile, national ranking and current form.',
+    title: data ? seoTitle(data) : 'Club | PlayFooty',
+    description: data ? seoDesc(data) : 'Country football club profile, national ranking and current form.',
     path: `/team/${clubId}`,
     jsonLd: data ? buildJsonLd(data, clubId) : undefined,
   })
@@ -85,12 +85,12 @@ export default function TeamProfile() {
 
 function seoTitle(d: ClubProfile): string {
   const yr = d.season?.match(/\d{4}/)?.[0] ?? String(new Date().getFullYear())
-  if (d.rank != null) return `${d.clubName} Netball: #${d.rank} in Australia, Ladder & Form ${yr} | Got Netty`
-  return `${d.clubName} Netball: Profile, Ladder & Results ${yr} | Got Netty`
+  if (d.rank != null) return `${d.clubName} Football: #${d.rank} in Australia, Ladder & Form ${yr} | PlayFooty`
+  return `${d.clubName} Football: Profile, Ladder & Results ${yr} | PlayFooty`
 }
 function seoDesc(d: ClubProfile): string {
   const where = [d.town, d.leagueName?.replace(/\s*-\s*a grade.*/i, ''), d.stateName ?? d.state].filter(Boolean).join(', ')
-  const bits = [`${d.clubName} country netball on Got Netty${where ? ` (${where})` : ''}.`]
+  const bits = [`${d.clubName} community football on PlayFooty${where ? ` (${where})` : ''}.`]
   if (d.rank != null) bits.push(`Ranked #${d.rank} nationally with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}.`)
   if (d.record.played > 0) bits.push(`${d.record.wins}-${d.record.losses} this season${d.ladderPosition != null ? `, ${ordinal(d.ladderPosition)} on the ladder` : ''}.`)
   bits.push('Live ladder, form and national ranking, updated every week.')
@@ -116,12 +116,12 @@ function HeroSkeleton() {
 }
 
 function buildJsonLd(d: ClubProfile, clubId: string) {
-  const base = 'https://gotnetty.com.au'
+  const base = 'https://playfooty.com.au'
   const url = `${base}/team/${clubId}`
   const faqs: { q: string; a: string }[] = []
   if (d.rank != null) faqs.push({
-    q: `What is ${d.clubName}'s national netball ranking?`,
-    a: `${d.clubName} is ranked #${d.rank} in Australia's country netball A Grade rankings on Got Netty, with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}${d.leagueName ? ` playing in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}` : ''}.`,
+    q: `What is ${d.clubName}'s national football ranking?`,
+    a: `${d.clubName} is ranked #${d.rank} in Australia's community football Senior rankings on PlayFooty, with a power rating of ${d.powerRating?.toFixed(1) ?? '0.0'}${d.leagueName ? ` playing in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}` : ''}.`,
   })
   if (d.record.played > 0) faqs.push({
     q: `How is ${d.clubName} going this season?`,
@@ -129,13 +129,13 @@ function buildJsonLd(d: ClubProfile, clubId: string) {
   })
   if (d.leagueName && d.leagueStrengthScore != null) faqs.push({
     q: `What league does ${d.clubName} play in?`,
-    a: `${d.clubName} plays A Grade netball in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}, a ${strengthLabel(strengthStars(d.leagueStrengthScore)).toLowerCase()} ${strengthStars(d.leagueStrengthScore)}-star country netball competition.`,
+    a: `${d.clubName} plays Senior football in the ${d.leagueName.replace(/\s*-\s*a grade.*/i, '')}, a ${strengthLabel(strengthStars(d.leagueStrengthScore)).toLowerCase()} ${strengthStars(d.leagueStrengthScore)}-star community football competition.`,
   })
 
   return [
     {
       '@context': 'https://schema.org', '@type': 'SportsTeam', '@id': `${url}#club`,
-      name: d.clubName, sport: 'Netball', url,
+      name: d.clubName, sport: 'Football', url,
       ...(d.logoUrl ? { logo: d.logoUrl } : {}),
       ...(d.leagueName ? { memberOf: { '@type': 'SportsOrganization', name: d.leagueName.replace(/\s*-\s*a grade.*/i, '') } } : {}),
       ...(d.town || d.stateName ? { location: { '@type': 'Place', name: [d.town, d.stateName ?? d.state].filter(Boolean).join(', ') } } : {}),
