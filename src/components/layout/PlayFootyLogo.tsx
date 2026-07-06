@@ -1,8 +1,12 @@
 import type { CSSProperties } from 'react'
 
-// Cache-bust the public logo URL because /logo.webp replaced an older Go Netty image in production.
-// The file still resolves to public/logo.webp; the query only forces browsers/CDNs to fetch the current asset.
-export const PLAYFOOTY_LOGO_SRC = '/logo.webp?v=playfooty-football-logo-c176cbb'
+/**
+ * Single source of truth for the PlayFooty brand mark in public/admin headers.
+ * Keep this pointed at the public-folder asset exactly: /public/logo.webp is
+ * served by Vite/Vercel as /logo.webp. Do not import, generate, or dynamically
+ * swap another header logo here.
+ */
+export const PLAYFOOTY_LOGO_SRC = '/logo.webp'
 
 type PlayFootyLogoProps = {
   height?: number

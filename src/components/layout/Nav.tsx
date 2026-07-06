@@ -92,7 +92,7 @@ export default function Nav() {
         <div
           className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between h-full"
         >
-          {/* Logo */}
+          {/* Public header logo: desktop and mobile top bar both use this single component. The mobile drawer does not render a second logo. */}
           <button
             onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }) }}
             aria-label="PlayFooty home"
