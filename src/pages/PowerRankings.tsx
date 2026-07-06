@@ -147,7 +147,6 @@ export default function PowerRankings() {
                 {data.articles.slice(0, 4).map(article => <MiniArticle key={article.slug} article={article} />)}
                 {data.articles.length === 0 && <p className="stats-muted">Latest articles will appear here when published.</p>}
               </SidebarPanel>
-              <div className="stats-sponsor"><span>Partner slot</span><strong>Put your brand beside national netball data.</strong></div>
             </aside>
           </section>
         )}

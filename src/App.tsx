@@ -58,7 +58,6 @@ export default function App() {
               <LatestNewsCompact articles={secondary.slice(0, 3)} />
               <MoversCard risers={home.risers} fallers={home.fallers} loading={home.loading} />
               <StrongestLeagueCard league={home.strongestLeague} />
-              <SponsorSlot />
             </aside>
           </div>
         </section>
@@ -144,11 +143,10 @@ function SecondaryStories({ articles }: { articles: Article[] }) {
   return <div className="secondary-grid">{articles.slice(0, 5).map(a => <Link key={a.slug} to={newsPath(a.slug)} className="secondary-story"><EditorialImage seed={a.heroSeed} ratio="4 / 3" rounded={12} /><span><b>{a.title}</b><Meta article={a} /></span></Link>)}</div>
 }
 
-function ChampionshipCard() { return <Link to="/championship" className="side-card championship-card"><CalendarDays /><span>Upcoming National Championships</span><strong>Pathway announcement building</strong><small>Countdown TBA · follow the national championship hub</small></Link> }
+function ChampionshipCard() { return <Link to="/championship" className="side-card championship-card"><CalendarDays /><span>Upcoming National Championships</span><strong>Pathway announcement building</strong><small>Future pathway · follow the championship hub</small></Link> }
 function RankingsUpdateCard({ generatedAt, weekLabel, total }: { generatedAt: string | null; weekLabel: string | null; total: number }) { return <Link to="/rankings" className="side-card update-card"><span className="live-pill"><span /> Latest rankings update</span><strong>{weekLabel ?? 'Season live'}</strong><small>{total} ranked clubs{generatedAt ? ` · updated ${shortDate(generatedAt)}` : ''}</small></Link> }
 function LatestNewsCompact({ articles }: { articles: Article[] }) { if (!articles.length) return null; return <article className="side-card"><CardTitle title="Latest News" to="/news" />{articles.map(a => <Link className="compact-news" key={a.slug} to={newsPath(a.slug)}><b>{a.title}</b><Meta article={a} /></Link>)}</article> }
 function StrongestLeagueCard({ league }: { league: LeagueRow | null }) { if (!league) return null; return <Link to={leaguePath(league.id)} className="side-card strongest-card"><span>Strongest League</span><strong>{league.name}</strong><small>{league.state} · {league.clubCount} clubs</small><StarStrength stars={strengthStars(league.strengthScore)} size={12} /></Link> }
-function SponsorSlot() { return <aside className="side-card sponsor-slot"><span>Partner slot</span><strong>Your brand beside the national ladder</strong><small>Premium homepage placement</small></aside> }
 
 function MoversCard({ risers, fallers, loading }: { risers: RankingEntry[]; fallers: RankingEntry[]; loading: boolean }) {
   const movers = [...risers.slice(0, 3), ...fallers.slice(0, 2)]

@@ -3,7 +3,7 @@
  * Future-facing public teaser only — no registrations, draws, payments or tournament systems.
  */
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarDays, HelpCircle, ListOrdered, MapPinned, Megaphone, Sparkles, Trophy, Users } from 'lucide-react'
+import { ArrowRight, CalendarDays, HelpCircle, ListOrdered, MapPinned, Sparkles, Trophy, Users } from 'lucide-react'
 import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
 import { useSeo } from '../lib/seo'
@@ -58,12 +58,13 @@ export default function Championship() {
             <div className="hero-actions">
               <button className="btn-primary" type="button" aria-disabled="true">Join updates · coming soon</button>
               <Link className="btn-secondary" to="/rankings">View rankings <ArrowRight size={16} /></Link>
+              <Link className="btn-secondary" to="/directory">Browse clubs <ArrowRight size={16} /></Link>
             </div>
           </div>
           <div className="countdown-card" aria-label="Championship status">
-            <span>Countdown</span>
-            <strong>TBA</strong>
-            <p>No event date has been announced. This hub will update when real championship details exist.</p>
+            <span>Status</span>
+            <strong>Not live</strong>
+            <p>No event date, venue, teams, registration or fixtures have been announced.</p>
           </div>
         </section>
 
@@ -79,7 +80,7 @@ export default function Championship() {
         </section>
 
         <section className="champ-section">
-          <SectionHead eyebrow="Future format" title="Concept cards" text="These are placeholders for possible future championship concepts only — not live systems." />
+          <SectionHead eyebrow="Future format" title="Concept cards" text="These are possible future championship concepts only — not live systems." />
           <div className="format-grid">
             {FORMAT_CARDS.map(card => <FormatCard key={card.title} {...card} />)}
           </div>
@@ -92,14 +93,6 @@ export default function Championship() {
           </div>
         </section>
 
-        <section className="partner-section">
-          <div>
-            <span>Partner placeholder</span>
-            <h2>Future championship partners</h2>
-            <p>Commercial opportunities are not open yet. This section simply marks where future sponsor and partner information can live when the championship becomes active.</p>
-          </div>
-          <Megaphone size={42} />
-        </section>
 
         <section className="champ-section faq-section">
           <SectionHead eyebrow="FAQ" title="What clubs need to know" text="Clear answers for a future-facing championship hub." />
