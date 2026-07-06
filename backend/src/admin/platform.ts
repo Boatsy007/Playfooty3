@@ -15,6 +15,7 @@ import { createBackup } from '../jobs/backup.js'
 import { sweepDataQuality } from '../jobs/data-quality.js'
 import { generateWeeklyDrafts } from '../jobs/generate-articles.js'
 import { runWeeklyUpdate } from '../jobs/weekly-update-engine.js'
+import { fetchPage, parseResults, parseFixtures, parseLadder, type ResultRow, type FixtureRow } from '../football/url-ingest.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -590,6 +591,195 @@ router.post('/football/leagues/:id/publish', async (req, res) => {
   const recalc = req.body?.recalculate === true ? await recalculateNational().catch(e => ({ error: e instanceof Error ? e.message : 'recalc failed' })) : null
   await audit('FOOTBALL_PUBLISH_APPROVED', 'League', req.params.id, { season, grade, results: results.count, ladder: ladder.count, recalc })
   res.json({ data: { season, grade, publishedResults: results.count, publishedLadderRows: ladder.count, recalc } })
+})
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Admin V3 — TRUE URL ingestion. Operators paste URLs; the backend fetches,
+// parses, imports (with provenance, dedupe, conflict → review), auto-creates
+// clubs, and regenerates the ladder from results. Additive; nothing overwrites
+// verified manual data.
+// ═════════════════════════════════════════════════════════════════════════════
+
+const slugifyFb = (s: string) => (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'club'
+
+/** Idempotently resolve/create a football club + its league-season membership. */
+async function ensureFootballClub(name: string, league: { id: string; stateId: string }, season: string, grade: string): Promise<{ clubId: string; created: boolean } | null> {
+  const trimmed = clean(name)
+  if (!trimmed) return null
+  let club = await prisma.club.findFirst({ where: { name: { equals: trimmed, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true } }).catch(() => null)
+  let created = false
+  if (!club) {
+    let slug = slugifyFb(trimmed); let i = 1
+    while (await prisma.club.findUnique({ where: { slug }, select: { id: true } }).catch(() => null)) { slug = `${slugifyFb(trimmed)}-afl${i > 1 ? i : ''}`; i++; if (i > 60) break }
+    club = await prisma.club.create({ data: { name: trimmed, slug, stateId: league.stateId, sport: 'FOOTBALL', source: 'PLAYFOOTY_URL_IMPORT', isActive: true, approvalStatus: 'APPROVED' }, select: { id: true } })
+    created = true
+  }
+  await prisma.clubLeagueSeason.upsert({
+    where: { clubId_leagueId_season_grade: { clubId: club.id, leagueId: league.id, season, grade } },
+    create: { clubId: club.id, leagueId: league.id, season, grade, sport: 'FOOTBALL', isActive: true },
+    update: { sport: 'FOOTBALL', isActive: true },
+  }).catch(() => {})
+  return { clubId: club.id, created }
+}
+const clean = (s: string) => (s || '').replace(/\s+/g, ' ').trim()
+
+interface RoundReport { round: string; resultsFound: number; resultsImported: number; fixturesFound: number; fixturesImported: number; clubsCreated: number; conflicts: number; reviews: number; ladderRows: number; strategies: string[]; warnings: string[] }
+
+/** Core per-round URL import used by both import-url and import-season. */
+async function importRoundFromUrls(
+  league: { id: string; stateId: string; sourceUrl: string | null },
+  opts: { round: string; season: string; grade: string; resultsUrl?: string; fixtureUrl?: string; source: string; importedBy: string; dryRun: boolean },
+): Promise<RoundReport> {
+  const rep: RoundReport = { round: opts.round, resultsFound: 0, resultsImported: 0, fixturesFound: 0, fixturesImported: 0, clubsCreated: 0, conflicts: 0, reviews: 0, ladderRows: 0, strategies: [], warnings: [] }
+  const verified = opts.source === 'MANUAL_ENTRY'
+
+  // ── Results ──
+  if (opts.resultsUrl) {
+    const page = await fetchPage(opts.resultsUrl)
+    const parsed = parseResults(page)
+    rep.resultsFound = parsed.rows.length; rep.strategies.push(`results:${parsed.strategy}`); rep.warnings.push(...parsed.warnings)
+    const payloadHash = stableHash({ url: opts.resultsUrl, rows: parsed.rows })
+    await prisma.footballDataImport.upsert({
+      where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: opts.source, dataType: 'RESULTS', payloadHash } },
+      create: { leagueId: league.id, sourceType: opts.source, dataType: 'RESULTS', sourceUrl: opts.resultsUrl, payloadHash, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, season: opts.season, grade: opts.grade, importedBy: opts.importedBy, strategy: parsed.strategy, rows: parsed.rows }), scrapedAt: new Date() },
+      update: { dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, importedBy: opts.importedBy, strategy: parsed.strategy, rows: parsed.rows }) },
+    })
+    if (parsed.rows.length === 0) { await createFootballReview(league.id, 'FOOTBALL_URL_NO_DATA', `Results URL returned no parseable rows for ${opts.round}: ${opts.resultsUrl}`, { url: opts.resultsUrl, warnings: parsed.warnings }, 0.2); rep.reviews++ }
+    if (!opts.dryRun) {
+      for (const r of parsed.rows as ResultRow[]) {
+        const home = await ensureFootballClub(r.homeName, league, opts.season, opts.grade)
+        const away = await ensureFootballClub(r.awayName, league, opts.season, opts.grade)
+        if (home?.created) rep.clubsCreated++; if (away?.created) rep.clubsCreated++
+        const round = str(r.round, opts.round)
+        const homePoints = footballPoints(r.homeGoals, r.homeBehinds, r.homePoints)
+        const awayPoints = footballPoints(r.awayGoals, r.awayBehinds, r.awayPoints)
+        const key = { leagueId: league.id, season: opts.season, grade: opts.grade, round, homeName: str(r.homeName), awayName: str(r.awayName) }
+        const existing = await prisma.footballResult.findUnique({ where: { leagueId_season_grade_round_homeName_awayName: key } }).catch(() => null)
+        if (existing && existing.verified && (existing.homePoints !== homePoints || existing.awayPoints !== awayPoints)) {
+          await createFootballReview(league.id, 'FOOTBALL_RESULT_CONFLICT', `URL result for ${key.homeName} v ${key.awayName} (${round}) conflicts with verified data`, { url: opts.resultsUrl, incoming: { homePoints, awayPoints }, existing: { homePoints: existing.homePoints, awayPoints: existing.awayPoints } }, 0.5)
+          rep.conflicts++; rep.reviews++; continue
+        }
+        await prisma.footballResult.upsert({
+          where: { leagueId_season_grade_round_homeName_awayName: key },
+          create: { ...key, homeGoals: num(r.homeGoals), homeBehinds: num(r.homeBehinds), homePoints, awayGoals: num(r.awayGoals), awayBehinds: num(r.awayBehinds), awayPoints, matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.resultsUrl, verified, published: false },
+          update: { homeGoals: num(r.homeGoals), homeBehinds: num(r.homeBehinds), homePoints, awayGoals: num(r.awayGoals), awayBehinds: num(r.awayBehinds), awayPoints, sourceType: opts.source, verified },
+        })
+        rep.resultsImported++
+      }
+    }
+  }
+
+  // ── Fixtures (future rounds: venue/date/time/home-away) ──
+  if (opts.fixtureUrl) {
+    const page = await fetchPage(opts.fixtureUrl)
+    const parsed = parseFixtures(page)
+    rep.fixturesFound = parsed.rows.length; rep.strategies.push(`fixtures:${parsed.strategy}`); rep.warnings.push(...parsed.warnings)
+    const payloadHash = stableHash({ url: opts.fixtureUrl, rows: parsed.rows })
+    await prisma.footballDataImport.upsert({
+      where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: opts.source, dataType: 'FIXTURES', payloadHash } },
+      create: { leagueId: league.id, sourceType: opts.source, dataType: 'FIXTURES', sourceUrl: opts.fixtureUrl, payloadHash, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, importedBy: opts.importedBy, rows: parsed.rows }), scrapedAt: new Date() },
+      update: { dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, rows: parsed.rows }) },
+    })
+    if (parsed.rows.length === 0) { await createFootballReview(league.id, 'FOOTBALL_URL_NO_DATA', `Fixture URL returned no parseable rows for ${opts.round}: ${opts.fixtureUrl}`, { url: opts.fixtureUrl, warnings: parsed.warnings }, 0.2); rep.reviews++ }
+    if (!opts.dryRun) {
+      for (const r of parsed.rows as FixtureRow[]) {
+        const home = await ensureFootballClub(r.homeName, league, opts.season, opts.grade)
+        const away = await ensureFootballClub(r.awayName, league, opts.season, opts.grade)
+        if (home?.created) rep.clubsCreated++; if (away?.created) rep.clubsCreated++
+        const round = str(r.round, opts.round)
+        const key = { leagueId: league.id, season: opts.season, grade: opts.grade, round, homeName: str(r.homeName), awayName: str(r.awayName) }
+        await prisma.footballFixture.upsert({
+          where: { leagueId_season_grade_round_homeName_awayName: key },
+          create: { ...key, matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.fixtureUrl, verified },
+          update: { matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, verified },
+        })
+        rep.fixturesImported++
+      }
+    }
+  }
+  return rep
+}
+
+/** After results change, rebuild the generated ladder from all season results. */
+async function regenerateLadder(leagueId: string, season: string, grade: string): Promise<number> {
+  const results = await prisma.footballResult.findMany({ where: { leagueId, season, grade } })
+  if (results.length === 0) return 0
+  const ladder = generateFootballLadder(results)
+  for (const r of ladder) {
+    await prisma.footballLadderEntry.upsert({
+      where: { leagueId_season_grade_clubName: { leagueId, season, grade, clubName: r.clubName } },
+      create: { leagueId, season, grade, clubName: r.clubName, position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, pointsFor: r.pointsFor, pointsAgainst: r.pointsAgainst, percentage: r.percentage, premiershipPoints: r.premiershipPoints, sourceType: 'MANUAL_ENTRY', verified: true },
+      update: { position: r.position, played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, pointsFor: r.pointsFor, pointsAgainst: r.pointsAgainst, percentage: r.percentage, premiershipPoints: r.premiershipPoints },
+    })
+  }
+  return ladder.length
+}
+
+// POST /football/leagues/:id/import-url — one round from pasted URLs
+router.post('/football/leagues/:id/import-url', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id }, select: { id: true, stateId: true, sourceUrl: true } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const b = req.body as Record<string, unknown>
+  const season = str(b.season, '2026'), grade = str(b.grade, 'Senior Football'), round = str(b.round, 'Round TBC')
+  const source = isFootballSource(b.source) ? b.source : 'PLAYHQ_SCRAPER'
+  const dryRun = b.dryRun === true
+  if (!b.resultsUrl && !b.fixtureUrl) return res.status(400).json({ error: 'resultsUrl or fixtureUrl required' })
+  const rep = await importRoundFromUrls(league, { round, season, grade, resultsUrl: str(b.resultsUrl) || undefined, fixtureUrl: str(b.fixtureUrl) || undefined, source, importedBy: str(b.importedBy, 'admin'), dryRun })
+  let ladderRows = 0
+  if (!dryRun && b.generateLadder !== false && rep.resultsImported > 0) ladderRows = await regenerateLadder(league.id, season, grade)
+  rep.ladderRows = ladderRows
+  await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: new Date(), lastSuccessfulSyncAt: rep.resultsImported || rep.fixturesImported ? new Date() : undefined, syncStatus: rep.reviews > rep.resultsImported + rep.fixturesImported ? 'NEEDS_REVIEW' : 'SUCCESS' } }).catch(() => {})
+  await audit('FOOTBALL_IMPORT_URL', 'League', league.id, rep, source)
+  res.json({ data: rep })
+})
+
+// POST /football/leagues/:id/import-season — many rounds at once
+router.post('/football/leagues/:id/import-season', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id }, select: { id: true, stateId: true, sourceUrl: true } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const b = req.body as Record<string, unknown>
+  const season = str(b.season, '2026'), grade = str(b.grade, 'Senior Football')
+  const source = isFootballSource(b.source) ? b.source : 'PLAYHQ_SCRAPER'
+  const dryRun = b.dryRun === true
+  const rounds = Array.isArray(b.rounds) ? b.rounds as Record<string, unknown>[] : []
+  if (rounds.length === 0) return res.status(400).json({ error: 'rounds[] required' })
+  const reports: RoundReport[] = []
+  for (const r of rounds) {
+    if (!str(r.resultsUrl) && !str(r.fixtureUrl)) continue
+    reports.push(await importRoundFromUrls(league, { round: str(r.round, 'Round TBC'), season, grade, resultsUrl: str(r.resultsUrl) || undefined, fixtureUrl: str(r.fixtureUrl) || undefined, source, importedBy: str(b.importedBy, 'admin'), dryRun }))
+  }
+  const totalResults = reports.reduce((n, r) => n + r.resultsImported, 0)
+  const ladderRows = !dryRun && totalResults > 0 && b.generateLadder !== false ? await regenerateLadder(league.id, season, grade) : 0
+  const totals = { rounds: reports.length, resultsImported: totalResults, fixturesImported: reports.reduce((n, r) => n + r.fixturesImported, 0), clubsCreated: reports.reduce((n, r) => n + r.clubsCreated, 0), conflicts: reports.reduce((n, r) => n + r.conflicts, 0), reviews: reports.reduce((n, r) => n + r.reviews, 0), ladderRows }
+  await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: new Date(), lastSuccessfulSyncAt: totalResults ? new Date() : undefined, syncStatus: totals.reviews > totalResults ? 'NEEDS_REVIEW' : 'SUCCESS' } }).catch(() => {})
+  await audit('FOOTBALL_IMPORT_SEASON', 'League', league.id, totals, source)
+  res.json({ data: { season, grade, totals, rounds: reports } })
+})
+
+// POST /football/leagues/:id/import-ladder-url — fetch + compare imported vs generated
+router.post('/football/leagues/:id/import-ladder-url', async (req, res) => {
+  const league = await prisma.league.findUnique({ where: { id: req.params.id }, select: { id: true, stateId: true } })
+  if (!league) return res.status(404).json({ error: 'not found' })
+  const b = req.body as Record<string, unknown>
+  const season = str(b.season, '2026'), grade = str(b.grade, 'Senior Football')
+  const url = str(b.ladderUrl)
+  if (!url) return res.status(400).json({ error: 'ladderUrl required' })
+  const page = await fetchPage(url)
+  const parsed = parseLadder(page)
+  await prisma.footballDataImport.upsert({
+    where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: 'PLAYHQ_SCRAPER', dataType: 'LADDER', payloadHash: stableHash({ url, rows: parsed.rows }) } },
+    create: { leagueId: league.id, sourceType: 'PLAYHQ_SCRAPER', dataType: 'LADDER', sourceUrl: url, payloadHash: stableHash({ url, rows: parsed.rows }), dryRun: true, status: 'PREVIEWED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ importedBy: str(b.importedBy, 'admin'), rows: parsed.rows }), scrapedAt: new Date() },
+    update: { recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ rows: parsed.rows }) },
+  })
+  if (parsed.rows.length === 0) await createFootballReview(league.id, 'FOOTBALL_URL_NO_DATA', `Ladder URL returned no parseable rows: ${url}`, { url, warnings: parsed.warnings }, 0.2)
+  const results = await prisma.footballResult.findMany({ where: { leagueId: league.id, season, grade } })
+  const generated = generateFootballLadder(results)
+  const diffs = generated.map(g => {
+    const imp = parsed.rows.find(x => x.clubName.toLowerCase() === g.clubName.toLowerCase())
+    return { clubName: g.clubName, generatedPosition: g.position, importedPosition: imp?.position ?? null, generatedPoints: g.premiershipPoints, importedPoints: imp?.points ?? null, differs: !imp || (imp.position != null && imp.position !== g.position) }
+  })
+  await audit('FOOTBALL_IMPORT_LADDER_URL', 'League', league.id, { url, imported: parsed.rows.length, conflictCount: diffs.filter(d => d.differs).length })
+  res.json({ data: { season, grade, importedRows: parsed.rows.length, generatedRows: generated.length, conflictCount: diffs.filter(d => d.differs).length, strategy: parsed.strategy, warnings: parsed.warnings, diffs } })
 })
 
 export { router as adminPlatformRouter }

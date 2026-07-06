@@ -42,6 +42,13 @@ export interface FootballLeague extends AdminLeague {
 export interface FootballImportResult {
   importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string
 }
+export interface RoundImportReport {
+  round: string; resultsFound: number; resultsImported: number; fixturesFound: number; fixturesImported: number
+  clubsCreated: number; conflicts: number; reviews: number; ladderRows: number; strategies: string[]; warnings: string[]
+}
+export interface SeasonImportTotals {
+  rounds: number; resultsImported: number; fixturesImported: number; clubsCreated: number; conflicts: number; reviews: number; ladderRows: number
+}
 export interface AdminClub {
   id: string; name: string; shortName: string | null; region: string | null
   logoUrl: string | null; websiteUrl: string | null; primaryColour: string | null
@@ -197,6 +204,10 @@ export const admin = {
   generateFootballLadder: (id: string, b: { season?: string; grade?: string; dryRun?: boolean }) => req<{ data: { season: string; grade: string; rows?: number; ladder?: unknown[] } }>('POST', `/admin/platform/football/leagues/${id}/generate-ladder`, b).then(r => r.data),
   compareFootballLadder: (id: string, season = '2026', grade = 'Senior Football') => req<{ data: { generatedRows: number; storedRows: number; conflictCount: number; diffs: unknown[] } }>('GET', `/admin/platform/football/leagues/${id}/compare-ladder?season=${encodeURIComponent(season)}&grade=${encodeURIComponent(grade)}`).then(r => r.data),
   publishFootballLeague: (id: string, b: { season?: string; grade?: string; recalculate?: boolean }) => req<{ data: { publishedResults: number; publishedLadderRows: number; recalc: unknown } }>('POST', `/admin/platform/football/leagues/${id}/publish`, b).then(r => r.data),
+  // Admin V3 — TRUE URL ingestion (paste URLs, backend fetches + parses + imports)
+  importFootballUrl: (id: string, b: { round: string; season?: string; grade?: string; resultsUrl?: string; fixtureUrl?: string; source?: string; generateLadder?: boolean; dryRun?: boolean }) => req<{ data: RoundImportReport }>('POST', `/admin/platform/football/leagues/${id}/import-url`, b).then(r => r.data),
+  importFootballSeason: (id: string, b: { season?: string; grade?: string; source?: string; generateLadder?: boolean; dryRun?: boolean; rounds: { round: string; resultsUrl?: string; fixtureUrl?: string }[] }) => req<{ data: { season: string; grade: string; totals: SeasonImportTotals; rounds: RoundImportReport[] } }>('POST', `/admin/platform/football/leagues/${id}/import-season`, b).then(r => r.data),
+  importFootballLadderUrl: (id: string, b: { season?: string; grade?: string; ladderUrl: string }) => req<{ data: { importedRows: number; generatedRows: number; conflictCount: number; strategy: string; warnings: string[]; diffs: { clubName: string; generatedPosition: number | null; importedPosition: number | null; differs: boolean }[] } }>('POST', `/admin/platform/football/leagues/${id}/import-ladder-url`, b).then(r => r.data),
   // Ranking explainability (Phase 6) — public endpoint, but handy in admin too
   explainClub: (clubId: string) => req<{ data: ClubExplanation }>('GET', `/api/rankings/explain/${clubId}`).then(r => r.data),
 }

@@ -357,8 +357,8 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
 const LC_TABS = ['Overview', 'Source Setup', 'Round Backfill', 'Fixtures', 'Results', 'Ladder', 'Clubs', 'Rankings', 'Articles', 'Reviews'] as const
 type LcTab = typeof LC_TABS[number]
 
-interface Round { key: string; name: string; resultsUrl: string; fixtureUrl: string; dateRange: string; dataType: 'RESULTS' | 'FIXTURES'; rowsJson: string; status: 'not imported' | 'imported' | 'needs review' | 'published' }
-const newRound = (n: number): Round => ({ key: Math.random().toString(36).slice(2), name: `Round ${n}`, resultsUrl: '', fixtureUrl: '', dateRange: '', dataType: 'RESULTS', rowsJson: '', status: 'not imported' })
+interface Round { key: string; name: string; resultsUrl: string; fixtureUrl: string; dateRange: string; selected: boolean; status: 'not imported' | 'imported' | 'needs review' | 'published'; note?: string }
+const newRound = (n: number): Round => ({ key: Math.random().toString(36).slice(2), name: `Round ${n}`, resultsUrl: '', fixtureUrl: '', dateRange: '', selected: false, status: 'not imported' })
 
 function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLeague; toast: (t: string, ok?: boolean) => void; onChanged: () => void }) {
   const [tab, setTab] = useState<LcTab>('Overview')
@@ -379,7 +379,7 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
       <div style={box}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <b className="pf-break" style={{ fontSize: 16 }}>{league.name}</b>
-          <span style={{ color: league.syncStatus === 'SUCCESS' ? C.green : league.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute, fontSize: 12 }}>{league.state?.code ?? '—'} · {league.syncStatus}</span>
+          <span style={{ color: league.syncStatus === 'SUCCESS' ? C.green : league.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute, fontSize: 12 }}>{league.state?.code ?? '—'} · {league.syncStatus} · last sync {league.lastSyncAt ? new Date(league.lastSyncAt).toLocaleString() : 'never'}</span>
         </div>
         <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
           <Field label="Season"><input style={input} value={season} onChange={e => setSeason(e.target.value)} /></Field>
@@ -488,71 +488,72 @@ function SourceSetup({ league, toast, onChanged }: { league: FootballLeague; toa
 
 function RoundBackfill({ league, season, grade, toast, onChanged, goReviews }: { league: FootballLeague; season: string; grade: string; toast: (t: string, ok?: boolean) => void; onChanged: () => void; goReviews: () => void }) {
   const [rounds, setRounds] = useState<Round[]>([newRound(1), newRound(2), newRound(3)])
-  const [source, setSource] = useState('MANUAL_ENTRY')
+  const [source, setSource] = useState('PLAYHQ_SCRAPER')
   const [busy, setBusy] = useState(false)
   const upd = (key: string, patch: Partial<Round>) => setRounds(rs => rs.map(r => r.key === key ? { ...r, ...patch } : r))
   const add = () => setRounds(rs => [...rs, newRound(rs.length + 1)])
   const remove = (key: string) => setRounds(rs => rs.filter(r => r.key !== key))
+  const applyReport = (key: string, rep: { resultsImported: number; fixturesImported: number; reviews: number; clubsCreated: number }) =>
+    upd(key, { status: rep.reviews > (rep.resultsImported + rep.fixturesImported) ? 'needs review' : (rep.resultsImported || rep.fixturesImported) ? 'imported' : 'needs review', note: `${rep.resultsImported} results · ${rep.fixturesImported} fixtures · ${rep.clubsCreated} clubs · ${rep.reviews} review` })
 
-  const importOne = async (r: Round): Promise<boolean> => {
-    if (!r.rowsJson.trim()) { toast(`${r.name}: paste rows to import (URL-only fetch is not connected)`, false); return false }
-    let parsed: Record<string, unknown>[]
-    try { parsed = JSON.parse(r.rowsJson) as Record<string, unknown>[]; if (!Array.isArray(parsed)) throw new Error() } catch { toast(`${r.name}: rows must be a JSON array`, false); return false }
-    const rows = parsed.map(x => ({ season, grade, ...x, round: r.name }))
-    const sourceUrl = r.dataType === 'FIXTURES' ? r.fixtureUrl : r.resultsUrl
-    const out = await admin.importFootballRows(league.id, { sourceType: source, dataType: r.dataType, rows, sourceUrl: sourceUrl || undefined })
-    upd(r.key, { status: (out.recordsImported ?? 0) > 0 ? 'imported' : 'needs review' })
-    return true
-  }
-  const runImport = async (filter?: 'RESULTS' | 'FIXTURES') => {
+  // Import a set of rounds via the season endpoint (backend fetches every URL).
+  const importRounds = async (list: Round[], label: string) => {
+    const usable = list.filter(r => r.resultsUrl.trim() || r.fixtureUrl.trim())
+    if (usable.length === 0) return toast('Add a Results or Fixture URL first', false)
     setBusy(true)
-    let n = 0
     try {
-      for (const r of rounds) {
-        if (filter && r.dataType !== filter) continue
-        if (!r.rowsJson.trim()) continue
-        const ok = await importOne(r); if (ok) n++
-      }
-      toast(n ? `Imported ${n} round${n > 1 ? 's' : ''}${filter ? ` (${filter.toLowerCase()})` : ''}` : 'No rounds with pasted rows to import', n > 0)
+      const out = await admin.importFootballSeason(league.id, { season, grade, source, generateLadder: true, rounds: usable.map(r => ({ round: r.name, resultsUrl: r.resultsUrl.trim() || undefined, fixtureUrl: r.fixtureUrl.trim() || undefined })) })
+      out.rounds.forEach(rep => { const r = usable.find(x => x.name === rep.round); if (r) applyReport(r.key, rep) })
+      const t = out.totals
+      toast(`${label}: ${t.resultsImported} results · ${t.fixturesImported} fixtures · ${t.clubsCreated} clubs created · ${t.ladderRows} ladder rows${t.reviews ? ` · ${t.reviews} to review` : ''}`, t.reviews === 0)
       onChanged()
     } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
+  const importOne = async (r: Round) => {
+    if (!r.resultsUrl.trim() && !r.fixtureUrl.trim()) return toast(`${r.name}: add a Results or Fixture URL`, false)
+    setBusy(true)
+    try {
+      const rep = await admin.importFootballUrl(league.id, { round: r.name, season, grade, source, resultsUrl: r.resultsUrl.trim() || undefined, fixtureUrl: r.fixtureUrl.trim() || undefined, generateLadder: true })
+      applyReport(r.key, rep)
+      toast(`${r.name}: ${rep.resultsImported} results · ${rep.fixturesImported} fixtures · ${rep.clubsCreated} clubs${rep.warnings.length ? ` · ⚠ ${rep.warnings[0]}` : ''}`, rep.reviews === 0)
+      onChanged()
+    } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+  }
+  const previousRounds = () => { const idx = rounds.map((r, i) => ({ r, i })).filter(x => x.r.status === 'imported').map(x => x.i); const last = idx.length ? Math.max(...idx) : rounds.length - 1; return rounds.slice(0, last + 1) }
 
   const statusColour = (s: Round['status']) => s === 'imported' ? C.green : s === 'published' ? '#4dd9f4' : s === 'needs review' ? C.gold : C.mute
   return (
     <div style={{ display: 'grid', gap: 14 }}>
       <div style={box}>
-        <b>Round Backfill — mid-season catch-up</b>
-        <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 10px' }}>Add every round from Round 1 to the latest. Paste each round's rows (results or fixtures), then Import All. Imports are idempotent — re-importing a round never duplicates. Paste-based import is fully wired; automatic fetch from a results URL needs a server-side scrape endpoint (see report).</p>
+        <b>Round Backfill — paste URLs, we fetch &amp; import</b>
+        <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 10px' }}>Add every round and paste its Results URL (and Fixture URL for future rounds). The backend fetches each page, parses the football scores, auto-creates any missing clubs, stores provenance, routes conflicts to review, and regenerates the ladder from results. Idempotent — re-importing never duplicates. No row copying.</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Field label="Import as source"><select style={{ ...input, width: 170 }} value={source} onChange={e => setSource(e.target.value)}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></Field>
+          <Field label="Import source"><select style={{ ...input, width: 170 }} value={source} onChange={e => setSource(e.target.value)}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></Field>
           <button style={btn('#2a3145')} onClick={add}>+ Add round</button>
-          <button disabled={busy} style={btn(C.green)} onClick={() => runImport()}>Import all</button>
-          <button disabled={busy} style={btn()} onClick={() => runImport('RESULTS')}>Import results only</button>
-          <button disabled={busy} style={btn()} onClick={() => runImport('FIXTURES')}>Import fixtures only</button>
+          <button disabled={busy} style={btn(C.green)} onClick={() => importRounds(rounds, 'Entire season')}>Import entire season</button>
+          <button disabled={busy} style={btn()} onClick={() => importRounds(rounds.filter(r => r.selected), 'Selected')}>Import selected</button>
+          <button disabled={busy} style={btn()} onClick={() => importRounds(previousRounds(), 'Previous rounds')}>Import previous rounds</button>
         </div>
+        {source === 'MANUAL_ENTRY' && <p style={{ color: C.gold, fontSize: 11, marginTop: 6 }}>MANUAL_ENTRY marks imported rows as verified. Use a PlayHQ/scraper source for URL fetches so manual overrides are never replaced.</p>}
       </div>
 
       {rounds.map(r => (
         <div key={r.key} style={box}>
-          <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 130px', gap: 8 }}>
+          <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '18px 1.2fr 2fr 2fr 1fr', gap: 8, alignItems: 'end' }}>
+            <label style={{ paddingBottom: 8 }}><input type="checkbox" checked={r.selected} onChange={e => upd(r.key, { selected: e.target.checked })} /></label>
             <Field label="Round"><input style={input} value={r.name} onChange={e => upd(r.key, { name: e.target.value })} /></Field>
-            <Field label="Results URL"><input className="pf-break" style={input} value={r.resultsUrl} onChange={e => upd(r.key, { resultsUrl: e.target.value })} placeholder="https://…" /></Field>
-            <Field label="Fixture URL"><input className="pf-break" style={input} value={r.fixtureUrl} onChange={e => upd(r.key, { fixtureUrl: e.target.value })} placeholder="https://…" /></Field>
-            <Field label="Date range"><input style={input} value={r.dateRange} onChange={e => upd(r.key, { dateRange: e.target.value })} placeholder="e.g. 5–6 Apr" /></Field>
+            <Field label="Results URL"><input className="pf-break" style={input} value={r.resultsUrl} onChange={e => upd(r.key, { resultsUrl: e.target.value })} placeholder="https://www.playhq.com/…/results" /></Field>
+            <Field label="Fixture URL (future rounds)"><input className="pf-break" style={input} value={r.fixtureUrl} onChange={e => upd(r.key, { fixtureUrl: e.target.value })} placeholder="https://www.playhq.com/…/fixture" /></Field>
+            <Field label="Date range"><input style={input} value={r.dateRange} onChange={e => upd(r.key, { dateRange: e.target.value })} placeholder="5–6 Apr" /></Field>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
-            <select style={{ ...input, width: 130 }} value={r.dataType} onChange={e => upd(r.key, { dataType: e.target.value as Round['dataType'] })}><option>RESULTS</option><option>FIXTURES</option></select>
             <span style={{ color: statusColour(r.status), fontSize: 12, fontWeight: 700 }}>● {r.status}</span>
+            {r.note && <span style={{ color: C.mute, fontSize: 12 }}>{r.note}</span>}
             <span style={{ flex: 1 }} />
-            <button disabled={busy} style={btn(C.green)} onClick={async () => { setBusy(true); try { if (await importOne(r)) { toast(`${r.name} imported`); onChanged() } } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }}>Import</button>
+            <button disabled={busy} style={btn(C.green)} onClick={() => importOne(r)}>Import round</button>
             <button style={btn(C.gold)} onClick={goReviews}>Review</button>
             <button style={{ ...btn('#2a3145'), color: C.red }} onClick={() => remove(r.key)}>Remove</button>
           </div>
-          <textarea style={{ ...input, minHeight: 90, marginTop: 8, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} value={r.rowsJson} onChange={e => upd(r.key, { rowsJson: e.target.value })}
-            placeholder={r.dataType === 'RESULTS'
-              ? '[{ "homeName":"Home FC","awayName":"Away FC","homeGoals":12,"homeBehinds":8,"awayGoals":9,"awayBehinds":10 }]'
-              : '[{ "homeName":"Home FC","awayName":"Away FC","matchDate":"2026-04-05T14:00:00","venue":"Home Oval" }]'} />
         </div>
       ))}
     </div>
@@ -561,19 +562,17 @@ function RoundBackfill({ league, season, grade, toast, onChanged, goReviews }: {
 
 function LadderPanel({ league, season, grade, toast, onChanged }: { league: FootballLeague; season: string; grade: string; toast: (t: string, ok?: boolean) => void; onChanged: () => void }) {
   const [busy, setBusy] = useState(false)
-  const [ladderJson, setLadderJson] = useState('')
-  const [diffs, setDiffs] = useState<{ clubName: string; generatedPosition: number | null; storedPosition: number | null; differs: boolean }[] | null>(null)
+  const [ladderUrl, setLadderUrl] = useState('')
+  const [diffs, setDiffs] = useState<{ clubName: string; generatedPosition: number | null; importedPosition: number | null; differs: boolean }[] | null>(null)
   const [conflicts, setConflicts] = useState(0)
-  const importLadder = async () => {
-    if (!ladderJson.trim()) return toast('Paste ladder rows to import', false)
-    let rows: unknown[]
-    try { rows = JSON.parse(ladderJson) as unknown[]; if (!Array.isArray(rows)) throw new Error() } catch { return toast('Ladder rows must be a JSON array', false) }
+  const importLadderUrl = async () => {
+    if (!ladderUrl.trim()) return toast('Paste a ladder URL to import + compare', false)
     setBusy(true)
-    try { const o = await admin.importFootballRows(league.id, { sourceType: 'MANUAL_ENTRY', dataType: 'LADDER', rows: (rows as Record<string, unknown>[]).map(x => ({ season, grade, ...x })) }); toast(`Imported ${o.recordsImported ?? 0} ladder rows (validation/fallback)`); onChanged() }
+    try { const o = await admin.importFootballLadderUrl(league.id, { season, grade, ladderUrl: ladderUrl.trim() }); setDiffs(o.diffs); setConflicts(o.conflictCount); toast(`Imported ${o.importedRows} ladder rows · ${o.conflictCount} difference(s) vs generated${o.warnings.length ? ` · ⚠ ${o.warnings[0]}` : ''}`, o.conflictCount === 0 && o.importedRows > 0); onChanged() }
     catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const generate = async () => { setBusy(true); try { const o = await admin.generateFootballLadder(league.id, { season, grade }); toast(`Generated ${o.rows ?? o.ladder?.length ?? 0} ladder rows from results`); onChanged() } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
-  const compare = async () => { setBusy(true); try { const o = await admin.compareFootballLadder(league.id, season, grade); setDiffs(o.diffs as typeof diffs); setConflicts(o.conflictCount); toast(`${o.conflictCount} difference(s) between generated and imported ladder`) } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
+  const compare = async () => { setBusy(true); try { const o = await admin.compareFootballLadder(league.id, season, grade); setDiffs((o.diffs as { clubName: string; generatedPosition: number | null; storedPosition: number | null; differs: boolean }[]).map(d => ({ clubName: d.clubName, generatedPosition: d.generatedPosition, importedPosition: d.storedPosition, differs: d.differs }))); setConflicts(o.conflictCount); toast(`${o.conflictCount} difference(s) between generated and stored ladder`) } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
   const publish = async () => { if (!confirm('Publish the approved ladder + results and recalculate rankings?')) return; setBusy(true); try { const o = await admin.publishFootballLeague(league.id, { season, grade, recalculate: true }); toast(`Published ${o.publishedLadderRows} ladder rows · ${o.publishedResults} results`); onChanged() } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
   return (
     <div style={{ display: 'grid', gap: 14 }}>
@@ -582,25 +581,31 @@ function LadderPanel({ league, season, grade, toast, onChanged }: { league: Foot
         <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 10px' }}>Results drive the ladder. Generate rebuilds it from imported results; an imported ladder is validation/fallback. Compare, then publish the approved ladder. Differences are surfaced for review, never auto-applied over verified data.</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button disabled={busy} style={btn(C.green)} onClick={generate}>Generate from results</button>
-          <button disabled={busy} style={btn(C.gold)} onClick={compare}>Compare imported vs generated</button>
+          <button disabled={busy} style={btn(C.gold)} onClick={compare}>Compare generated vs stored</button>
           <button disabled={busy} style={btn(C.red)} onClick={publish}>Publish + recalculate</button>
         </div>
       </div>
       <div style={box}>
-        <b>Import ladder (validation / fallback)</b>
-        <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 8px' }}>Optional — paste a published ladder to validate against the generated one.</p>
-        <textarea style={{ ...input, minHeight: 90, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} value={ladderJson} onChange={e => setLadderJson(e.target.value)} placeholder='[{ "clubName":"Home FC","position":1,"played":5,"wins":5,"pointsFor":420,"pointsAgainst":210,"points":20 }]' />
-        <button disabled={busy} style={{ ...btn(), marginTop: 8 }} onClick={importLadder}>Import ladder rows</button>
+        <b>Import ladder from URL (validation / fallback)</b>
+        <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 8px' }}>Paste a published ladder URL — the backend fetches it and shows the differences against the results-generated ladder. The generated ladder stays authoritative; approve the imported one only after review.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input className="pf-break" style={{ ...input, flex: 1, minWidth: 220 }} value={ladderUrl} onChange={e => setLadderUrl(e.target.value)} placeholder="https://www.playhq.com/…/ladder" />
+          <button disabled={busy} style={btn()} onClick={importLadderUrl}>Import + compare</button>
+        </div>
       </div>
       {diffs && (
         <div style={box}>
           <b>Comparison — {conflicts} conflict(s)</b>
-          <div className="pf-scroll" style={{ marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' }}>
+            <button style={btn(C.green)} disabled={busy} onClick={() => toast('Generated ladder is already the stored/authoritative ladder', true)}>Approve generated</button>
+            <button style={btn(C.gold)} disabled={busy} onClick={() => toast('Imported ladder kept for review — publish generated, or resolve in Reviews', true)}>Approve imported (review)</button>
+          </div>
+          <div className="pf-scroll">
             <table style={{ width: '100%' }}>
               <thead><tr><th style={th}>Club</th><th style={th}>Generated</th><th style={th}>Imported</th><th style={th}>Match</th></tr></thead>
               <tbody>{diffs.map((d, i) => (
                 <tr key={i} style={{ background: d.differs ? 'rgba(244,193,77,0.08)' : undefined }}>
-                  <td style={td} className="pf-break">{d.clubName}</td><td style={td}>{d.generatedPosition ?? '—'}</td><td style={td}>{d.storedPosition ?? '—'}</td>
+                  <td style={td} className="pf-break">{d.clubName}</td><td style={td}>{d.generatedPosition ?? '—'}</td><td style={td}>{d.importedPosition ?? '—'}</td>
                   <td style={td}><span style={{ color: d.differs ? C.gold : C.green }}>{d.differs ? 'differs' : 'ok'}</span></td>
                 </tr>
               ))}</tbody>
