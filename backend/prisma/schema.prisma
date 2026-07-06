@@ -1771,6 +1771,10 @@ model MatchResult {
   umpires       String?   // JSON — only if publicly available
   matchStatus   String?   // PlayHQ game status (e.g. FINAL / UPCOMING)
   playhqGameId  String?
+  playhqVenueId String?
+  playhqSurfaceId String?
+  playhqRoundId String?
+  playhqPoolId  String?
   sourceUpdatedAt DateTime? // PlayHQ "last updated" timestamp
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -1817,6 +1821,10 @@ model Fixture {
   ground        String?
   umpires       String?   // JSON — only if publicly available
   playhqGameId  String?
+  playhqVenueId String?
+  playhqSurfaceId String?
+  playhqRoundId String?
+  playhqPoolId  String?
   sourceUpdatedAt DateTime?
 
   createdAt     DateTime  @default(now())

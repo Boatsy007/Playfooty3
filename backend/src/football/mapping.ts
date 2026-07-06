@@ -11,7 +11,7 @@
 import { prisma } from '../db/client.js'
 import { logger } from '../utils/logger.js'
 
-export type PlayhqEntityType = 'ORGANISATION' | 'ASSOCIATION' | 'COMPETITION' | 'SEASON' | 'GRADE' | 'CLUB' | 'TEAM' | 'FIXTURE' | 'RESULT' | 'LADDER' | 'VENUE'
+export type PlayhqEntityType = 'ORGANISATION' | 'ASSOCIATION' | 'COMPETITION' | 'SEASON' | 'GRADE' | 'CLUB' | 'TEAM' | 'FIXTURE' | 'RESULT' | 'LADDER' | 'VENUE' | 'SURFACE' | 'ROUND' | 'POOL'
 
 export interface MapFields {
   tenant?: string | null; organisationId?: string | null; internalId?: string | null; internalType?: string | null

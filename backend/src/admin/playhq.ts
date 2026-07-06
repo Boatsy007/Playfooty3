@@ -11,7 +11,7 @@
 
 import { Router } from 'express'
 import { requireAdminKey } from '../api/middleware/auth.js'
-import { getFootballStatus, getSyncLogs, discover, importOrganisation, importLeague, importSeason, importFixturesOnly, importResultsOnly, importLaddersOnly, syncLeague, syncSeason, syncAll, type SyncLeagueOpts } from '../football/ingest.js'
+import { getFootballStatus, getHealth, getSyncLogs, refreshAuth, discover, importOrganisation, importLeague, importSeason, importFixturesOnly, importResultsOnly, importVenuesOnly, importLaddersOnly, syncLeague, syncSeason, syncAll, type SyncLeagueOpts } from '../football/ingest.js'
 
 const router = Router()
 router.use(requireAdminKey)
@@ -23,9 +23,12 @@ const leagueOpts = (b: Record<string, unknown>): SyncLeagueOpts => ({
   stateId: b.stateId as string | undefined, createdBy: 'admin',
 })
 
-// ── Status / logs ─────────────────────────────────────────────────────────────
+// ── Status / health / logs / refresh ──────────────────────────────────────────
 router.get('/status', (_req, res) => { res.json({ data: getFootballStatus() }) })
+router.get('/health', async (_req, res) => { res.json({ data: await getHealth() }) })
 router.get('/logs', async (req, res) => { res.json({ data: await getSyncLogs(parseInt(String(req.query.limit ?? '50'), 10) || 50) }) })
+router.post('/refresh', async (_req, res) => { res.json({ data: await refreshAuth('admin') }) })
+router.post('/import-venues', async (_req, res) => { res.json({ data: await importVenuesOnly({ createdBy: 'admin' }) }) })
 
 // ── Discovery / organisation ──────────────────────────────────────────────────
 router.post('/discover', async (req, res) => {

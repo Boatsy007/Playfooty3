@@ -1,52 +1,71 @@
 /**
- * PlayHQ API configuration (Phase F1) — environment only, never committed.
+ * PlayHQ API configuration (Phase F2) — environment only, never committed.
  * ─────────────────────────────────────────────────────────────────────────────
- * Reads credentials from env vars and reports whether the PlayHQ integration is
- * usable. If credentials are missing the integration is DISABLED and every call
- * fails gracefully with a clear admin message — the rest of the app is never
- * blocked. No secret value is ever logged or returned to a client.
+ * Two independent auth models (never mixed):
+ *   • PUBLIC   — x-api-key + x-phq-tenant  (modern v1/v2 endpoints)
+ *   • PARTNER  — JWT from POST /auth via clientId/clientSecret (deprecated list
+ *                + /partner/* endpoints), auto-refreshed on expiry
+ * The integration is usable if EITHER an API key (public) OR client credentials
+ * (partner) are present. If neither exists it is DISABLED and every call fails
+ * gracefully with a clear admin message. No secret is ever logged or returned.
  */
 
 export const PLAYHQ_CREDENTIALS_MISSING = 'PlayHQ credentials not configured.'
-const DEFAULT_BASE_URL = 'https://api.playhq.com/v1'
+const DEFAULT_BASE_URL = 'https://api.playhq.com'
 
 export interface PlayhqConfig {
-  apiKey: string
   baseUrl: string
+  apiKey: string | null
   tenant: string | null
   organisationId: string | null
-  enabled: boolean
+  clientId: string | null
+  clientSecret: string | null
+  publicEnabled: boolean   // x-api-key auth available
+  partnerEnabled: boolean  // JWT auth available
 }
 
-/** True only when an API key exists and the integration is not explicitly disabled. */
-export function isPlayhqConfigured(): boolean {
-  const key = (process.env.PLAYHQ_API_KEY ?? '').trim()
-  const enabledFlag = (process.env.PLAYHQ_API_ENABLED ?? '').trim().toLowerCase()
-  const disabled = enabledFlag === 'false' || enabledFlag === '0' || enabledFlag === 'off'
-  return key.length > 0 && !disabled
+function readEnv(): Omit<PlayhqConfig, 'publicEnabled' | 'partnerEnabled'> & { enabledFlag: string } {
+  return {
+    baseUrl: (process.env.PLAYHQ_API_BASE_URL ?? DEFAULT_BASE_URL).trim().replace(/\/+$/, '') || DEFAULT_BASE_URL,
+    apiKey: (process.env.PLAYHQ_API_KEY ?? '').trim() || null,
+    tenant: (process.env.PLAYHQ_TENANT ?? '').trim() || null,
+    organisationId: (process.env.PLAYHQ_ORGANISATION_ID ?? '').trim() || null,
+    clientId: (process.env.PLAYHQ_CLIENT_ID ?? '').trim() || null,
+    clientSecret: (process.env.PLAYHQ_CLIENT_SECRET ?? '').trim() || null,
+    enabledFlag: (process.env.PLAYHQ_API_ENABLED ?? '').trim().toLowerCase(),
+  }
 }
+
+function notDisabled(flag: string): boolean { return !(flag === 'false' || flag === '0' || flag === 'off') }
+
+/** True if the public (x-api-key) flow is usable. */
+export function isPublicConfigured(): boolean { const e = readEnv(); return !!e.apiKey && notDisabled(e.enabledFlag) }
+/** True if the partner (JWT) flow is usable. */
+export function isPartnerConfigured(): boolean { const e = readEnv(); return !!(e.clientId && e.clientSecret) && notDisabled(e.enabledFlag) }
+/** True if EITHER auth model is usable. */
+export function isPlayhqConfigured(): boolean { return isPublicConfigured() || isPartnerConfigured() }
 
 /** Resolve config from env. Returns null when the integration is not usable. */
 export function getPlayhqConfig(): PlayhqConfig | null {
   if (!isPlayhqConfigured()) return null
-  return {
-    apiKey: (process.env.PLAYHQ_API_KEY ?? '').trim(),
-    baseUrl: (process.env.PLAYHQ_API_BASE_URL ?? DEFAULT_BASE_URL).trim().replace(/\/+$/, ''),
-    tenant: (process.env.PLAYHQ_TENANT ?? '').trim() || null,
-    organisationId: (process.env.PLAYHQ_ORGANISATION_ID ?? '').trim() || null,
-    enabled: true,
-  }
+  const e = readEnv()
+  return { baseUrl: e.baseUrl, apiKey: e.apiKey, tenant: e.tenant, organisationId: e.organisationId, clientId: e.clientId, clientSecret: e.clientSecret, publicEnabled: isPublicConfigured(), partnerEnabled: isPartnerConfigured() }
 }
 
-/** Non-secret status for admin/status — never exposes the API key. */
+/** Non-secret status for admin/status + admin/health — never exposes secrets. */
 export function playhqPublicStatus() {
+  const e = readEnv()
   const configured = isPlayhqConfigured()
   return {
     configured,
     enabled: configured,
+    publicApi: isPublicConfigured(),
+    partnerApi: isPartnerConfigured(),
     message: configured ? 'PlayHQ integration configured.' : PLAYHQ_CREDENTIALS_MISSING,
-    tenant: (process.env.PLAYHQ_TENANT ?? '').trim() || null,
-    organisationId: (process.env.PLAYHQ_ORGANISATION_ID ?? '').trim() || null,
-    baseUrl: (process.env.PLAYHQ_API_BASE_URL ?? DEFAULT_BASE_URL).trim().replace(/\/+$/, ''),
+    tenant: e.tenant,
+    organisationId: e.organisationId,
+    baseUrl: e.baseUrl,
+    hasApiKey: !!e.apiKey,
+    hasClientCredentials: !!(e.clientId && e.clientSecret),
   }
 }

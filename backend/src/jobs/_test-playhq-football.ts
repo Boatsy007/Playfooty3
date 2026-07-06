@@ -13,6 +13,7 @@ import { footballTotal, resolveScore, ladderPercentage, computeFootballLadder } 
 import { isPlayhqConfigured, PLAYHQ_CREDENTIALS_MISSING } from '../providers/playhq/config.js'
 import { getPlayhqProvider } from '../providers/registry.js'
 import { getFootballStatus } from '../football/ingest.js'
+import { aflScore } from '../providers/playhq/types.js'
 
 async function main() {
   const checks: [string, boolean][] = []
@@ -37,6 +38,14 @@ async function main() {
   checks.push(['A top (1W 1D = 6pts)', a.position === 1 && a.points === 6])
   checks.push(['A percentage computed', a.percentage === ladderPercentage(170, 130)])
   checks.push(['3 clubs ranked', ladder.length === 3])
+
+  // AFL score extraction from a v1 game-summary team block (spec shape).
+  const homeTeam = { isHomeTeam: true, scoreTotal: 163, scoreSubTotal: [{ type: 'TOTAL_BEHINDS', value: 25 }, { type: 'TOTAL_GOALS', value: 23 }] }
+  const sc = aflScore(homeTeam)
+  checks.push(['aflScore goals = 23', sc.goals === 23])
+  checks.push(['aflScore behinds = 25', sc.behinds === 25])
+  checks.push(['aflScore total = 163 (=23*6+25)', sc.total === 163 && 23 * 6 + 25 === 163])
+  checks.push(['aflScore empty safe', aflScore(undefined).total === null])
 
   // Graceful disabled (test env has no PlayHQ vars).
   const configured = isPlayhqConfigured()
