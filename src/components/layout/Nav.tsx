@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import playFootyLogo from '../../assets/playfooty-logo-white.svg'
 
 const NAV_H = 96 // px — tall enough for the full logo
-const BRAND_RED = '#ee0018'
+const HEADER_NAVY = '#041f42'
+const ACTION_RED = '#ee0018'
 
 const links = [
   { label: 'Home',     href: '/',           route: '/'          },
@@ -78,7 +78,7 @@ export default function Nav() {
         className="fixed top-0 left-0 right-0 z-50"
         style={{
           height: NAV_H,
-          background: scrolled ? 'rgba(238,0,24,0.98)' : BRAND_RED,
+          background: HEADER_NAVY,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: scrolled ? '1px solid rgba(255,255,255,0.22)' : '1px solid rgba(255,255,255,0.12)',
@@ -98,7 +98,7 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src={playFootyLogo} alt="PlayFooty" style={{ height: 62, width: 'auto', maxWidth: 300, display: 'block' }} />
+            <img src="/logo.webp" alt="PlayFooty" style={{ height: 62, width: 'auto', maxWidth: 300, display: 'block' }} />
           </button>
 
           {/* Desktop links */}
@@ -152,7 +152,7 @@ export default function Nav() {
               className="ml-4 font-bold rounded-full text-[13px] tracking-wide"
               style={{
                 background: '#ffffff',
-                color: BRAND_RED,
+                color: ACTION_RED,
                 padding: '0.6rem 1.4rem',
                 boxShadow: '0 4px 20px rgba(120,0,12,0.24)',
                 transition: 'background 0.2s, box-shadow 0.2s',
@@ -216,7 +216,7 @@ export default function Nav() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease }}
             className="fixed inset-0 z-40 lg:hidden"
-            style={{ background: BRAND_RED }}
+            style={{ background: HEADER_NAVY }}
           >
             {/* Top bar fill (matches nav) */}
             <div style={{ height: NAV_H }} />
@@ -259,7 +259,7 @@ export default function Nav() {
                   className="w-full font-bold rounded-2xl text-base py-4"
                   style={{
                     background: '#ffffff',
-                    color: BRAND_RED,
+                    color: ACTION_RED,
                     boxShadow: '0 8px 32px rgba(120,0,12,0.24)',
                   }}
                 >
