@@ -6,8 +6,6 @@ import type { CSSProperties } from 'react'
  * served by Vite/Vercel as /logo.webp. Do not import, generate, or dynamically
  * swap another header logo here.
  */
-export const PLAYFOOTY_LOGO_SRC = '/logo.webp'
-
 type PlayFootyLogoProps = {
   height?: number
   maxWidth?: number
@@ -17,7 +15,7 @@ type PlayFootyLogoProps = {
 export default function PlayFootyLogo({ height = 62, maxWidth = 300, style }: PlayFootyLogoProps) {
   return (
     <img
-      src={PLAYFOOTY_LOGO_SRC}
+      src="/logo.webp"
       alt="PlayFooty"
       decoding="async"
       loading="eager"
