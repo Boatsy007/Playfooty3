@@ -33,6 +33,7 @@ export interface AdminLeague {
 }
 export interface FootballLeague extends AdminLeague {
   sport: string; primaryDataSource: string | null; fallbackDataSources: string | null; sourceUrl: string | null
+  currentSeason: string | null
   playhqOrganisationId: string | null; playhqCompetitionId: string | null; playhqSeasonId: string | null; playhqGradeId: string | null
   scrapeEnabled: boolean; apiEnabled: boolean; manualEntryEnabled: boolean
   lastSyncAt: string | null; lastSuccessfulSyncAt: string | null; syncStatus: string; dataSourceSyncError: string | null

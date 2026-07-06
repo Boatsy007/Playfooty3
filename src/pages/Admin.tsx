@@ -23,9 +23,8 @@ function useToast() {
 }
 
 const TABS = [
-  ['dashboard', 'Dashboard'], ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['leagues', 'Leagues'], ['clubs', 'Clubs'],
-  ['football', 'Football Sources'], ['ocr', 'Image Import'], ['publishing', 'AI Publishing'], ['reviews', 'Pending Reviews'], ['rankings', 'Rankings'],
-  ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+  ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'], ['fixtures', 'Fixtures'], ['results', 'Results'],
+  ['rankings', 'Rankings'], ['newsroom', 'Newsroom'], ['reviews', 'Review Queue'], ['system', 'System'],
 ] as const
 type Tab = typeof TABS[number][0]
 
@@ -43,7 +42,7 @@ export default function Admin() {
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
+          <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.5 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
           <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
@@ -53,19 +52,16 @@ export default function Admin() {
             </button>
           ))}
         </div>
+        <AdminGlobalSearch toast={t.show} go={setTab} />
         {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
-        {tab === 'playhq' && <PlayHQImport toast={t.show} />}
-        {tab === 'csv' && <CsvImport toast={t.show} />}
-        {tab === 'leagues' && <Leagues toast={t.show} />}
+        {tab === 'leagues' && <LeaguesOperations toast={t.show} />}
         {tab === 'clubs' && <Clubs toast={t.show} />}
-        {tab === 'football' && <FootballSources toast={t.show} />}
-        {tab === 'ocr' && <ImageImport toast={t.show} />}
-        {tab === 'publishing' && <Publishing toast={t.show} />}
+        {tab === 'fixtures' && <FixtureResultsOps kind="fixtures" toast={t.show} />}
+        {tab === 'results' && <FixtureResultsOps kind="results" toast={t.show} />}
+        {tab === 'newsroom' && <Publishing toast={t.show} />}
         {tab === 'reviews' && <Reviews toast={t.show} />}
         {tab === 'rankings' && <Rankings toast={t.show} />}
-        {tab === 'audit' && <AuditLog toast={t.show} />}
-        {tab === 'backups' && <Backups toast={t.show} />}
-        {tab === 'settings' && <Settings toast={t.show} />}
+        {tab === 'system' && <SystemOps toast={t.show} />}
       </div>
       {t.node}
     </div>
@@ -75,8 +71,22 @@ export default function Admin() {
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
   const [d, setD] = useState<DashboardData | null>(null)
+  const [football, setFootball] = useState<FootballLeague[]>([])
+  const [articles, setArticles] = useState<ArticleRow[]>([])
   useEffect(() => { admin.dashboard().then(setD).catch(e => toast(e.message, false)) }, [])
+  useEffect(() => {
+    Promise.all([
+      admin.listFootballLeagues().catch(() => [] as FootballLeague[]),
+      admin.listArticles('ALL').then(r => r.data).catch(() => [] as ArticleRow[]),
+    ]).then(([leagues, articleRows]) => { setFootball(leagues); setArticles(articleRows) })
+  }, [])
   if (!d) return <div style={box}>Loading…</div>
+  const footballClubs = football.reduce((n, l) => n + (l._count?.clubSeasons ?? 0), 0)
+  const fixtures = football.reduce((n, l) => n + (l._count?.footballFixtures ?? 0), 0)
+  const results = football.reduce((n, l) => n + (l._count?.footballResults ?? 0), 0)
+  const lastSync = football.map(l => l.lastSuccessfulSyncAt ?? l.lastSyncAt).filter(Boolean).sort().at(-1)
+  const latestImport = football.map(l => ({ name: l.name, count: l._count?.footballImports ?? 0, sync: l.lastSyncAt })).filter(x => x.count || x.sync).sort((a, b) => String(b.sync ?? '').localeCompare(String(a.sync ?? '')))[0]
+  const waitingArticles = articles.filter(a => a.status !== 'PUBLISHED').length
   const stat = (label: string, value: number | string, colour = C.text, onClick?: () => void) => (
     <div style={{ ...box, cursor: onClick ? 'pointer' : 'default', minWidth: 130 }} onClick={onClick}>
       <div style={{ fontSize: 28, fontWeight: 800, color: colour }}>{value}</div>
@@ -87,19 +97,22 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        {stat('Active leagues', d.counts.leaguesActive, C.text, () => go('leagues'))}
-        {stat('Archived leagues', d.counts.leaguesArchived, C.mute)}
-        {stat('Clubs', d.counts.clubs, C.text, () => go('clubs'))}
-        {stat('Teams', d.counts.teams)}
+        {stat('Football leagues', football.length, C.text, () => go('leagues'))}
+        {stat('Football clubs', footballClubs || '—', C.text, () => go('clubs'))}
+        {stat('Current season', football[0]?.currentSeason ?? '—')}
+        {stat('Fixtures', fixtures, C.text, () => go('fixtures'))}
+        {stat('Results', results, C.text, () => go('results'))}
         {stat('Pending reviews', d.counts.pendingReviews, d.counts.pendingReviews ? C.gold : C.green, () => go('reviews'))}
-        {stat('Image sources', d.counts.ocrImports)}
+        {stat('Articles waiting', waitingArticles, waitingArticles ? C.gold : C.green, () => go('newsroom'))}
         {stat('Warnings', d.warnings, d.warnings ? C.red : C.green)}
       </div>
       <div style={box}>
-        <b>Status</b>
+        <b>Operations status</b>
         <div style={{ color: C.mute, fontSize: 13, marginTop: 8, display: 'grid', gap: 4 }}>
           <div>Last ranking run: <span style={{ color: C.text }}>{d.lastRun ? `${d.lastRun.weekLabel} · ${d.lastRun.clubCount} clubs · ${fmt(d.lastRun.completedAt)}` : '—'}</span></div>
-          <div>Last scrape: <span style={{ color: C.text }}>{d.lastScrape ? `${d.lastScrape.sourceType} · ${fmt(d.lastScrape.lastScrapedAt)}` : '—'}</span></div>
+          <div>Last sync: <span style={{ color: C.text }}>{lastSync ? fmt(lastSync) : d.lastScrape ? `${d.lastScrape.sourceType} · ${fmt(d.lastScrape.lastScrapedAt)}` : '—'}</span></div>
+          <div>Latest import: <span style={{ color: C.text }}>{latestImport ? `${latestImport.name} · ${latestImport.count} import record(s)` : 'No football imports yet'}</span></div>
+          <div>System health: <span style={{ color: d.warnings || d.counts.pendingReviews ? C.gold : C.green }}>{d.warnings || d.counts.pendingReviews ? 'Attention required' : 'Ready'}</span></div>
         </div>
       </div>
       {d.flaggedLeagues.length > 0 && (
@@ -116,20 +129,134 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
       )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={box}>
-          <b>Recently updated leagues</b>
-          <div style={{ marginTop: 8 }}>{d.recentLeagues.map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{fmt(l.lastManualUpdateAt)}</span></div>)}</div>
+          <b>Recent football leagues</b>
+          <div style={{ marginTop: 8 }}>{football.slice(0, 8).map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{l.syncStatus}</span></div>)}</div>
+          {football.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Add the first league from the Leagues workspace.</p>}
         </div>
         <div style={box}>
-          <b>Recently updated clubs</b>
-          <div style={{ marginTop: 8 }}>{d.recentClubs.map(c => <div key={c.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{c.name} <span style={{ float: 'right' }}>{fmt(c.updatedAt)}</span></div>)}</div>
+          <b>Recent published articles</b>
+          <div style={{ marginTop: 8 }}>{articles.filter(a => a.status === 'PUBLISHED').slice(0, 8).map(a => <div key={a.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{a.title} <span style={{ float: 'right' }}>{fmt(a.publishedAt)}</span></div>)}</div>
+          {articles.filter(a => a.status === 'PUBLISHED').length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No published articles yet.</p>}
         </div>
       </div>
     </div>
   )
 }
 
+function LeaguesOperations({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>League Operations</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>
+          The league is now the centre of the admin. Configure source settings, run dry syncs, import verified football rows, generate ladders, compare differences, publish approved data and trigger rankings from each selected league.
+        </p>
+      </div>
+      <FootballSources toast={toast} />
+      <details style={box}>
+        <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Legacy league utilities</summary>
+        <p style={{ color: C.mute, fontSize: 13 }}>Existing strength, archive, approval and ladder-edit tools are preserved here until each tool is moved inside the selected league workspace.</p>
+        <Leagues toast={toast} />
+      </details>
+    </div>
+  )
+}
+
+function FixtureResultsOps({ kind, toast }: { kind: 'fixtures' | 'results'; toast: (t: string, ok?: boolean) => void }) {
+  const [leagues, setLeagues] = useState<FootballLeague[]>([])
+  useEffect(() => { admin.listFootballLeagues().then(setLeagues).catch(e => toast(e.message, false)) }, [])
+  const title = kind === 'fixtures' ? 'Fixtures' : 'Results'
+  const total = leagues.reduce((n, l) => n + (kind === 'fixtures' ? (l._count?.footballFixtures ?? 0) : (l._count?.footballResults ?? 0)), 0)
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>{title}</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>
+          {kind === 'fixtures'
+            ? 'Fixture management is driven from each league workspace. Import or manually enter fixtures from Leagues → selected league → Manual verified import.'
+            : 'Result approval is driven from each league workspace. Enter scores, generate ladders from results, compare differences and publish from Leagues.'}
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ ...box, minWidth: 160 }}><div style={{ fontSize: 30, fontWeight: 900 }}>{total}</div><div style={{ color: C.mute, fontSize: 12 }}>{title} recorded</div></div>
+        <div style={{ ...box, minWidth: 160 }}><div style={{ fontSize: 30, fontWeight: 900 }}>{leagues.length}</div><div style={{ color: C.mute, fontSize: 12 }}>Football leagues</div></div>
+      </div>
+      <div style={box}>
+        <b>League status</b>
+        <div style={{ overflowX: 'auto', marginTop: 8 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr><th style={th}>League</th><th style={th}>Source</th><th style={th}>{title}</th><th style={th}>Sync</th></tr></thead>
+            <tbody>
+              {leagues.map(l => <tr key={l.id}><td style={td}>{l.name}</td><td style={td}>{l.primaryDataSource ?? '—'}</td><td style={td}>{kind === 'fixtures' ? (l._count?.footballFixtures ?? 0) : (l._count?.footballResults ?? 0)}</td><td style={td}>{l.syncStatus}</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+        {leagues.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues are available yet.</p>}
+      </div>
+    </div>
+  )
+}
+
+function SystemOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [section, setSection] = useState<'playhq' | 'csv' | 'ocr' | 'audit' | 'backups' | 'settings'>('playhq')
+  const sections = [
+    ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['ocr', 'Image Import'], ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+  ] as const
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <b>System</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 12px' }}>Legacy utilities are preserved here so the main admin navigation stays focused on operating leagues.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{sections.map(([id, label]) => <button key={id} style={btn(section === id ? C.pink : '#1b2233')} onClick={() => setSection(id)}>{label}</button>)}</div>
+      </div>
+      {section === 'playhq' && <PlayHQImport toast={toast} />}
+      {section === 'csv' && <CsvImport toast={toast} />}
+      {section === 'ocr' && <ImageImport toast={toast} />}
+      {section === 'audit' && <AuditLog toast={toast} />}
+      {section === 'backups' && <Backups toast={toast} />}
+      {section === 'settings' && <Settings toast={toast} />}
+    </div>
+  )
+}
+
 // ─── PlayFooty football source control centre ────────────────────────────────
 const DATA_SOURCES = ['PLAYHQ_API', 'PLAYHQ_SCRAPER', 'CSV_UPLOAD', 'OCR_UPLOAD', 'MANUAL_ENTRY']
+
+function AdminGlobalSearch({ toast, go }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void }) {
+  const [q, setQ] = useState('')
+  const [leagues, setLeagues] = useState<FootballLeague[]>([])
+  const [clubs, setClubs] = useState<AdminClub[]>([])
+  const [articles, setArticles] = useState<ArticleRow[]>([])
+  useEffect(() => {
+    Promise.all([
+      admin.listFootballLeagues().catch(() => [] as FootballLeague[]),
+      admin.listClubs().catch(() => [] as AdminClub[]),
+      admin.listArticles('ALL').then(r => r.data).catch(() => [] as ArticleRow[]),
+    ]).then(([leagueRows, clubRows, articleRows]) => { setLeagues(leagueRows); setClubs(clubRows); setArticles(articleRows) }).catch(e => toast(e.message, false))
+  }, [])
+  const needle = q.trim().toLowerCase()
+  const results = needle.length < 2 ? [] : [
+    ...leagues.filter(l => l.name.toLowerCase().includes(needle)).slice(0, 5).map(l => ({ type: 'League', label: l.name, meta: `${l.state?.code ?? '—'} · ${l.syncStatus}`, tab: 'leagues' as Tab })),
+    ...clubs.filter(c => c.name.toLowerCase().includes(needle)).slice(0, 5).map(c => ({ type: 'Club', label: c.name, meta: c.state?.code ?? '—', tab: 'clubs' as Tab })),
+    ...articles.filter(a => a.title.toLowerCase().includes(needle)).slice(0, 5).map(a => ({ type: 'Article', label: a.title, meta: a.status, tab: 'newsroom' as Tab })),
+  ]
+  return (
+    <div style={{ ...box, marginBottom: 18, padding: 12 }}>
+      <input style={{ ...input, maxWidth: 560 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Search admin: leagues, clubs, fixtures, results, articles…" aria-label="Universal admin search" />
+      {needle.length >= 2 && (
+        <div style={{ display: 'grid', gap: 6, marginTop: 10 }}>
+          {results.length === 0 && <div style={{ color: C.mute, fontSize: 13 }}>No matching admin records found.</div>}
+          {results.map((r, i) => (
+            <button key={`${r.type}-${r.label}-${i}`} onClick={() => { go(r.tab); setQ('') }} style={{ ...input, display: 'flex', justifyContent: 'space-between', textAlign: 'left', cursor: 'pointer' }}>
+              <span><b style={{ color: C.text }}>{r.label}</b> <small style={{ color: C.mute }}>· {r.type}</small></span>
+              <span style={{ color: C.mute }}>{r.meta}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [rows, setRows] = useState<FootballLeague[]>([])
