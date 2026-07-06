@@ -92,6 +92,13 @@ model League {
   lastSyncedAt        DateTime?
   syncError           String?
 
+  // ── Phase F1: sport abstraction + PlayHQ Football API provenance ──────────
+  // Additive; default NETBALL keeps every existing league unchanged.
+  sport                 String   @default("NETBALL") // NETBALL | FOOTBALL
+  playhqOrganisationId  String?
+  playhqCompetitionId   String?
+  playhqSeasonId        String?
+
   // ── Phase 2: multi-source provenance + admin/status ──────────────────────
   primarySource      String?   // PLAYHQ | NETBALL_CONNECT | COUNTRY_FOOTY | MANUAL_IMAGE | MANUAL | CSV
   importType         String?   @default("AUTO")     // AUTO | MANUAL | IMAGE
@@ -191,6 +198,10 @@ model Club {
   source         String?                    // origin of this club record
   bestRank       Int?                       // historical best national rank
 
+  // Phase F1: sport abstraction + PlayHQ Football provenance (additive)
+  sport        String? @default("NETBALL") // NETBALL | FOOTBALL
+  playhqClubId String?
+
   // Never-destroy: soft-delete / archive / approval
   archivedAt     DateTime?
   approvalStatus String   @default("APPROVED")  // PENDING | APPROVED | REJECTED
@@ -234,6 +245,7 @@ model ClubLeagueSeason {
   season   String
   grade    String  @default("A Grade")
   isActive Boolean @default(true)
+  sport    String? @default("NETBALL") // Phase F1 — NETBALL | FOOTBALL (additive)
 
   // Aggregated season stats (kept in sync by ranking engine)
   played       Int   @default(0)
@@ -715,7 +727,8 @@ model Ladder {
   leagueName      String?
   season          String
   grade           String    @default("A Grade")
-  source          String    @default("MANUAL") // PLAYHQ | OCR | CSV | MANUAL | GENERATED_FROM_RESULTS
+  sport           String?   @default("NETBALL") // Phase F1 — NETBALL | FOOTBALL (additive)
+  source          String    @default("MANUAL") // PLAYHQ | PLAYHQ_API | OCR | CSV | MANUAL | GENERATED_FROM_RESULTS
   status          String    @default("DRAFT")   // DRAFT | CURRENT | SUPERSEDED | REVIEW
   isCurrent       Boolean   @default(false)
   manualOverride  Boolean   @default(false)     // uploaded/manual ladders are protected
@@ -879,6 +892,60 @@ model ClubSeasonTimeline {
   @@index([clubId, season])
   @@index([leagueId, season, grade, round])
   @@map("club_season_timeline")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PHASE F1 — PlayHQ Football API ingestion (ADDITIVE, MULTI-SPORT, MULTI-ORG)
+// ─────────────────────────────────────────────────────────────────────────────
+// A single mapping table linking external PlayHQ entities (org/competition/
+// season/grade/club/team/fixture/result/ladder) to internal shared records, so
+// imports are idempotent and re-runnable and the platform can support multiple
+// organisations. Plus a sync-log for the admin status/logs endpoints. Nothing
+// here is sport-specific storage — football simply reuses the shared models.
+// ═════════════════════════════════════════════════════════════════════════════
+
+model PlayhqEntityMap {
+  id                   String   @id @default(uuid())
+  entityType           String   // ORGANISATION | ASSOCIATION | COMPETITION | SEASON | GRADE | CLUB | TEAM | FIXTURE | RESULT | LADDER | VENUE
+  playhqId             String
+  tenant               String?  // x-phq-tenant (e.g. afl)
+  organisationId       String?  // owning PlayHQ organisation (multi-org)
+  internalId           String?  // linked internal record id (league/club/fixture/result/…)
+  internalType         String?  // League | Club | Fixture | MatchResult | Ladder | ClubLeagueSeason
+  name                 String?
+  parentPlayhqId       String?  // e.g. grade → competition, team → club
+  sport                String?  @default("FOOTBALL")
+  payload              String?  // JSON — raw external record (public data only)
+  sourceUpdatedAt      DateTime? // PlayHQ "last updated" timestamp
+  lastSyncedAt         DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([entityType, playhqId])
+  @@index([organisationId])
+  @@index([internalType, internalId])
+  @@index([parentPlayhqId])
+  @@map("playhq_entity_maps")
+}
+
+model PlayhqSyncLog {
+  id             String   @id @default(uuid())
+  operation      String   // DISCOVER | IMPORT_ORGANISATION | IMPORT_LEAGUE | IMPORT_SEASON | IMPORT_FIXTURES | IMPORT_RESULTS | IMPORT_LADDERS | SYNC_LEAGUE | SYNC_SEASON | SYNC_ALL
+  status         String   // OK | ERROR | SKIPPED | NOOP | DISABLED
+  tenant         String?
+  organisationId String?
+  playhqId       String?  // the primary entity acted on
+  message        String?
+  counts         String?  // JSON — { leagues, clubs, fixtures, results, … }
+  warnings       String?  // JSON string[]
+  durationMs     Int?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([operation])
+  @@index([status])
+  @@index([createdAt])
+  @@map("playhq_sync_logs")
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1687,11 +1754,24 @@ model MatchResult {
   isDraw        Boolean   @default(false)
   margin        Int       @default(0)
   status        String    @default("FINAL")   // FINAL | PROVISIONAL | FORFEIT | VOID
-  importSource  String    @default("MANUAL")  // PLAYHQ | OCR | CSV | MANUAL | MATCH_BRIDGE
+  importSource  String    @default("MANUAL")  // PLAYHQ | PLAYHQ_API | OCR | CSV | MANUAL | MATCH_BRIDGE
   verified      Boolean   @default(false)
   manualOverride Boolean  @default(false)      // protect from auto re-imports
   notes         String?
   dedupeKey     String    @unique
+
+  // Phase F1: sport abstraction + Australian-football scoring + PlayHQ API refs.
+  // Additive/nullable — netball results (goals/behinds null) are unaffected.
+  sport         String?   @default("NETBALL") // NETBALL | FOOTBALL
+  homeGoals     Int?      // football: goals (6 pts each)
+  homeBehinds   Int?      // football: behinds (1 pt each)
+  awayGoals     Int?
+  awayBehinds   Int?
+  ground        String?
+  umpires       String?   // JSON — only if publicly available
+  matchStatus   String?   // PlayHQ game status (e.g. FINAL / UPCOMING)
+  playhqGameId  String?
+  sourceUpdatedAt DateTime? // PlayHQ "last updated" timestamp
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -1702,6 +1782,8 @@ model MatchResult {
   @@index([leagueId, season, grade, round])
   @@index([fixtureId])
   @@index([matchDate])
+  @@index([playhqGameId])
+  @@index([sport, season])
   @@map("match_results")
 }
 
@@ -1729,6 +1811,14 @@ model Fixture {
   importSource  String    @default("MANUAL")
   manualOverride Boolean  @default(false)
   dedupeKey     String    @unique
+
+  // Phase F1: sport abstraction + PlayHQ API refs (additive/nullable).
+  sport         String?   @default("NETBALL") // NETBALL | FOOTBALL
+  ground        String?
+  umpires       String?   // JSON — only if publicly available
+  playhqGameId  String?
+  sourceUpdatedAt DateTime?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -1738,6 +1828,8 @@ model Fixture {
   @@index([status])
   @@index([leagueId, season, grade, round])
   @@index([matchDate])
+  @@index([playhqGameId])
+  @@index([sport, season])
   @@map("fixtures")
 }
 

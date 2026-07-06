@@ -28,6 +28,7 @@ import { adminNotificationsRouter } from './admin/notifications.js'
 import { adminAnalyticsRouter } from './admin/analytics.js'
 import { adminLadderRouter } from './admin/ladder.js'
 import { adminSeasonRouter } from './admin/season.js'
+import { adminPlayhqRouter } from './admin/playhq.js'
 import { resultsRouter, fixturesRouter, clubMatchRouter, leagueMatchRouter } from './api/routes/results.js'
 import { historyRouter }        from './api/routes/history.js'
 import { championshipsRouter }  from './api/routes/championships.js'
@@ -124,6 +125,7 @@ app.use('/admin/notifications', adminNotificationsRouter) // Phase B9 — notifi
 app.use('/admin/analytics', adminAnalyticsRouter)         // Phase B11 — analytics & insights
 app.use('/admin/ladder',   adminLadderRouter)             // Ladder Import V2 — ladders + bulk backfill
 app.use('/admin/season',   adminSeasonRouter)             // Phase B10.5 — full season ingestion engine
+app.use('/admin/playhq',   adminPlayhqRouter)             // Phase F1 — PlayHQ Football API ingestion
 
 // ── Health check (public, unauthenticated) ───────────────────────────────────
 app.get('/health', (_req, res) => {
