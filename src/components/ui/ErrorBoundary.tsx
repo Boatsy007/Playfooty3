@@ -13,7 +13,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Got Netty render error:', error, info)
+    console.error('PlayFooty render error:', error, info)
   }
 
   render() {
@@ -24,7 +24,7 @@ export class ErrorBoundary extends React.Component<
             Something went wrong
           </p>
           <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2rem', maxWidth: '400px' }}>
-            Please refresh the page. If the problem persists, contact hello@gotnetty.com.au
+            Please refresh the page. If the problem persists, contact hello@playfooty.com.au
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}

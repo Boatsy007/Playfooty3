@@ -52,7 +52,7 @@ export default function TheWeekend() {
             THE <span style={{ color: '#ff2c91' }}>EVENT</span><br />EXPERIENCE
           </h2>
           <p className="leading-relaxed" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)', color: 'rgba(255,255,255,0.45)', maxWidth: '52ch' }}>
-            Four days of championship netball, club celebrations and Gold Coast experiences. More than a tournament, this is the annual gathering of Australia's country netball community.
+            Four days of championship football, club celebrations and Gold Coast experiences. More than a tournament, this is the annual gathering of Australia's Community Football community.
           </p>
         </motion.div>
 

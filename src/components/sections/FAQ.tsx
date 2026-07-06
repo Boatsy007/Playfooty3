@@ -4,33 +4,33 @@ import { Plus } from 'lucide-react'
 
 const faqs = [
   {
-    q: 'Who is eligible to compete at CNCA?',
-    a: 'CNCA is open to A Grade premiership clubs from country and regional netball leagues across Australia. If your club holds an A Grade premiership from your local competition, you are eligible to request an invitation. Eligibility is assessed on a case-by-case basis.',
+    q: 'Who is eligible to compete at PlayFooty?',
+    a: 'PlayFooty is open to A Grade premiership clubs from country and regional football leagues across Australia. If your club holds an A Grade premiership from your local competition, you are eligible to request an invitation. Eligibility is assessed on a case-by-case basis.',
     cat: 'Eligibility',
   },
   {
-    q: 'Can non-competing clubs attend CNCA as spectators?',
-    a: 'Absolutely. CNCA is a whole-of-community event and every club in Australia is encouraged to attend — regardless of whether they are competing. Whether you want to watch the national championship, celebrate your season or simply use CNCA as your club\'s annual Gold Coast trip, everyone is welcome.',
+    q: 'Can non-competing clubs attend PlayFooty as spectators?',
+    a: 'Absolutely. PlayFooty is a whole-of-community event and every club in Australia is encouraged to attend — regardless of whether they are competing. Whether you want to watch the national championship, celebrate your season or simply use PlayFooty as your club\'s annual Gold Coast trip, everyone is welcome.',
     cat: 'Eligibility',
   },
   {
-    q: 'What states and territories are represented at CNCA?',
-    a: 'CNCA draws clubs from country and regional leagues across all Australian states and territories — New South Wales, Victoria, Queensland, Western Australia, South Australia, Tasmania, Northern Territory and the Australian Capital Territory.',
+    q: 'What states and territories are represented at PlayFooty?',
+    a: 'PlayFooty draws clubs from country and regional leagues across all Australian states and territories — New South Wales, Victoria, Queensland, Western Australia, South Australia, Tasmania, Northern Territory and the Australian Capital Territory.',
     cat: 'Event',
   },
   {
-    q: 'When and where is CNCA 2027?',
-    a: 'CNCA 2027 is held on the Gold Coast, Queensland in October 2027. The championship runs across four days with competition, events and celebrations scheduled throughout the weekend.',
+    q: 'When and where is PlayFooty 2027?',
+    a: 'PlayFooty 2027 is held on the Gold Coast, Queensland in October 2027. The championship runs across four days with competition, events and celebrations scheduled throughout the weekend.',
     cat: 'Event',
   },
   {
     q: 'What happens during the championship weekend?',
-    a: 'The CNCA weekend is more than a netball competition. The four-day program includes the national championship, an opening function, a club awards night, live entertainment, a festival food zone and full access to Gold Coast experiences and tourism. It is designed as a complete end-of-season celebration.',
+    a: 'The PlayFooty weekend is more than a football competition. The four-day program includes the national championship, an opening function, a club awards night, live entertainment, a festival food zone and full access to Gold Coast experiences and tourism. It is designed as a complete end-of-season celebration.',
     cat: 'Event',
   },
   {
-    q: 'Is CNCA just for A Grade players?',
-    a: 'No. CNCA is a whole-of-club event. The weekend is designed for A Grade players, coaches, club officials, committee members, volunteers, families, supporters and junior players attending as spectators. Everyone in your club community is part of CNCA.',
+    q: 'Is PlayFooty just for A Grade players?',
+    a: 'No. PlayFooty is a whole-of-club event. The weekend is designed for A Grade players, coaches, club officials, committee members, volunteers, families, supporters and junior players attending as spectators. Everyone in your club community is part of PlayFooty.',
     cat: 'Eligibility',
   },
   {
@@ -40,7 +40,7 @@ const faqs = [
   },
   {
     q: 'Are group accommodation packages available?',
-    a: 'Yes. CNCA will partner with Gold Coast accommodation providers to offer group packages for competing and attending clubs. Accommodation information and booking details will be shared with clubs following their invitation request.',
+    a: 'Yes. PlayFooty will partner with Gold Coast accommodation providers to offer group packages for competing and attending clubs. Accommodation information and booking details will be shared with clubs following their invitation request.',
     cat: 'Travel & Accommodation',
   },
   {
@@ -49,7 +49,7 @@ const faqs = [
     cat: 'Competition',
   },
   {
-    q: 'How many clubs will compete at CNCA?',
+    q: 'How many clubs will compete at PlayFooty?',
     a: 'The championship field is invitation-only and places are limited. Invitations will be extended to eligible A Grade premiership clubs from across Australia. Exact numbers will be confirmed as the event develops.',
     cat: 'Competition',
   },
@@ -85,7 +85,7 @@ export default function FAQ() {
             EVERYTHING<br />YOU NEED TO <span style={{ color: '#ff2c91' }}>KNOW.</span>
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', maxWidth: '52ch' }}>
-            Got a question about CNCA? Find the answers here — or reach out to our team directly.
+            Got a question about PlayFooty? Find the answers here — or reach out to our team directly.
           </p>
         </motion.div>
 
@@ -200,7 +200,7 @@ export default function FAQ() {
             Can't find what you're looking for?
           </p>
           <a
-            href="mailto:info@cnca.com.au"
+            href="mailto:info@playfooty.com.au"
             className="font-bold text-sm transition-colors duration-200"
             style={{ color: '#ff2c91' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#cc1f6e')}

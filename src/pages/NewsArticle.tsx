@@ -1,5 +1,5 @@
 /**
- * Got Netty News — article page. Premium editorial layout with hero, byline, social
+ * PlayFooty News — article page. Premium editorial layout with hero, byline, social
  * share, rich body (paragraphs, headings, pull quotes, image gallery), related
  * stories and "more from league / club". Full SEO (Article + Breadcrumb JSON-LD,
  * OG/Twitter, canonical). Isolated feature — reuses only shared Nav/Footer/useSeo.
@@ -26,11 +26,11 @@ export default function NewsArticle() {
   void ready
   const article = getArticle(slug)
   const cat = article ? categoryOf(article.category) : null
-  const url = `https://gotnetty.com.au/news/${slug}`
+  const url = `https://playfooty.com.au/news/${slug}`
 
   useSeo({
-    title: article ? `${article.title} | Got Netty News` : 'Article | Got Netty News',
-    description: article?.summary ?? 'Country netball news from Got Netty.',
+    title: article ? `${article.title} | PlayFooty News` : 'Article | PlayFooty News',
+    description: article?.summary ?? 'Community Football news from PlayFooty.',
     path: `/news/${slug}`,
     jsonLd: article ? [
       {
@@ -38,14 +38,14 @@ export default function NewsArticle() {
         description: article.summary, articleSection: cat?.label,
         datePublished: article.date, dateModified: article.date,
         author: { '@type': 'Person', name: article.author.name },
-        publisher: { '@type': 'Organization', name: 'Got Netty' },
+        publisher: { '@type': 'Organization', name: 'PlayFooty' },
         mainEntityOfPage: { '@type': 'WebPage', '@id': url }, url,
       },
       {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://gotnetty.com.au' },
-          { '@type': 'ListItem', position: 2, name: 'News', item: 'https://gotnetty.com.au/news' },
-          { '@type': 'ListItem', position: 3, name: cat?.label ?? 'News', item: `https://gotnetty.com.au/news?category=${article.category}` },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://playfooty.com.au' },
+          { '@type': 'ListItem', position: 2, name: 'News', item: 'https://playfooty.com.au/news' },
+          { '@type': 'ListItem', position: 3, name: cat?.label ?? 'News', item: `https://playfooty.com.au/news?category=${article.category}` },
           { '@type': 'ListItem', position: 4, name: article.title, item: url },
         ],
       },
@@ -81,7 +81,7 @@ export default function NewsArticle() {
       {/* Breadcrumb */}
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '22px 20px 0' }}>
         <button onClick={() => navigate('/news')} className="font-condensed" style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTE, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: 12 }}>
-          <ArrowLeft size={14} /> Got Netty News
+          <ArrowLeft size={14} /> PlayFooty News
         </button>
       </div>
 

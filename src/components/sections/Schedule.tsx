@@ -26,7 +26,7 @@ const days: Day[] = [
     events: [
       { time: 'Morning', title: 'Venue Opens', desc: 'Championship venue opens for arrivals', icon: Sun },
       { time: 'Afternoon', title: 'Club Check-In', desc: 'Official registration for all participating clubs', icon: Sunset },
-      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed at the official CNCA opening function', icon: Moon },
+      { time: 'Evening', title: 'Welcome Function', desc: 'All clubs, coaches, families and supporters welcomed at the official PlayFooty opening function', icon: Moon },
     ],
   },
   {
@@ -59,8 +59,8 @@ const days: Day[] = [
     theme: 'Grand Final + Presentation',
     events: [
       { time: 'Morning', title: 'Grand Final Day Opens', desc: 'The final day of championship begins', icon: Sun },
-      { time: 'Midday', title: 'CNCA Grand Final', desc: 'One match. One title.', icon: Sunset },
-      { time: 'Evening', title: 'Awards Presentation', desc: 'Official CNCA awards honouring the champion club', icon: Moon },
+      { time: 'Midday', title: 'PlayFooty Grand Final', desc: 'One match. One title.', icon: Sunset },
+      { time: 'Evening', title: 'Awards Presentation', desc: 'Official PlayFooty awards honouring the champion club', icon: Moon },
     ],
   },
 ]

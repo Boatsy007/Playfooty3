@@ -33,7 +33,7 @@ export default function HowItWorks() {
               MORE THAN THE<br />PLAYING GROUP
             </h2>
             <p className="text-sm leading-relaxed max-w-xs lg:pb-2" style={{ color: 'rgba(17,17,17,0.5)' }}>
-              CNCA brings together everyone who contributes to country netball.
+              PlayFooty brings together everyone who contributes to Community Football.
             </p>
           </div>
         </motion.div>

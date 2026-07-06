@@ -2,9 +2,9 @@ import { memo } from 'react'
 
 const segments = [
   'NATIONAL RANKINGS', '✦', 'LEAGUE LADDERS', '✦',
-  'CLUB PROFILES', '✦', 'COUNTRY NETBALL NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
+  'CLUB PROFILES', '✦', 'Community Football NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
   'NATIONAL RANKINGS', '✦', 'LEAGUE LADDERS', '✦',
-  'CLUB PROFILES', '✦', 'COUNTRY NETBALL NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
+  'CLUB PROFILES', '✦', 'Community Football NEWS', '✦', 'UPDATED EVERY WEEK', '✦',
 ]
 
 export default memo(function Ticker() {

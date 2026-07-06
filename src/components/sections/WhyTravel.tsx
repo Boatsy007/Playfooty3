@@ -5,7 +5,7 @@ import { Users, Target, Briefcase, Heart, Star } from 'lucide-react'
 const roles = [
   { icon: Users,     title: 'A GRADE PLAYERS', desc: "Australia's leading country premiership teams competing for one national title.", accent: '#ff2c91', span: false },
   { icon: Target,    title: 'COACHES',          desc: 'Coaching groups leading their clubs onto a national stage.',                    accent: '#f4c14d', span: false },
-  { icon: Briefcase, title: 'CLUB OFFICIALS',   desc: 'The committee members, volunteers and administrators who keep country netball moving.', accent: '#ff2c91', span: false },
+  { icon: Briefcase, title: 'CLUB OFFICIALS',   desc: 'The committee members, volunteers and administrators who keep Community Football moving.', accent: '#ff2c91', span: false },
   { icon: Heart,     title: 'FAMILIES',         desc: 'A Gold Coast championship weekend built around the people who support the players all season.', accent: '#4dd9f4', span: false },
   { icon: Star,      title: 'SUPPORTERS',       desc: 'Club supporters travelling together, celebrating together and creating the event atmosphere.', accent: '#f4c14d', span: true },
 ]
@@ -84,7 +84,7 @@ export default function WhyTravel() {
             >
               {title === 'A GRADE PLAYERS' ? 'Championship Competitors' :
                title === 'COACHES' ? 'National Stage' :
-               title === 'CLUB OFFICIALS' ? 'Country Netball' :
+               title === 'CLUB OFFICIALS' ? 'Community Football' :
                'Gold Coast'}
             </span>
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(17,17,17,0.42)' }}>

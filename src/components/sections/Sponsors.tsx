@@ -5,7 +5,7 @@ const tiers = [
   {
     tier: 'Major Partner',
     label: 'MAJOR PARTNER',
-    desc: 'The naming rights partner of the Country Netball Championships Australia. Premium brand exposure across all championship assets, digital platforms and event activations.',
+    desc: 'The naming rights partner of the Community Football Championships Australia. Premium brand exposure across all championship assets, digital platforms and event activations.',
     accent: '#f4c14d',
     placeholder: { width: 260, height: 80, label: 'Your Brand Here' },
     size: 'lg',
@@ -39,11 +39,11 @@ const tiers = [
 
 const opportunities = [
   { title: 'Championship Naming Rights', desc: 'Own the event name. The ultimate sponsorship asset in grassroots Australian sport.' },
-  { title: 'Digital & Social Media', desc: 'Premium placement across the CNCA website and all championship social channels.' },
+  { title: 'Digital & Social Media', desc: 'Premium placement across the PlayFooty website and all championship social channels.' },
   { title: 'On-Court Branding', desc: 'Court-side signage, banner placement and uniform branding throughout the championship.' },
   { title: 'Event Activation Space', desc: 'Dedicated activation zones within the championship precinct for the full four days.' },
   { title: 'Category Exclusivity', desc: 'Own your category. No competing brands within your partnership tier and space.' },
-  { title: 'Community & Legacy', desc: "Associate your brand with Australia's growing country netball community." },
+  { title: 'Community & Legacy', desc: "Associate your brand with Australia's growing Community Football community." },
 ]
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -68,15 +68,15 @@ export default function Sponsors() {
               Partnership Opportunities
             </p>
             <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3rem, 8vw, 7.5rem)' }}>
-              BECOME A<br /><span style={{ color: '#ff2c91' }}>CNCA PARTNER.</span>
+              BECOME A<br /><span style={{ color: '#ff2c91' }}>PlayFooty PARTNER.</span>
             </h2>
           </div>
           <div>
             <p style={{ fontSize: 'clamp(1rem, 1.6vw, 1.1rem)', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>
-              CNCA is Australia's national country netball championship — a premium, invitation-only event reaching clubs, families and communities from every state and territory.
+              PlayFooty is Australia's national Community Football championship — a premium, invitation-only event reaching clubs, families and communities from every state and territory.
             </p>
             <p className="mt-3" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.7 }}>
-              Partner with CNCA and align your brand with community, aspiration and the spirit of grassroots Australian sport.
+              Partner with PlayFooty and align your brand with community, aspiration and the spirit of grassroots Australian sport.
             </p>
           </div>
         </motion.div>
@@ -197,7 +197,7 @@ export default function Sponsors() {
           className="flex flex-col sm:flex-row sm:items-center gap-5"
         >
           <a
-            href="mailto:info@cnca.com.au"
+            href="mailto:info@playfooty.com.au"
             className="group inline-flex items-center gap-2.5 font-bold rounded-full transition-all duration-200"
             style={{
               background: '#ff2c91',
@@ -220,7 +220,7 @@ export default function Sponsors() {
             <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform duration-200" />
           </a>
           <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.28)' }}>
-            info@cnca.com.au · Sponsorship packages available now
+            info@playfooty.com.au · Sponsorship packages available now
           </p>
         </motion.div>
 

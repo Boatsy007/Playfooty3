@@ -12,16 +12,16 @@ import Footer from '../components/layout/Footer'
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
-// ─── Why Book Through CNCA ──────────────────────────────────────────────────
+// ─── Why Book Through PlayFooty ──────────────────────────────────────────────────
 const benefits = [
   { icon: FileText,     title: 'One Organiser',              desc: 'Your club deals with one contact for the entire trip — accommodation, transport, activities and more.',  accent: '#ff2c91' },
   { icon: FileText,     title: 'One Invoice',                desc: 'One clean invoice for the entire club package. No chasing multiple suppliers across the Gold Coast.',    accent: '#f4c14d' },
-  { icon: Building,     title: 'Official Partners',          desc: 'Every accommodation partner is vetted, approved and exclusive to CNCA clubs. No surprises.',            accent: '#ff2c91' },
+  { icon: Building,     title: 'Official Partners',          desc: 'Every accommodation partner is vetted, approved and exclusive to PlayFooty clubs. No surprises.',            accent: '#ff2c91' },
   { icon: Star,         title: 'Exclusive Club Rates',       desc: 'Group rates unavailable to the public. Your club saves money and travels better.',                       accent: '#4dd9f4' },
   { icon: Plane,        title: 'Airport Transfers',          desc: 'Seamless arrival and departure transfers from Gold Coast Airport for your entire group.',                 accent: '#f4c14d' },
   { icon: Bus,          title: 'Team Transport',             desc: 'Dedicated team transport between accommodation and the championship venue throughout the weekend.',        accent: '#ff2c91' },
   { icon: Ticket,       title: 'Theme Park Discounts',       desc: 'Exclusive group pricing at Movie World, Dreamworld, Wet\'n\'Wild and Sea World for the whole club.',     accent: '#4dd9f4' },
-  { icon: Trophy,       title: 'Awards Night Tickets',       desc: 'Your club package includes tickets to the CNCA Awards Night — the centrepiece of the weekend.',          accent: '#f4c14d' },
+  { icon: Trophy,       title: 'Awards Night Tickets',       desc: 'Your club package includes tickets to the PlayFooty Awards Night — the centrepiece of the weekend.',          accent: '#f4c14d' },
   { icon: Clock,        title: 'Priority Booking',           desc: 'Club packages are booked first. Earlier confirmation means better rates and better availability.',        accent: '#ff2c91' },
   { icon: Heart,        title: 'Less Work for Volunteers',   desc: 'Stop the committee from running a travel agency. We handle it so they can enjoy the weekend.',           accent: '#f4c14d' },
 ]
@@ -138,7 +138,7 @@ const experiences = [
   { title: 'SkyPoint',        cat: 'Attraction',    icon: MapPin,     accent: '#f4c14d', desc: 'Climb to the top of the Q1 tower — 270° views of the Gold Coast, hinterland and Pacific Ocean from 230m.' },
   { title: 'Harbour Cruises', cat: 'Waterway',      icon: Waves,      accent: '#4dd9f4', desc: 'Explore the stunning Broadwater by boat. Sunset cruises, island transfers and private charter options.' },
   { title: 'Pacific Fair',    cat: 'Shopping',      icon: ShoppingBag,accent: '#ff2c91', desc: 'Australia\'s biggest fashion destination. 400+ stores, restaurants and entertainment — a full day on its own.' },
-  { title: 'Mini Golf',       cat: 'Entertainment', icon: Trophy,     accent: '#f4c14d', desc: 'Putt Putt Golf at Mermaid Beach — a CNCA classic for clubs wanting a fun, competitive afternoon together.' },
+  { title: 'Mini Golf',       cat: 'Entertainment', icon: Trophy,     accent: '#f4c14d', desc: 'Putt Putt Golf at Mermaid Beach — a PlayFooty classic for clubs wanting a fun, competitive afternoon together.' },
   { title: 'Escape Rooms',    cat: 'Entertainment', icon: Zap,        accent: '#ff2c91', desc: 'Team bonding at its finest. Work together to solve puzzles and beat the clock — perfect for club groups.' },
   { title: 'Karting',         cat: 'Motorsport',    icon: Zap,        accent: '#4dd9f4', desc: 'Race your teammates at Slideways Go Karting — great fun and fierce competition guaranteed.' },
 ]
@@ -149,7 +149,7 @@ const dining = [
   { title: 'Beachfront',        sub: 'Oceanside Breakfast & Brunch',      desc: 'Start the day with the Pacific at your feet. Fresh juices, big breakfasts and coffee worth the walk.', accent: '#4dd9f4' },
   { title: 'Italian',           sub: 'Pasta, Pizza & Wine',                desc: 'Shared plates, great wine and the kind of atmosphere that turns dinner into a three-hour celebration.', accent: '#ff2c91' },
   { title: 'Buffet',            sub: 'Club-Friendly Group Dining',         desc: 'Feed the whole club without the hassle. Premium buffet options for large groups with dietary requirements covered.', accent: '#f4c14d' },
-  { title: 'Awards Dinner',     sub: 'Private Function Room',              desc: 'A dedicated private dining space for your club\'s official CNCA celebration. Setup, AV and menu all included.', accent: '#ff2c91' },
+  { title: 'Awards Dinner',     sub: 'Private Function Room',              desc: 'A dedicated private dining space for your club\'s official PlayFooty celebration. Setup, AV and menu all included.', accent: '#ff2c91' },
   { title: 'Sunset Dining',     sub: 'Rooftop Bar & Restaurant',           desc: 'Watch the Gold Coast sun disappear into the hinterland over drinks and a premium shared menu.', accent: '#4dd9f4' },
 ]
 
@@ -172,7 +172,7 @@ const itinerary = [
       { time: 'Morning',   label: 'Flights Arrive', desc: 'Club lands at Gold Coast Airport — transfers waiting.' },
       { time: 'Midday',    label: 'Check In',       desc: 'Settle into your accommodation and get your bearings.' },
       { time: 'Afternoon', label: 'Beach Walk',     desc: 'First swim, first coffee, first Gold Coast moment.' },
-      { time: 'Evening',   label: 'Welcome Function', desc: 'Official CNCA opening event. Meet the clubs, feel the energy.' },
+      { time: 'Evening',   label: 'Welcome Function', desc: 'Official PlayFooty opening event. Meet the clubs, feel the energy.' },
     ],
   },
   {
@@ -195,8 +195,8 @@ const itinerary = [
     events: [
       { time: 'Morning',   label: 'Semi Finals',    desc: 'The best four clubs fight for a spot in the final.' },
       { time: 'Afternoon', label: 'Grand Final',    desc: 'One match. One trophy. One national champion crowned.' },
-      { time: 'Evening',   label: 'Awards Night',   desc: 'The CNCA Awards Night. Dinner, presentations and celebration.' },
-      { time: 'Late',      label: 'After-Party',    desc: 'The celebration continues. The whole CNCA community together.' },
+      { time: 'Evening',   label: 'Awards Night',   desc: 'The PlayFooty Awards Night. Dinner, presentations and celebration.' },
+      { time: 'Late',      label: 'After-Party',    desc: 'The celebration continues. The whole PlayFooty community together.' },
     ],
   },
   {
@@ -208,7 +208,7 @@ const itinerary = [
       { time: 'Morning',   label: 'Theme Parks',  desc: 'Movie World, Dreamworld or a beach day. Your choice.' },
       { time: 'Midday',    label: 'Shopping',     desc: 'Pacific Fair, boutiques and the Surfers Paradise strip.' },
       { time: 'Afternoon', label: 'Last Lunch',   desc: 'Final meal together before the long trip home.' },
-      { time: 'Evening',   label: 'Fly Home',     desc: 'Airport transfers arranged. Until CNCA 2028.' },
+      { time: 'Evening',   label: 'Fly Home',     desc: 'Airport transfers arranged. Until PlayFooty 2028.' },
     ],
   },
 ]
@@ -221,7 +221,7 @@ const packages = [
     tagColor: '#f4c14d',
     accent: '#f4c14d',
     items: [
-      'Official CNCA Accommodation',
+      'Official PlayFooty Accommodation',
       'Airport Transfers (Return)',
       'Championship Entry',
       'Welcome Pack',
@@ -234,7 +234,7 @@ const packages = [
     accent: '#ff2c91',
     featured: true,
     items: [
-      'Official CNCA Accommodation',
+      'Official PlayFooty Accommodation',
       'Airport & Venue Transfers',
       'Awards Night Tickets',
       'Welcome Function Entry',
@@ -272,22 +272,22 @@ const packages = [
 
 // ─── Package FAQs ────────────────────────────────────────────────────────────
 const packageFaqs = [
-  { q: 'Can families attend CNCA?',                    a: 'Absolutely. CNCA is designed as a whole-of-club event. Families, partners and children are welcome as spectators and participants in the wider Gold Coast experience across the entire weekend.' },
-  { q: 'Can junior players come along?',               a: 'Yes. Junior players attending as spectators and supporters are part of the CNCA community. The Gold Coast is an incredible environment for young netballers to experience elite country competition and the wider event atmosphere.' },
+  { q: 'Can families attend PlayFooty?',                    a: 'Absolutely. PlayFooty is designed as a whole-of-club event. Families, partners and children are welcome as spectators and participants in the wider Gold Coast experience across the entire weekend.' },
+  { q: 'Can junior players come along?',               a: 'Yes. Junior players attending as spectators and supporters are part of the PlayFooty community. The Gold Coast is an incredible environment for young footballers to experience elite country competition and the wider event atmosphere.' },
   { q: 'Can we stay longer than four days?',           a: 'Yes. Many clubs extend their stay before or after the championship. Our team can arrange accommodation and activity packages for early arrivals and extended stays — just let us know your preferred dates.' },
   { q: 'Can we choose our own accommodation?',         a: 'Clubs can select from our official accommodation partner options across a range of styles and budgets — from budget-friendly holiday parks to luxury beachfront resorts. We work with your club to match the right fit.' },
   { q: 'Can we organise our own flights?',             a: 'Absolutely. Many clubs prefer to book flights independently or through their preferred airline or travel agent. Our package simply picks you up at the airport and manages everything from that point forward.' },
-  { q: 'Can club supporters book through CNCA?',       a: 'Yes. All supporters, volunteers and community members are welcome to book through CNCA club packages regardless of whether their club is competing. Everyone who wants to experience the CNCA weekend can join the group package.' },
+  { q: 'Can club supporters book through PlayFooty?',       a: 'Yes. All supporters, volunteers and community members are welcome to book through PlayFooty club packages regardless of whether their club is competing. Everyone who wants to experience the PlayFooty weekend can join the group package.' },
   { q: 'Can we add theme park visits to the package?', a: 'Yes. Theme park experiences can be added to any package level. We have exclusive group pricing at major Gold Coast parks including Movie World, Dreamworld and Wet\'n\'Wild. Simply include this when building your enquiry.' },
   { q: 'Can we arrive early or extend the trip?',      a: 'Yes. Whether you want to arrive a day or two early to settle in and explore or stay on for a full Gold Coast holiday after the championship, our team can build an itinerary around your preferred schedule.' },
 ]
 
 // ─── Why Clubs Love Travelling Together copy ─────────────────────────────────
 const storyPoints = [
-  { heading: 'Celebrate the season.', body: 'Every training session, every match, every final — your A Grade season builds to CNCA. Arriving on the Gold Coast together is the moment it all pays off.' },
+  { heading: 'Celebrate the season.', body: 'Every training session, every match, every final — your A Grade season builds to PlayFooty. Arriving on the Gold Coast together is the moment it all pays off.' },
   { heading: 'Build club culture.', body: 'The memories made off the court are as powerful as the ones on it. Shared experiences become the stories that define your club for years.' },
-  { heading: 'Reward your volunteers.', body: 'The people who set up courts, run canteens and write match reports deserve to be part of something extraordinary. CNCA is their reward too.' },
-  { heading: 'Family holidays attached.', body: 'Partners, parents and kids don\'t just come to watch — they come for the Gold Coast. Let the families turn CNCA into a full October holiday.' },
+  { heading: 'Reward your volunteers.', body: 'The people who set up courts, run canteens and write match reports deserve to be part of something extraordinary. PlayFooty is their reward too.' },
+  { heading: 'Family holidays attached.', body: 'Partners, parents and kids don\'t just come to watch — they come for the Gold Coast. Let the families turn PlayFooty into a full October holiday.' },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -480,7 +480,7 @@ function PackagesHero({ onRequest, onBuilder }: { onRequest: () => void; onBuild
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 1 — Why Book Through CNCA
+// SECTION 1 — Why Book Through PlayFooty
 // ─────────────────────────────────────────────────────────────────────────────
 function WhyBook() {
   const [hovered, setHovered] = useState<number | null>(null)
@@ -498,7 +498,7 @@ function WhyBook() {
           className="mb-16 lg:mb-20"
         >
           <p className="font-condensed font-bold tracking-[0.28em] text-[10px] uppercase mb-5" style={{ color: '#f4c14d' }}>
-            Why Book Through CNCA
+            Why Book Through PlayFooty
           </p>
           <h2 className="font-display text-white leading-none mb-5" style={{ fontSize: 'clamp(2.8rem, 8vw, 7rem)' }}>
             ONE CALL.<br /><span style={{ color: '#ff2c91' }}>EVERYTHING SORTED.</span>
@@ -716,7 +716,7 @@ function AccommodationSection() {
               WHERE YOUR<br /><span style={{ color: '#ff2c91' }}>CLUB STAYS.</span>
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'rgba(17,17,17,0.45)', lineHeight: 1.7 }}>
-              Official CNCA accommodation partners — vetted, approved and positioned to make the whole club's stay seamless, comfortable and social.
+              Official PlayFooty accommodation partners — vetted, approved and positioned to make the whole club's stay seamless, comfortable and social.
             </p>
           </div>
         </motion.div>
@@ -789,7 +789,7 @@ function AccommodationSection() {
       {/* Bottom strip */}
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8" style={{ borderTop: '1px solid rgba(17,17,17,0.07)' }}>
         <p className="font-condensed font-bold text-[10px] tracking-[0.28em] uppercase text-center" style={{ color: 'rgba(17,17,17,0.28)' }}>
-          All properties are vetted CNCA partners &nbsp;·&nbsp; Exclusive group rates available &nbsp;·&nbsp; Priority booking for CNCA clubs
+          All properties are vetted PlayFooty partners &nbsp;·&nbsp; Exclusive group rates available &nbsp;·&nbsp; Priority booking for PlayFooty clubs
         </p>
       </div>
     </section>
@@ -867,7 +867,7 @@ function ExperiencesSection() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <p className="font-condensed font-bold text-[10px] tracking-[0.28em] uppercase text-center" style={{ color: 'rgba(255,255,255,0.18)' }}>
-          Group discounts available &nbsp;·&nbsp; All activities bookable through your club package &nbsp;·&nbsp; CNCA exclusive pricing
+          Group discounts available &nbsp;·&nbsp; All activities bookable through your club package &nbsp;·&nbsp; PlayFooty exclusive pricing
         </p>
       </div>
     </section>
@@ -1206,7 +1206,7 @@ function MapSection() {
   const prefersReduced = useReducedMotion()
   const mapPoints = [
     { label: 'GC Airport',  left: '12%', top: '72%', accent: '#4dd9f4' },
-    { label: 'CNCA Venue',  left: '48%', top: '52%', accent: '#ff2c91' },
+    { label: 'PlayFooty Venue',  left: '48%', top: '52%', accent: '#ff2c91' },
     { label: 'Surfers Para.', left: '54%', top: '35%', accent: '#f4c14d' },
     { label: 'Movie World', left: '22%', top: '28%', accent: '#f4c14d' },
     { label: 'Dreamworld',  left: '30%', top: '18%', accent: '#ff2c91' },
@@ -1307,7 +1307,7 @@ function WhyClubsTravelSection() {
             The Real Reason
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.8rem, 8vw, 8rem)' }}>
-            THIS IS BIGGER<br />THAN <span style={{ color: '#ff2c91' }}>NETBALL.</span>
+            THIS IS BIGGER<br />THAN <span style={{ color: '#ff2c91' }}>FOOTBALL.</span>
           </h2>
         </motion.div>
 
@@ -1462,7 +1462,7 @@ function PackagesCTA({ onRequest }: { onRequest: () => void }) {
             Ready to Book?
           </p>
           <h2 className="font-display text-white leading-[0.88] mb-5" style={{ fontSize: 'clamp(3rem, 9vw, 9rem)' }}>
-            MAKE CNCA YOUR<br /><span style={{ color: '#ff2c91' }}>2027 CLUB TRIP.</span>
+            MAKE PlayFooty YOUR<br /><span style={{ color: '#ff2c91' }}>2027 CLUB TRIP.</span>
           </h2>
           <p className="mb-12" style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.35)', maxWidth: '40ch', margin: '0 auto 3rem' }}>
             One organiser. One unforgettable weekend.<br />Let us handle every detail.
@@ -1637,18 +1637,18 @@ export default function ClubPackages() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "TouristTrip",
-        "name": "CNCA Official Club Packages — Gold Coast 2027",
-        "description": "Official club travel packages for the Country Netball Championships Australia on the Gold Coast, October 2027. Accommodation, transport, activities and championship experiences for competing and non-competing clubs.",
-        "touristType": ["Sports team", "Netball club", "Family"],
+        "name": "PlayFooty Official Club Packages — Gold Coast 2027",
+        "description": "Official club travel packages for the Community Football Championships Australia on the Gold Coast, October 2027. Accommodation, transport, activities and championship experiences for competing and non-competing clubs.",
+        "touristType": ["Sports team", "Football club", "Family"],
         "offers": {
           "@type": "Offer",
           "availability": "https://schema.org/InStock",
           "availabilityEnds": "2027-10-06",
-          "seller": { "@type": "Organization", "name": "CNCA — Country Netball Championships Australia" }
+          "seller": { "@type": "Organization", "name": "PlayFooty — Community Football Championships Australia" }
         },
         "itinerary": {
           "@type": "ItemList",
-          "name": "CNCA 2027 Club Package Itinerary",
+          "name": "PlayFooty 2027 Club Package Itinerary",
           "itemListElement": itinerary.map((d, i) => ({
             "@type": "ListItem",
             "position": i + 1,

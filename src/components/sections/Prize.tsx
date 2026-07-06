@@ -53,7 +53,7 @@ export default function Prize() {
           >
             <div className="border-l-2 pl-8" style={{ borderColor: '#f4c14d' }}>
               <p className="text-white font-semibold text-xl leading-relaxed mb-3">
-                A major prize package will be awarded to the 2027 CNCA Champion Club.
+                A major prize package will be awarded to the 2027 PlayFooty Champion Club.
               </p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Full details announced prior to the event.

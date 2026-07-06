@@ -92,11 +92,11 @@ export default function Nav() {
           {/* Logo */}
           <button
             onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' }) }}
-            aria-label="Got Netty home"
+            aria-label="PlayFooty home"
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src="/logo.webp" alt="Got Netty" style={{ height: 85, width: 'auto', objectFit: 'contain' }} />
+            <img src="/logo.webp" alt="PlayFooty" style={{ height: 85, width: 'auto', objectFit: 'contain' }} />
           </button>
 
           {/* Desktop links */}
@@ -262,7 +262,7 @@ export default function Nav() {
                   View National Rankings
                 </button>
                 <p className="text-center text-xs" style={{ color: 'rgba(17,17,17,0.3)' }}>
-                  Got Netty · Australia's Home of Country Netball
+                  PlayFooty · Australia's Home of Community Football
                 </p>
               </motion.div>
             </nav>

@@ -85,8 +85,8 @@ export default function Invitation() {
                 { label: 'Date', value: 'October 2027' },
                 { label: 'Location', value: 'Gold Coast, Queensland' },
                 { label: 'Eligibility', value: 'A Grade Premiership Clubs' },
-                { label: 'Website', value: 'cnca.com.au' },
-                { label: 'Email', value: 'info@cnca.com.au' },
+                { label: 'Website', value: 'playfooty.com.au' },
+                { label: 'Email', value: 'info@playfooty.com.au' },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <span className="font-condensed font-bold text-xs tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -140,7 +140,7 @@ export default function Invitation() {
                     </div>
                     <div>
                       <label className={labelCls}>Club Name *</label>
-                      <input {...register('clubName', { required: true })} type="text" placeholder="Your netball club" className={inputCls} />
+                      <input {...register('clubName', { required: true })} type="text" placeholder="Your football club" className={inputCls} />
                     </div>
                   </div>
 

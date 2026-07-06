@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
-// CNCA 2027 opens Thursday 7 October 2027, 08:00 AEST (UTC+10)
+// PlayFooty 2027 opens Thursday 7 October 2027, 08:00 AEST (UTC+10)
 const TARGET_MS = new Date('2027-10-07T08:00:00+10:00').getTime()
 
 function getTimeLeft() {
@@ -122,7 +122,7 @@ export default function Countdown() {
             THE COUNTDOWN<br />IS <span style={{ color: '#ff2c91' }}>ON.</span>
           </h2>
           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.02em' }}>
-            Australia's national country netball championship
+            Australia's national Community Football championship
           </p>
         </motion.div>
 

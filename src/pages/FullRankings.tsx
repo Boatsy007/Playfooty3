@@ -53,11 +53,11 @@ export default function FullRankings() {
   void newsTick
 
   useSeo({
-    title: 'National Country Netball Rankings — A Grade | Got Netty',
-    description: 'The complete Got Netty national rankings of Australia’s country netball A Grade clubs, ordered by power rating and updated every week of the season.',
+    title: 'National Community Football Rankings — A Grade | PlayFooty',
+    description: 'The complete PlayFooty national rankings of Australia’s Community Football A Grade clubs, ordered by power rating and updated every week of the season.',
     path: '/rankings',
     jsonLd: entries.length ? {
-      '@context': 'https://schema.org', '@type': 'ItemList', name: 'Got Netty National Country Netball Rankings',
+      '@context': 'https://schema.org', '@type': 'ItemList', name: 'PlayFooty National Community Football Rankings',
       numberOfItems: entries.length, itemListElement: entries.slice(0, 100).map(e => ({ '@type': 'ListItem', position: e.rank, name: e.clubName })),
     } : undefined,
   })
@@ -118,7 +118,7 @@ function PageHeader({ week, total, updated, query, setQuery, states, state, setS
     <div className="header-copy">
       <span className="live-pill"><span /> Rankings live</span>
       <h1>National Rankings</h1>
-      <p>Australia&rsquo;s national A Grade country netball club rankings.</p>
+      <p>Australia&rsquo;s national A Grade Community Football club rankings.</p>
       <div className="header-stats"><b>Current rankings</b><b>{week ?? 'Season live'}</b><b>{total} ranked clubs</b><b>{updated ? `Last updated ${shortDate(updated)}` : 'Updated weekly'}</b></div>
     </div>
     <div className="filters-panel" aria-label="Rankings filters">

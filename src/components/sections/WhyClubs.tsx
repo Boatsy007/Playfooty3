@@ -5,7 +5,7 @@ const benefits = [
   {
     num: '01',
     title: 'A National Title To Play For',
-    desc: "For A Grade teams who've won locally, CNCA is the next step. Compete against the best country clubs in Australia for a national title.",
+    desc: "For A Grade teams who've won locally, PlayFooty is the next step. Compete against the best country clubs in Australia for a national title.",
     icon: Trophy,
   },
   {

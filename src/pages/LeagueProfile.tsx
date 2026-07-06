@@ -35,16 +35,16 @@ export default function LeagueProfile() {
 
   useSeo({
     title: data
-      ? `${data.name} Netball: Ladder, Rankings & Results ${seasonYear(data)} | Got Netty`
-      : 'League | Got Netty',
+      ? `${data.name} Football: Ladder, Rankings & Results ${seasonYear(data)} | PlayFooty`
+      : 'League | PlayFooty',
     description: data && facts
       ? [
-          `${data.name} A Grade netball on Got Netty${facts.nationalRank != null ? `: the #${facts.nationalRank} ranked league in Australia` : ''}.`,
+          `${data.name} A Grade football on PlayFooty${facts.nationalRank != null ? `: the #${facts.nationalRank} ranked league in Australia` : ''}.`,
           `Live ladder, national club rankings and ${strengthLabel(facts.stars).toLowerCase()} ${facts.stars}/5 strength rating`,
           facts.leader ? `${facts.leader.clubName} lead the ladder.` : '',
           'Updated every week of the season.',
         ].filter(Boolean).join(' ')
-      : 'Country netball league ladder, national rankings and strength rating, updated weekly.',
+      : 'Community Football league ladder, national rankings and strength rating, updated weekly.',
     path: `/league/${leagueId}`,
     jsonLd: data && facts ? buildJsonLd(data, facts, leagueId) : undefined,
   })
@@ -112,18 +112,18 @@ function HeroSkeleton() {
 
 /** Structured data: league organisation, breadcrumbs, and an FAQ built from real facts. */
 function buildJsonLd(d: LeagueDetail, facts: NonNullable<ReturnType<typeof deriveFacts>>, leagueId: string) {
-  const base = 'https://gotnetty.com.au'
+  const base = 'https://playfooty.com.au'
   const url = `${base}/league/${leagueId}`
   const faqs: { q: string; a: string }[] = []
   if (facts.nationalRank != null) {
     faqs.push({
-      q: `How strong is the ${d.name} in netball?`,
-      a: `The ${d.name} is currently the #${facts.nationalRank} ranked country netball league of ${facts.leagueCount} tracked in Australia, with a ${strengthLabel(strengthStars(d.strengthScore)).toLowerCase()} strength rating of ${strengthStars(d.strengthScore)}/5 on Got Netty.`,
+      q: `How strong is the ${d.name} in football?`,
+      a: `The ${d.name} is currently the #${facts.nationalRank} ranked Community Football league of ${facts.leagueCount} tracked in Australia, with a ${strengthLabel(strengthStars(d.strengthScore)).toLowerCase()} strength rating of ${strengthStars(d.strengthScore)}/5 on PlayFooty.`,
     })
   }
   if (facts.leader) {
     faqs.push({
-      q: `Who is on top of the ${d.name} netball ladder?`,
+      q: `Who is on top of the ${d.name} football ladder?`,
       a: `${facts.leader.clubName} currently lead the ${d.name} A Grade ladder with a ${facts.leader.wins}-${facts.leader.losses} record${facts.leader.points ? ` and ${facts.leader.points} points` : ''}.`,
     })
   }
@@ -141,11 +141,11 @@ function buildJsonLd(d: LeagueDetail, facts: NonNullable<ReturnType<typeof deriv
       '@type': 'SportsOrganization',
       '@id': `${url}#league`,
       name: d.name,
-      sport: 'Netball',
+      sport: 'Football',
       url,
       areaServed: { '@type': 'State', name: d.stateName ?? d.state },
-      ...(story ? { description: `${d.name} A Grade netball. ${story}` } : {}),
-      memberOf: { '@type': 'Organization', name: 'Got Netty', url: base },
+      ...(story ? { description: `${d.name} A Grade football. ${story}` } : {}),
+      memberOf: { '@type': 'Organization', name: 'PlayFooty', url: base },
     },
     {
       '@context': 'https://schema.org',

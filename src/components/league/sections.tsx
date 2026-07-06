@@ -19,7 +19,7 @@ const INK = '#0c0e13'
 // ─── Per-league identity ──────────────────────────────────────────────────────
 // Each league gets a deterministic accent hue from its name, so Gippsland,
 // Bellarine and Hampden each feel like their own destination while staying
-// unmistakably Got Netty. No invented branding: it is a stable visual identity
+// unmistakably PlayFooty. No invented branding: it is a stable visual identity
 // until real league colours/logos are uploaded via the admin portal.
 const LEAGUE_HUES = [356, 24, 204, 262, 152, 190, 318, 42]
 function leagueHash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h) }

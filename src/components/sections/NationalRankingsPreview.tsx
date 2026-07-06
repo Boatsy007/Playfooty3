@@ -22,7 +22,7 @@ export default function NationalRankingsPreview() {
             AUSTRALIA’S <span style={{ color: PINK }}>TOP 10</span>
           </h2>
           <p style={{ color: MUTE, fontSize: 15.5, maxWidth: 520 }}>
-            The strongest country netball A&nbsp;Grade clubs in the nation, ranked from live ladder data — Australia’s national leaderboard.
+            The strongest Community Football A&nbsp;Grade clubs in the nation, ranked from live ladder data — Australia’s national leaderboard.
           </p>
         </div>
 

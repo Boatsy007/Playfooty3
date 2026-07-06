@@ -6,13 +6,13 @@ const benefits = [
   {
     icon: Trophy,
     title: 'A national title to play for.',
-    desc: 'For A Grade players who have won their local premiership, CNCA is the next step — a national championship that measures your club against the best country clubs in Australia.',
+    desc: 'For A Grade players who have won their local premiership, PlayFooty is the next step — a national championship that measures your club against the best country clubs in Australia.',
     color: 'bg-pink-500',
   },
   {
     icon: Users,
     title: 'A reason to bring the whole club together.',
-    desc: 'Winning a premiership is the perfect excuse for an end-of-season trip. CNCA gives your whole club — players, families, committee and supporters — a shared goal to travel toward.',
+    desc: 'Winning a premiership is the perfect excuse for an end-of-season trip. PlayFooty gives your whole club — players, families, committee and supporters — a shared goal to travel toward.',
     color: 'bg-navy-700',
   },
   {
@@ -42,7 +42,7 @@ const stateList = [
 
 export default function Testimonials() {
   return (
-    <section id="why-cnca" className="bg-white overflow-hidden">
+    <section id="why-playfooty" className="bg-white overflow-hidden">
       {/* State ticker */}
       <div className="bg-navy-700 py-3 overflow-hidden">
         <motion.div

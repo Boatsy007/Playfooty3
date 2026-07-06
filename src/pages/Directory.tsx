@@ -43,8 +43,8 @@ export default function Directory() {
   const [leagueF, setLeagueF] = useState('')
 
   useSeo({
-    title: 'National Club Directory — Country Netball | Got Netty',
-    description: 'Search Australia’s country netball clubs and teams by name, state and league, or browse A–Z. The official Got Netty national club directory.',
+    title: 'National Club Directory — Community Football | PlayFooty',
+    description: 'Search Australia’s Community Football clubs and teams by name, state and league, or browse A–Z. The official PlayFooty national club directory.',
     path: '/directory',
   })
 
@@ -145,7 +145,7 @@ function PageHeader({ season, ranked, leagues, updated, query, setQuery, stateF,
     <div className="header-copy">
       <span className="live-pill"><span /> Club directory live</span>
       <h1>Clubs</h1>
-      <p>Browse Australia&rsquo;s country netball clubs, rankings, leagues and form.</p>
+      <p>Browse Australia&rsquo;s Community Football clubs, rankings, leagues and form.</p>
       <div className="header-stats"><b>{season ?? 'Season live'}</b><b>{ranked} ranked clubs</b><b>{leagues} leagues represented</b><b>{updated ? `Updated ${shortDate(updated)}` : 'Updated weekly'}</b></div>
     </div>
     <div className="filters-panel" aria-label="Club filters">

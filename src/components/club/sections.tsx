@@ -72,7 +72,7 @@ export function ClubHero({ club }: { club: ClubProfile }) {
             <ClubCrest name={club.clubName} src={club.logoUrl} id={id} />
             <div style={{ minWidth: 0 }}>
               <div className="font-condensed" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, flexWrap: 'wrap' }}>
-                <Tag color={GOLD}>Country netball club</Tag>
+                <Tag color={GOLD}>Community Football club</Tag>
                 {club.ranked && <span className="font-condensed" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Ranked nationally</span>}
               </div>
               <div style={{ overflow: 'hidden' }}>
@@ -115,7 +115,7 @@ export function ClubHero({ club }: { club: ClubProfile }) {
               <FormPips form={club.recentForm} />
             </span>
           )}
-          <a href={`mailto:hello@gotnetty.com.au?subject=${claimSubject}`} className="font-condensed club-hero-claim"
+          <a href={`mailto:hello@playfooty.com.au?subject=${claimSubject}`} className="font-condensed club-hero-claim"
             style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 999, background: PINK, color: '#fff', padding: '12px 18px', textDecoration: 'none', fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', boxShadow: '0 14px 34px rgba(255,44,145,0.28)' }}>
             Claim club <ArrowRight size={14} />
           </a>
@@ -467,7 +467,7 @@ export function ClubClaim({ club }: { club: ClubProfile }) {
                   Your national profile then updates automatically every Monday.
                 </p>
               </div>
-              <a href={`mailto:hello@gotnetty.com.au?subject=${subject}`} className="btn-pink font-condensed"
+              <a href={`mailto:hello@playfooty.com.au?subject=${subject}`} className="btn-pink font-condensed"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 9, padding: '1rem 2rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.08em', border: 'none', whiteSpace: 'nowrap' }}>
                 CLAIM THIS CLUB <ArrowRight size={16} />
               </a>
@@ -495,7 +495,7 @@ export function ClubInfo({ club }: { club: ClubProfile }) {
   if (!facts.length && !hasColours) return null
   return (
     <Section>
-      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Verified profile details currently available on Go Netty." />
+      <SectionHead title={<>CLUB <span style={{ color: PINK }}>INFORMATION</span></>} sub="Verified profile details currently available on PlayFooty." />
       <div className="club-info-grid" style={{ display: 'grid', gap: 14 }}>
         {facts.map(f => {
           const body = <><span className="font-condensed" style={{ color: FAINT, fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{f.label}</span><strong style={{ color: TEXT, display: 'block', marginTop: 7, lineHeight: 1.1 }}>{f.value}</strong></>
@@ -563,7 +563,7 @@ export function ClubSidebar({ club }: { club: ClubProfile }) {
       {club.leagueStrengthScore != null && <Link to={club.leagueId ? leaguePath(club.leagueId) : '/leagues'} className="gn-card gn-card-hover" style={{ padding: 18, textDecoration: 'none', color: TEXT }}><SideLabel>League strength</SideLabel><div style={{ marginTop: 8 }}><StarStrength stars={strengthStars(club.leagueStrengthScore)} size={12} /></div><small style={{ color: MUTE }}>{strengthLabel(strengthStars(club.leagueStrengthScore))}</small></Link>}
       {news.length > 0 && <div className="gn-card" style={{ padding: 18 }}><SideLabel>Latest club news</SideLabel>{news.map(a => <Link key={a.slug} to={newsPath(a.slug)} style={{ display: 'block', color: TEXT, textDecoration: 'none', borderTop: `1px solid ${LINE}`, paddingTop: 10, marginTop: 10 }}><strong style={{ fontSize: 13, lineHeight: 1.2 }}>{a.title}</strong><small style={{ display: 'block', color: MUTE }}>{formatDate(a.date)}</small></Link>)}</div>}
       <Link to="/championship" className="gn-card gn-card-hover" style={{ padding: 18, background: INK, color: '#fff', textDecoration: 'none' }}><SideLabel color={GOLD}>Upcoming championships</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08, marginTop: 8 }}>National pathway coming soon</strong></Link>
-      <a href={`mailto:hello@gotnetty.com.au?subject=${claimSubject}`} className="gn-card gn-card-hover" style={{ padding: 18, background: PINK, color: '#fff', textDecoration: 'none' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Manage this profile</strong></a>
+      <a href={`mailto:hello@playfooty.com.au?subject=${claimSubject}`} className="gn-card gn-card-hover" style={{ padding: 18, background: PINK, color: '#fff', textDecoration: 'none' }}><SideLabel color="rgba(255,255,255,0.72)">Claim club</SideLabel><strong style={{ display: 'block', fontSize: 18, lineHeight: 1.08 }}>Manage this profile</strong></a>
       <div className="gn-card" style={{ padding: 18, borderStyle: 'dashed' }}><SideLabel>Sponsor placeholder</SideLabel><strong style={{ color: TEXT }}>Partner with {club.clubName}</strong></div>
       <style>{`@media(max-width:980px){.club-sidebar{position:static!important;margin-top:18px}.club-sidebar .gn-card{width:100%}}`}</style>
     </aside>

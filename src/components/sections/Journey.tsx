@@ -28,7 +28,7 @@ const steps = [
   {
     num: '05',
     heading: 'THE INVITATION ARRIVES',
-    body: 'CNCA reaches out. The entire club knows. Something bigger than the local competition is calling — a national stage.',
+    body: 'PlayFooty reaches out. The entire club knows. Something bigger than the local competition is calling — a national stage.',
     accent: '#f4c14d',
   },
   {
@@ -46,7 +46,7 @@ const steps = [
   {
     num: '08',
     heading: 'ONE NATIONAL CHAMPION',
-    body: 'One club lifts the CNCA trophy. The moment is forever. The legacy begins. See you next year.',
+    body: 'One club lifts the PlayFooty trophy. The moment is forever. The legacy begins. See you next year.',
     accent: '#f4c14d',
   },
 ]
@@ -69,7 +69,7 @@ export default function Journey() {
           className="mb-20 lg:mb-28"
         >
           <p className="font-condensed font-bold tracking-[0.22em] text-xs uppercase mb-5" style={{ color: '#f4c14d' }}>
-            The Road to CNCA
+            The Road to PlayFooty
           </p>
           <h2 className="font-display text-white leading-none" style={{ fontSize: 'clamp(3.2rem, 9vw, 9rem)' }}>
             EVERY SEASON<br />LEADS <span style={{ color: '#ff2c91' }}>HERE.</span>

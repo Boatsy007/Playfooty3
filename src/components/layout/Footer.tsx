@@ -8,15 +8,15 @@ export default memo(function Footer() {
         <div className="flex items-center gap-3">
           <span className="flex items-baseline gap-1">
             <span className="font-display text-xl text-white/80 leading-none">GOT</span>
-            <span className="font-display text-xl leading-none" style={{ color: '#ff2c91' }}>NETTY</span>
+            <span className="font-display text-xl leading-none" style={{ color: '#ff2c91' }}>PlayFooty</span>
           </span>
           <div className="flex items-center gap-2 text-white/50 text-sm font-bold">
             <Globe size={14} className="text-[#ff2c91]" />
-            gotnetty.com.au
+            playfooty.com.au
           </div>
         </div>
         <p className="text-white/30 text-xs text-center">
-          &copy; {new Date().getFullYear()} Got Netty — Australia's Home of Country Netball. All rights reserved.
+          &copy; {new Date().getFullYear()} PlayFooty — Australia's Home of Community Football. All rights reserved.
         </p>
         <div className="flex gap-5">
           {['Privacy', 'Terms'].map(t => (

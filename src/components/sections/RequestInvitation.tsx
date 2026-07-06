@@ -80,8 +80,8 @@ export default function RequestInvitation() {
               <p className="text-xs font-bold text-navy-400 uppercase tracking-widest mb-3">Event Details</p>
               <div className="space-y-2">
                 {[
-                  ['Name', 'Country Netball Championships Australia'],
-                  ['Short Name', 'CNCA'],
+                  ['Name', 'Community Football Championships Australia'],
+                  ['Short Name', 'PlayFooty'],
                   ['Date', 'October 2027'],
                   ['Location', 'Gold Coast, Queensland'],
                   ['Competition', 'A Grade — Invitation Only'],
@@ -114,7 +114,7 @@ export default function RequestInvitation() {
                 </div>
                 <h3 className="text-2xl font-extrabold text-navy-700 mb-3">Request Received</h3>
                 <p className="text-navy-400 leading-relaxed max-w-sm mx-auto">
-                  Thank you for your interest in CNCA 2027. We'll be in touch with invitation details, competition format and accommodation information.
+                  Thank you for your interest in PlayFooty 2027. We'll be in touch with invitation details, competition format and accommodation information.
                 </p>
               </motion.div>
             ) : (
@@ -135,7 +135,7 @@ export default function RequestInvitation() {
                     <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">Club Name *</label>
                     <input
                       {...register('clubName', { required: true })}
-                      placeholder="e.g. Mudgee Netball Club"
+                      placeholder="e.g. Mudgee Football Club"
                       className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.clubName ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>
@@ -146,7 +146,7 @@ export default function RequestInvitation() {
                     <label className="block text-xs font-bold text-navy-600 mb-1.5 uppercase tracking-wide">League / Association *</label>
                     <input
                       {...register('league', { required: true })}
-                      placeholder="e.g. Central Western Netball"
+                      placeholder="e.g. Central Western Football"
                       className={`w-full border rounded-xl px-4 py-3 text-sm text-navy-700 outline-none transition-all focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 placeholder-navy-300 ${errors.league ? 'border-red-400' : 'border-navy-200'}`}
                     />
                   </div>

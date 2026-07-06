@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 
 const prizes = [
   'National Championship Trophy',
-  'Official CNCA Champion Recognition',
+  'Official PlayFooty Champion Recognition',
   'Major Prize Package',
   'National Exposure',
   'Championship Legacy',
@@ -47,7 +47,7 @@ export default function OneNationalChampion() {
               ONE<br />NATIONAL<br /><span style={{ color: '#ff2c91' }}>CHAMPION</span>
             </h2>
             <p className="leading-relaxed mb-10" style={{ fontSize: 'clamp(0.95rem, 1.6vw, 1.05rem)', color: 'rgba(255,255,255,0.42)', maxWidth: '40ch' }}>
-              Only one club will leave the Gold Coast as the inaugural CNCA National Champion.
+              Only one club will leave the Gold Coast as the inaugural PlayFooty National Champion.
             </p>
             <button
               onClick={() => go('#invitation')}

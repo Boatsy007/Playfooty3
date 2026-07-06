@@ -5,7 +5,7 @@ interface TickerProps {
 }
 
 const defaults = [
-  'COUNTRY NETBALL CHAMPIONSHIPS AUSTRALIA',
+  'Community Football CHAMPIONSHIPS AUSTRALIA',
   'GOLD COAST 2027',
   'A GRADE PREMIERS ONLY',
   'INVITATION ONLY',

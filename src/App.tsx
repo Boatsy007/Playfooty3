@@ -41,14 +41,14 @@ export default function App() {
       <main id="main-content" style={{ background: '#fff', color: TEXT }}>
         <LeagueRail leagues={leagueRail} loading={home.loading} />
 
-        <section className="front-page" aria-label="Country netball live homepage">
+        <section className="front-page" aria-label="Community Football live homepage">
           <div className="front-grid">
             <aside className="rankings-column" aria-label="National rankings">
               <NationalRankings entries={home.entries} loading={home.loading} weekLabel={home.weekLabel} generatedAt={home.generatedAt} />
             </aside>
 
-            <section className="editorial-column" aria-label="Featured country netball stories">
-              {feature ? <FeaturedStory article={feature} /> : <EmptyCard title="News loading" text="Latest country netball stories will appear here." />}
+            <section className="editorial-column" aria-label="Featured Community Football stories">
+              {feature ? <FeaturedStory article={feature} /> : <EmptyCard title="News loading" text="Latest Community Football stories will appear here." />}
               <SecondaryStories articles={secondary} />
             </section>
 

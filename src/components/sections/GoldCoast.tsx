@@ -74,7 +74,7 @@ export default function GoldCoast() {
             </h2>
             <div>
               <p style={{ fontSize: 'clamp(1rem, 1.6vw, 1.15rem)', color: 'rgba(17,17,17,0.55)', lineHeight: 1.65, fontWeight: 500 }}>
-                Australia's premier holiday destination is the host of the inaugural CNCA championship — and there's never been a better reason to visit.
+                Australia's premier holiday destination is the host of the inaugural PlayFooty championship — and there's never been a better reason to visit.
               </p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function GoldCoast() {
         />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-8 py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <p className="font-display text-white leading-none" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 2rem)' }}>
-            CNCA IS YOUR REASON TO MAKE THE TRIP.
+            PlayFooty IS YOUR REASON TO MAKE THE TRIP.
           </p>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)', maxWidth: '40ch', lineHeight: 1.7 }}>
             The Gold Coast is always a good idea. The national championship makes it unmissable.

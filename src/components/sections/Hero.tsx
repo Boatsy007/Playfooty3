@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
 const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]
-const headline = ["AUSTRALIA'S HOME OF", 'COUNTRY NETBALL']
+const headline = ["AUSTRALIA'S HOME OF", 'Community Football']
 
 export default function Hero() {
   const navigate = useNavigate()
@@ -13,7 +13,7 @@ export default function Hero() {
       {/* Full-bleed photo */}
       <img
         src="/hero-photo.webp"
-        alt="Got Netty — Australia's home of country netball"
+        alt="PlayFooty — Australia's home of Community Football"
         className="absolute inset-0 w-full h-full object-cover"
         style={{ objectPosition: '65% center' }}
       />
@@ -64,10 +64,10 @@ export default function Hero() {
           className="mb-10 space-y-2"
         >
           <p className="font-semibold text-white" style={{ fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)' }}>
-            National rankings, league ladders, club profiles, statistics and country netball news from across Australia.
+            National rankings, league ladders, club profiles, statistics and Community Football news from across Australia.
           </p>
           <p className="font-semibold" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.95rem)', color: 'rgba(255,255,255,0.38)' }}>
-            Who are the best country netball clubs in the nation? Settled every week.
+            Who are the best Community Football clubs in the nation? Settled every week.
           </p>
         </motion.div>
 

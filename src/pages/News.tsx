@@ -42,12 +42,12 @@ export default function News() {
   const categories = CATEGORY_NAV.filter(id => articlesInCategory(id, 1).length)
 
   useSeo({
-    title: 'Got Netty News — Country Netball News & Rankings',
-    description: 'The home of Australian country netball news: national rankings movers, transfers, player and coach spotlights, club and league news, opinion and history.',
+    title: 'PlayFooty News — Community Football News & Rankings',
+    description: 'The home of Australian Community Football news: national rankings movers, transfers, player and coach spotlights, club and league news, opinion and history.',
     path: '/news',
     jsonLd: {
-      '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Got Netty News',
-      description: 'Australian country netball news and features.', url: 'https://gotnetty.com.au/news',
+      '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'PlayFooty News',
+      description: 'Australian Community Football news and features.', url: 'https://playfooty.com.au/news',
     },
   })
 
@@ -87,7 +87,7 @@ function PageHeader({ total, updated, categories }: { total: number; updated: st
     <div className="header-copy">
       <span className="live-pill"><span /> Latest updates</span>
       <h1>News</h1>
-      <p>The latest country netball news, rankings, league updates and club stories from across Australia.</p>
+      <p>The latest Community Football news, rankings, league updates and club stories from across Australia.</p>
       <div className="header-stats"><b>{total} published articles</b><b>{updated ? `Last updated ${formatDate(updated)}` : 'Updated weekly'}</b></div>
     </div>
     <nav className="category-nav" aria-label="News categories">{categories.map(id => <a key={id} href={`#cat-${id}`}>{categoryOf(id).label}</a>)}</nav>

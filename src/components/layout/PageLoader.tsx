@@ -28,7 +28,7 @@ export default function PageLoader() {
 
           {/* Logo reveal */}
           <div className="relative flex flex-col items-center gap-4">
-            {/* Netball SVG icon */}
+            {/* Football SVG icon */}
             <motion.div
               initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -56,7 +56,7 @@ export default function PageLoader() {
               </motion.div>
             </motion.div>
 
-            {/* Got Netty wordmark */}
+            {/* PlayFooty wordmark */}
             <div className="overflow-hidden">
               <motion.div
                 initial={{ y: 60, opacity: 0 }}
@@ -65,7 +65,7 @@ export default function PageLoader() {
                 className="flex items-baseline gap-3"
               >
                 <span className="font-display text-6xl text-white tracking-wider">GOT</span>
-                <span className="font-display text-6xl tracking-wider" style={{ color: '#ff2c91' }}>NETTY</span>
+                <span className="font-display text-6xl tracking-wider" style={{ color: '#ff2c91' }}>PlayFooty</span>
               </motion.div>
             </div>
 
@@ -75,7 +75,7 @@ export default function PageLoader() {
               transition={{ duration: 0.5, delay: 0.7 }}
               className="text-xs font-bold tracking-[0.25em] uppercase text-white/50"
             >
-              Australia's Home of Country Netball
+              Australia's Home of Community Football
             </motion.p>
 
             {/* Progress bar */}

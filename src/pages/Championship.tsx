@@ -17,7 +17,7 @@ const MUTED = '#65758b'
 const LINE = '#dbe3ee'
 
 const FORMAT_CARDS = [
-  { icon: ListOrdered, title: 'National rankings pathway', body: 'The long-term concept is for rankings to help identify leading country netball clubs when a championship model is ready.' },
+  { icon: ListOrdered, title: 'National rankings pathway', body: 'The long-term concept is for rankings to help identify leading Community Football clubs when a championship model is ready.' },
   { icon: Trophy, title: 'Invited clubs', body: 'Future invitations would be based on transparent criteria. No invitation process is currently open.' },
   { icon: Sparkles, title: 'Wildcards', body: 'Wildcard ideas may help recognise clubs on the edge of the national picture, but no wildcard system is live.' },
   { icon: Users, title: 'Regional representation', body: 'The future event concept is built around giving country and regional competitions national visibility.' },
@@ -25,25 +25,25 @@ const FORMAT_CARDS = [
 ]
 
 const PATHWAYS = [
-  { title: 'National Rankings', body: 'See the current national ladder that Go Netty is focused on now.', to: '/rankings' },
+  { title: 'National Rankings', body: 'See the current national ladder that PlayFooty is focused on now.', to: '/rankings' },
   { title: 'League Rankings', body: 'Explore competition strength and league hubs around Australia.', to: '/leagues' },
   { title: 'Clubs', body: 'Browse club profiles, form and ranking movement.', to: '/directory' },
-  { title: 'News', body: 'Follow ranking updates, league stories and country netball coverage.', to: '/news' },
+  { title: 'News', body: 'Follow ranking updates, league stories and Community Football coverage.', to: '/news' },
 ]
 
 const FAQS = [
   { q: 'Is the championship live yet?', a: 'No. The Championship Hub is a future-facing public teaser. Registrations, fixtures, draws and tournament operations are not currently live.' },
-  { q: 'How will teams qualify?', a: 'Qualification rules have not been launched. Go Netty is rankings-first now, and any future pathway would be announced clearly before clubs are asked to act.' },
-  { q: 'Will rankings matter?', a: 'The intention is that national rankings help identify leading country netball clubs over time, but no live qualification logic is currently operating.' },
+  { q: 'How will teams qualify?', a: 'Qualification rules have not been launched. PlayFooty is rankings-first now, and any future pathway would be announced clearly before clubs are asked to act.' },
+  { q: 'Will rankings matter?', a: 'The intention is that national rankings help identify leading Community Football clubs over time, but no live qualification logic is currently operating.' },
   { q: 'Can clubs register now?', a: 'No. Club registration is not open. There are no payments, nomination forms or tournament management tools connected to this hub.' },
 ]
 
 export default function Championship() {
   useSeo({
-    title: 'Country Netball Championship — Coming Soon | Go Netty',
-    description: 'A future-facing public hub for the Country Netball Championship concept. Go Netty is rankings-first now; championship registrations, fixtures and qualification are not live.',
+    title: 'Community Football Championship — Coming Soon | PlayFooty',
+    description: 'A future-facing public hub for the Community Football Championship concept. PlayFooty is rankings-first now; championship registrations, fixtures and qualification are not live.',
     path: '/championship',
-    jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Country Netball Championship — Coming Soon', description: 'Future-facing championship teaser for Australian country netball.' },
+    jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Community Football Championship — Coming Soon', description: 'Future-facing championship teaser for Australian Community Football.' },
   })
 
   return (
@@ -53,8 +53,8 @@ export default function Championship() {
         <section className="champ-hero">
           <div className="champ-hero-copy">
             <span className="champ-live"><CalendarDays size={15} /> Coming soon</span>
-            <h1>Country Netball Championship</h1>
-            <p className="hero-lead">A future national country netball championship concept, built around the rankings-first platform Go Netty is creating today.</p>
+            <h1>Community Football Championship</h1>
+            <p className="hero-lead">A future national Community Football championship concept, built around the rankings-first platform PlayFooty is creating today.</p>
             <div className="hero-actions">
               <button className="btn-primary" type="button" aria-disabled="true">Join updates · coming soon</button>
               <Link className="btn-secondary" to="/rankings">View rankings <ArrowRight size={16} /></Link>
@@ -72,7 +72,7 @@ export default function Championship() {
           <div className="why-grid">
             <h2>Rankings first. Championship later.</h2>
             <div>
-              <p>Go Netty is focused on building the most credible national picture of country netball through rankings, league strength, club profiles and weekly movement.</p>
+              <p>PlayFooty is focused on building the most credible national picture of Community Football through rankings, league strength, club profiles and weekly movement.</p>
               <p>The Championship is a future-facing idea: a way for that rankings ecosystem to eventually support a national event without pretending the event infrastructure is live today.</p>
             </div>
           </div>

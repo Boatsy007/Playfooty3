@@ -22,7 +22,7 @@ export default function Statement() {
               <span style={{ color: '#ff2c91' }}>CHAMPIONSHIP.</span>
             </p>
             <p className="font-display leading-[0.9] mt-3" style={{ fontSize: 'clamp(2.8rem, 7vw, 7rem)', color: 'rgba(255,255,255,0.22)' }}>
-              WHERE COUNTRY<br />NETBALL COMES<br />TOGETHER.
+              WHERE COUNTRY<br />FOOTBALL COMES<br />TOGETHER.
             </p>
           </motion.div>
 
@@ -35,7 +35,7 @@ export default function Statement() {
             className="leading-relaxed lg:pb-2"
             style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.4)' }}
           >
-            For four days, Australia's leading country netball clubs come together on the Gold Coast to compete, celebrate and connect. Players, coaches, officials, families and supporters all become part of the experience.
+            For four days, Australia's leading Community Football clubs come together on the Gold Coast to compete, celebrate and connect. Players, coaches, officials, families and supporters all become part of the experience.
           </motion.p>
 
         </div>

@@ -72,12 +72,12 @@ export default function GlobalSearch({ controller }: { controller: SearchControl
 
   return (
     <div className="gn-search-backdrop" onClick={close}>
-      <div className="gn-search-shell" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Search Go Netty">
+      <div className="gn-search-shell" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Search PlayFooty">
         <header className="gn-search-head">
           <div>
             <span className="gn-search-live"><span /> Search</span>
-            <h2>Search Go Netty</h2>
-            <p>Find clubs, leagues, teams and news from across Australian country netball.</p>
+            <h2>Search PlayFooty</h2>
+            <p>Find clubs, leagues, teams and news from across Australian Community Football.</p>
           </div>
           <button onClick={close} className="gn-search-close" aria-label="Close search"><X size={19} /></button>
         </header>

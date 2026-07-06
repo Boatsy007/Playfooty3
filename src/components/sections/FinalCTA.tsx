@@ -26,7 +26,7 @@ export default function FinalCTA() {
       <div className="absolute bottom-[-30%] left-[-10%] w-[50vw] h-[50vw] rounded-full border border-white/5 pointer-events-none" />
       <div className="absolute top-1/4 right-1/4 w-[25vw] h-[25vw] rounded-full border border-white/5 pointer-events-none" />
 
-      {/* Netball SVG decoration */}
+      {/* Football SVG decoration */}
       <svg
         className="absolute inset-0 w-full h-full opacity-[0.04] pointer-events-none"
         viewBox="0 0 800 800"
@@ -82,7 +82,7 @@ export default function FinalCTA() {
             transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             className="text-white/80 text-base md:text-xl font-medium max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            A Grade premiership clubs are invited to compete for the CNCA title on the Gold Coast — October 2027.
+            A Grade premiership clubs are invited to compete for the PlayFooty title on the Gold Coast — October 2027.
           </motion.p>
 
           {/* CTA */}

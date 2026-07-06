@@ -21,7 +21,7 @@ export default function TopTen({ entries, weekLabel, generatedAt, loading }: {
       <SectionHead
         kicker="The National Leaderboard"
         title={<>AUSTRALIA&rsquo;S <span style={{ color: PINK }}>TOP 10</span></>}
-        sub="Every A Grade country netball club in the nation on one ladder, recalculated from live results each week."
+        sub="Every A Grade Community Football club in the nation on one ladder, recalculated from live results each week."
         to="/rankings" toLabel="Full rankings"
       />
 

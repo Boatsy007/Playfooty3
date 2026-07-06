@@ -1,5 +1,5 @@
 /**
- * About Got Netty — mission and how the rankings work. Editorial, static.
+ * About PlayFooty — mission and how the rankings work. Editorial, static.
  */
 import Nav from '../components/layout/Nav'
 import Footer from '../components/layout/Footer'
@@ -12,8 +12,8 @@ const MUTE = 'rgba(17,17,17,0.55)'
 
 export default function About() {
   useSeo({
-    title: 'About Got Netty — Australia\'s Home of Country Netball',
-    description: 'Got Netty is Australia\'s home of country netball: the definitive national rankings, league ladders, club profiles and news for country and regional netball.',
+    title: 'About PlayFooty — Australia\'s Home of Community Football',
+    description: 'PlayFooty is Australia\'s home of Community Football: the definitive national rankings, league ladders, club profiles and news for country and regional football.',
     path: '/about',
   })
 
@@ -26,17 +26,17 @@ export default function About() {
             About
           </p>
           <h1 className="font-display leading-none" style={{ fontSize: 'clamp(2.6rem, 6vw, 5rem)', color: TEXT, marginBottom: 24 }}>
-            AUSTRALIA'S HOME OF<br /><span style={{ color: PINK }}>COUNTRY NETBALL</span>
+            AUSTRALIA'S HOME OF<br /><span style={{ color: PINK }}>Community Football</span>
           </h1>
 
           <div style={{ color: MUTE, fontSize: 16.5, lineHeight: 1.75, display: 'grid', gap: 18 }}>
             <p>
-              Got Netty exists to answer one question better than anyone else: <strong style={{ color: TEXT }}>who are the
-              best country netball clubs and leagues in Australia?</strong>
+              PlayFooty exists to answer one question better than anyone else: <strong style={{ color: TEXT }}>who are the
+              best Community Football clubs and leagues in Australia?</strong>
             </p>
             <p>
               Every week of the season we collect A Grade results and ladders from country and regional leagues across
-              the nation — football netball leagues, regional associations, every state and territory — and rank every
+              the nation — football leagues, regional associations, every state and territory — and rank every
               club on one national ladder.
             </p>
             <p>
@@ -46,7 +46,7 @@ export default function About() {
               comes with its reasoning, so you can always see <em>why</em> a club sits where it does.
             </p>
             <p>
-              Rankings. Ladders. Clubs. News. Updated every week — so every Monday morning, country netball knows where
+              Rankings. Ladders. Clubs. News. Updated every week — so every Monday morning, Community Football knows where
               it stands.
             </p>
           </div>

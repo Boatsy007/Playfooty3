@@ -76,7 +76,7 @@ export default function TravelExperience() {
               Make The Trip Easy For Your Club
             </h2>
             <p className="text-lg text-navy-500 leading-relaxed mb-6">
-              CNCA will work with accommodation partners to provide group options for travelling clubs, teams, families and supporters. Our goal is to make the end-of-season trip to the Gold Coast as simple as possible.
+              PlayFooty will work with accommodation partners to provide group options for travelling clubs, teams, families and supporters. Our goal is to make the end-of-season trip to the Gold Coast as simple as possible.
             </p>
             <p className="text-base text-navy-400 leading-relaxed mb-8">
               Whether you're coordinating accommodation for ten people or a hundred, register your interest and we'll connect you with the right options.

@@ -5,7 +5,7 @@
  */
 import { useEffect } from 'react'
 
-const SITE = 'https://gotnetty.com.au'
+const SITE = 'https://playfooty.com.au'
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
@@ -34,7 +34,7 @@ export interface Seo {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[]
 }
 
-const JSONLD_ID = 'cnca-jsonld'
+const JSONLD_ID = 'playfooty-jsonld'
 
 export function useSeo({ title, description, path, jsonLd }: Seo) {
   useEffect(() => {

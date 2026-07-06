@@ -21,7 +21,7 @@ const features = [
     icon: PartyPopper,
     emoji: '🎉',
     title: 'Celebrate Your Season',
-    desc: "Make CNCA your club's annual end-of-season trip.",
+    desc: "Make PlayFooty your club's annual end-of-season trip.",
     accent: '#ff2c91',
   },
   {
@@ -34,7 +34,7 @@ const features = [
   {
     icon: Users,
     emoji: '💗',
-    title: 'Travel With Your Netball Community',
+    title: 'Travel With Your Football Community',
     desc: 'Bring players, families, supporters and junior teams.',
     accent: '#f4c14d',
   },
@@ -90,13 +90,13 @@ export default function NotCompeting() {
             </h2>
             <div>
               <p className="font-condensed font-bold mb-3" style={{ fontSize: 'clamp(1rem, 1.8vw, 1.3rem)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.3 }}>
-                CNCA isn't just for the clubs chasing the national title.
+                PlayFooty isn't just for the clubs chasing the national title.
               </p>
               <p className="leading-relaxed" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75 }}>
-                While eligible A Grade premier clubs compete for the Country Netball Championships Australia title, clubs from across Australia are encouraged to attend and be part of the championship weekend.
+                While eligible A Grade premier clubs compete for the Community Football Championships Australia title, clubs from across Australia are encouraged to attend and be part of the championship weekend.
               </p>
               <p className="leading-relaxed mt-3" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.75 }}>
-                Whether your season ends with a premiership, a grand final loss, a finals campaign or simply a year worth celebrating, CNCA provides an opportunity for players, coaches, families and supporters to enjoy an unforgettable end-of-season trip on the Gold Coast.
+                Whether your season ends with a premiership, a grand final loss, a finals campaign or simply a year worth celebrating, PlayFooty provides an opportunity for players, coaches, families and supporters to enjoy an unforgettable end-of-season trip on the Gold Coast.
               </p>
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function NotCompeting() {
                 className="font-display text-white leading-none mb-2"
                 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)' }}
               >
-                MAKE CNCA YOUR <span style={{ color: '#ff2c91' }}>2027 CLUB TRIP</span>
+                MAKE PlayFooty YOUR <span style={{ color: '#ff2c91' }}>2027 CLUB TRIP</span>
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
                 Not every club will compete for the national title.<br className="hidden sm:block" />

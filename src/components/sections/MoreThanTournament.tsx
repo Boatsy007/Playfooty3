@@ -6,12 +6,12 @@ const features = [
   {
     icon: Trophy,
     title: 'A Grade Championship',
-    desc: 'A Grade premiership clubs compete for the CNCA title — the national standard for country netball excellence.',
+    desc: 'A Grade premiership clubs compete for the PlayFooty title — the national standard for Community Football excellence.',
   },
   {
     icon: PartyPopper,
     title: 'Welcome Function',
-    desc: 'All clubs, coaches, families and supporters welcomed together at the official CNCA welcome event.',
+    desc: 'All clubs, coaches, families and supporters welcomed together at the official PlayFooty welcome event.',
   },
   {
     icon: Music,
@@ -21,7 +21,7 @@ const features = [
   {
     icon: Award,
     title: 'Awards Presentation',
-    desc: 'A formal presentation ceremony honouring the CNCA champion club and standout players of the championship.',
+    desc: 'A formal presentation ceremony honouring the PlayFooty champion club and standout players of the championship.',
   },
   {
     icon: Camera,
@@ -41,7 +41,7 @@ const features = [
   {
     icon: Users,
     title: 'Supporter Experience',
-    desc: 'Designed for the whole club to attend. Families, partners and supporters are a central part of the CNCA weekend.',
+    desc: 'Designed for the whole club to attend. Families, partners and supporters are a central part of the PlayFooty weekend.',
   },
   {
     icon: Palmtree,
@@ -75,7 +75,7 @@ export default function MoreThanTournament() {
             More Than A Tournament
           </h2>
           <p className="text-lg text-navy-400 max-w-xl mx-auto leading-relaxed">
-            CNCA is built around the A Grade championship, but the weekend is designed for every person who makes your club what it is.
+            PlayFooty is built around the A Grade championship, but the weekend is designed for every person who makes your club what it is.
           </p>
         </motion.div>
 

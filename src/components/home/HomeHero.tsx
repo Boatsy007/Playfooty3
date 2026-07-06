@@ -1,5 +1,5 @@
 /**
- * Homepage masthead. No stock photography: a drawn netball-court geometry over
+ * Homepage masthead. No stock photography: a drawn football-court geometry over
  * layered stadium-light gradients, with a quiet season-live indicator. The one
  * dark block on the page; everything below is bright editorial.
  */
@@ -21,7 +21,7 @@ export default function HomeHero({ weekLabel }: { weekLabel: string | null }) {
   })
 
   return (
-    <section aria-label="Got Netty" style={{ position: 'relative', overflow: 'hidden', background: INK, minHeight: 'min(88svh, 760px)', display: 'flex' }}>
+    <section aria-label="PlayFooty" style={{ position: 'relative', overflow: 'hidden', background: INK, minHeight: 'min(88svh, 760px)', display: 'flex' }}>
 
       {/* Stadium lighting: two soft sources + floor wash */}
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: `
@@ -65,7 +65,7 @@ export default function HomeHero({ weekLabel }: { weekLabel: string | null }) {
             Australia&rsquo;s Home of
           </motion.span>
           <span style={{ display: 'block' }}>
-            {['COUNTRY', 'NETBALL'].map((line, i) => (
+            {['COUNTRY', 'FOOTBALL'].map((line, i) => (
               <span key={line} style={{ display: 'block', overflow: 'hidden' }}>
                 <motion.span
                   initial={{ y: reduced ? 0 : '108%' }}

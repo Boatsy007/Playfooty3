@@ -105,7 +105,7 @@ export default function PowerRankings() {
           <div>
             <span className="stats-live"><Clock size={14} /> Statistics hub</span>
             <h1>Statistics</h1>
-            <p>Explore national country netball rankings, league strength, club movement and weekly performance trends.</p>
+            <p>Explore national Community Football rankings, league strength, club movement and weekly performance trends.</p>
           </div>
           <div className="stats-header-grid">
             <HeaderStat label="Season / week" value={data?.meta.weekLabel ?? 'Current rankings'} sub={data?.meta.season ? `Season ${data.meta.season}` : undefined} />
@@ -147,7 +147,7 @@ export default function PowerRankings() {
                 {data.articles.slice(0, 4).map(article => <MiniArticle key={article.slug} article={article} />)}
                 {data.articles.length === 0 && <p className="stats-muted">Latest articles will appear here when published.</p>}
               </SidebarPanel>
-              <div className="stats-sponsor"><span>Partner slot</span><strong>Put your brand beside national netball data.</strong></div>
+              <div className="stats-sponsor"><span>Partner slot</span><strong>Put your brand beside national football data.</strong></div>
             </aside>
           </section>
         )}
@@ -189,7 +189,7 @@ function LeagueStatSection({ title, subtitle, leagues, mode = 'strength' }: { ti
 }
 
 function SectionTitle({ title, subtitle }: { title: string; subtitle: string }) {
-  return <header className="stat-section-head"><div><span>Go Netty data</span><h2>{title}</h2></div><p>{subtitle}</p></header>
+  return <header className="stat-section-head"><div><span>PlayFooty data</span><h2>{title}</h2></div><p>{subtitle}</p></header>
 }
 
 function ClubStatCard({ club, metric }: { club: ApiEntry; metric: 'rank' | 'movement' | 'rating' }) {

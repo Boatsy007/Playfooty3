@@ -47,8 +47,8 @@ export default function Leagues() {
   void newsTick
 
   useSeo({
-    title: 'Country Netball Leagues — National Strength Ratings | Got Netty',
-    description: 'Every country netball league tracked by Got Netty, with league strength ratings and nationally-ranked teams. Browse leagues by state.',
+    title: 'Community Football Leagues — National Strength Ratings | PlayFooty',
+    description: 'Every Community Football league tracked by PlayFooty, with league strength ratings and nationally-ranked teams. Browse leagues by state.',
     path: '/leagues',
   })
 
@@ -75,7 +75,7 @@ export default function Leagues() {
           <>
             <FeaturedStrip leagues={ranked} />
             <div className="leagues-layout">
-              <section className="league-directory" aria-label="Country netball league directory">
+              <section className="league-directory" aria-label="Community Football league directory">
                 <div className="directory-toolbar"><b>{filtered.length}</b><span>leagues shown</span><Link to="/rankings">National rankings <ArrowRight size={14} /></Link></div>
                 {filtered.length === 0 ? <Centered>No leagues found.</Centered> : <div className="league-grid">{filtered.map(l => <LeagueCard key={l.id} league={l} />)}</div>}
               </section>
@@ -115,7 +115,7 @@ function PageHeader({ total, rankedClubs, updated, week, q, setQ, states, state,
     <div className="header-copy">
       <span className="live-pill"><span /> League directory live</span>
       <h1>Leagues</h1>
-      <p>Browse Australia&rsquo;s country netball leagues, ladders and strength ratings.</p>
+      <p>Browse Australia&rsquo;s Community Football leagues, ladders and strength ratings.</p>
       <div className="header-stats"><b>{week ?? 'Season live'}</b><b>{total} tracked leagues</b>{rankedClubs > 0 && <b>{rankedClubs} ranked clubs</b>}<b>{updated ? `Updated ${shortDate(updated)}` : 'Updated weekly'}</b></div>
     </div>
     <div className="filters-panel" aria-label="League filters">

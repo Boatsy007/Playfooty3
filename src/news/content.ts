@@ -1,5 +1,5 @@
 /**
- * Got Netty News — content model, sample editorial content, and query helpers.
+ * PlayFooty News — content model, sample editorial content, and query helpers.
  * ─────────────────────────────────────────────────────────────────────────────
  * Completely isolated from the rest of the app. Ships with sample articles for
  * launch; the shape is future-ready (video/podcast/gallery/author/coach fields,
@@ -25,7 +25,7 @@ export const CATEGORIES: Category[] = [
   { id: 'coach-spotlight', label: 'Coach Spotlight', accent: '#f4c14d', blurb: 'Minds behind the teams.' },
   { id: 'history',         label: 'History',         accent: '#b8860b', blurb: 'The stories that built the game.' },
   { id: 'opinion',         label: 'Opinion',         accent: '#111111', blurb: 'Analysis and argument.' },
-  { id: 'community',       label: 'Community',        accent: '#4dd9f4', blurb: 'The heart of country netball.' },
+  { id: 'community',       label: 'Community',        accent: '#4dd9f4', blurb: 'The heart of Community Football.' },
   { id: 'grassroots',      label: 'Grassroots',       accent: '#22c55e', blurb: 'Where it all begins.' },
 ]
 
@@ -68,11 +68,11 @@ export const ARTICLES: Article[] = [
     subtitle: 'A statement weekend lifts the Bellarine powerhouse to the top of the country for the first time.',
     category: 'rankings', author: { name: 'Marla Prentice', role: 'National Rankings Editor' },
     date: '2026-07-02', readingTime: 5, featured: true, trending: true, mostRead: true, breaking: true,
-    heroSeed: 'geelong-amateur', heroCredit: 'Got Netty / Match Day',
+    heroSeed: 'geelong-amateur', heroCredit: 'PlayFooty / Match Day',
     summary: 'Geelong Amateur have claimed top spot on the national leaderboard after a dominant Bellarine FNL performance pushed their power rating clear of the field.',
-    tags: { state: 'VIC', league: 'Bellarine FNL - A Grade Netball', club: 'Geelong Amateur' },
+    tags: { state: 'VIC', league: 'Bellarine FNL - A Grade Football', club: 'Geelong Amateur' },
     body: [
-      { type: 'p', text: 'For the first time in the national era, Geelong Amateur sit alone at the summit of country netball. A commanding weekend on the Bellarine peninsula has done what months of consistency had been building toward.' },
+      { type: 'p', text: 'For the first time in the national era, Geelong Amateur sit alone at the summit of Community Football. A commanding weekend on the Bellarine peninsula has done what months of consistency had been building toward.' },
       { type: 'quote', text: 'We don’t talk about rankings inside the group — but the standard we hold ourselves to is exactly what put us here.', cite: 'Geelong Amateur A Grade coach' },
       { type: 'p', text: 'The result reshapes the top of the leaderboard heading into the back half of the season, with the chasing pack closing in.' },
       { type: 'h', text: 'What it means for the run home' },
@@ -130,7 +130,7 @@ export const ARTICLES: Article[] = [
     category: 'transfers', author: { name: 'Priya Nand', role: 'Transfers Desk' },
     date: '2026-06-28', readingTime: 3, trending: true,
     heroSeed: 'drouin-signing', summary: 'Drouin have secured one of the most sought-after midcourters in the region ahead of a Championship push.',
-    tags: { state: 'VIC', league: 'Gippsland League - A Grade Netball', club: 'Drouin' },
+    tags: { state: 'VIC', league: 'Gippsland League - A Grade Football', club: 'Drouin' },
     body: [
       { type: 'p', text: 'Drouin have moved early and decisively, adding a marquee midcourter who instantly lifts their ceiling.' },
       { type: 'quote', text: 'The pull of a Championship run is real. This group is going somewhere.', cite: 'The incoming midcourter' },
@@ -142,8 +142,8 @@ export const ARTICLES: Article[] = [
     subtitle: 'Inside the season that has the whole country watching one goal circle.',
     category: 'player-spotlight', author: { name: 'Erin Colley', role: 'Features Writer' },
     date: '2026-06-27', readingTime: 7, mostRead: true,
-    heroSeed: 'spotlight-shooter', summary: 'Accuracy, volume and nerve — a deep dive on the shooter putting up numbers country netball has rarely seen.',
-    tags: { state: 'VIC', league: 'Geelong & District FNL - A Grade Netball' },
+    heroSeed: 'spotlight-shooter', summary: 'Accuracy, volume and nerve — a deep dive on the shooter putting up numbers Community Football has rarely seen.',
+    tags: { state: 'VIC', league: 'Geelong & District FNL - A Grade Football' },
     body: [
       { type: 'p', text: 'Some seasons demand a closer look. This is one of them.' },
       { type: 'quote', text: 'I just try to make the next one. That’s the whole game, really.', cite: 'The featured shooter' },
@@ -158,7 +158,7 @@ export const ARTICLES: Article[] = [
     category: 'coach-spotlight', author: { name: 'Erin Colley', role: 'Features Writer' },
     date: '2026-06-26', readingTime: 6,
     heroSeed: 'coach', summary: 'A tactical breakdown of the pressure system reshaping one of the season’s best stories.',
-    tags: { state: 'VIC', league: 'Geelong FNL - A Grade Netball' },
+    tags: { state: 'VIC', league: 'Geelong FNL - A Grade Football' },
     body: [
       { type: 'p', text: 'Great defence is a decision made twenty times a quarter. This coach has their group making it every time.' },
       { type: 'p', text: 'We chart the triggers, the rotations and the trust that makes it hold under fatigue.' },
@@ -171,7 +171,7 @@ export const ARTICLES: Article[] = [
     category: 'league-news', author: { name: 'Sam Reidy', role: 'League Correspondent' },
     date: '2026-06-25', readingTime: 4,
     heroSeed: 'gippsland-race', summary: 'The Gippsland League A Grade race is the tightest it has been in years, with national implications.',
-    tags: { state: 'VIC', league: 'Gippsland League - A Grade Netball', club: 'Moe' },
+    tags: { state: 'VIC', league: 'Gippsland League - A Grade Football', club: 'Moe' },
     body: [
       { type: 'p', text: 'The ladder tells one story; the percentage column tells another. Both point to a grandstand finish.' },
     ],
@@ -179,10 +179,10 @@ export const ARTICLES: Article[] = [
   A({
     slug: 'club-news-community-day',
     title: 'Club News: the community day that packed the courts',
-    subtitle: 'A regional club shows why country netball is more than results.',
+    subtitle: 'A regional club shows why Community Football is more than results.',
     category: 'community', author: { name: 'Jo Fairweather', role: 'Community Editor' },
     date: '2026-06-24', readingTime: 3,
-    heroSeed: 'community-day', summary: 'Junior clinics, a packed canteen and a senior side to be proud of — a snapshot of country netball at its best.',
+    heroSeed: 'community-day', summary: 'Junior clinics, a packed canteen and a senior side to be proud of — a snapshot of Community Football at its best.',
     tags: { state: 'VIC', club: 'Bannockburn' },
     body: [
       { type: 'p', text: 'The scoreboard mattered, but the queue at the canteen mattered more. This is the fabric of the country game.' },
@@ -194,7 +194,7 @@ export const ARTICLES: Article[] = [
     subtitle: 'Before the national leaderboard, there were the dynasties that built the standard.',
     category: 'history', author: { name: 'Ted Marlowe', role: 'Historian' },
     date: '2026-06-22', readingTime: 8,
-    heroSeed: 'history', summary: 'A look back at the powerhouse clubs and defining rivalries that set the benchmark country netball now measures itself against.',
+    heroSeed: 'history', summary: 'A look back at the powerhouse clubs and defining rivalries that set the benchmark Community Football now measures itself against.',
     tags: { state: 'National' },
     body: [
       { type: 'p', text: 'Every ranking has a history. This is where the modern standard was forged.' },
@@ -207,7 +207,7 @@ export const ARTICLES: Article[] = [
     subtitle: 'Why margin, not just the win, should shape how we read the ladder.',
     category: 'opinion', author: { name: 'Marla Prentice', role: 'National Rankings Editor' },
     date: '2026-06-20', readingTime: 5,
-    heroSeed: 'opinion', summary: 'A case for reading country netball through the lens of margin — and what it reveals about the true contenders.',
+    heroSeed: 'opinion', summary: 'A case for reading Community Football through the lens of margin — and what it reveals about the true contenders.',
     tags: { state: 'National' },
     body: [
       { type: 'p', text: 'Wins tell you who survived. Percentage tells you who dominated. For a national ranking, the difference matters.' },
@@ -219,7 +219,7 @@ export const ARTICLES: Article[] = [
     subtitle: 'Record registrations are changing what regional clubs can become.',
     category: 'grassroots', author: { name: 'Jo Fairweather', role: 'Community Editor' },
     date: '2026-06-18', readingTime: 4,
-    heroSeed: 'grassroots', summary: 'From NetSetGo to A Grade, a wave of junior participation is rewriting the future of country netball.',
+    heroSeed: 'grassroots', summary: 'From NetSetGo to A Grade, a wave of junior participation is rewriting the future of Community Football.',
     tags: { state: 'National' },
     body: [
       { type: 'p', text: 'The pathway starts on a Friday night on a cold court. Right now, those courts have never been busier.' },
@@ -249,9 +249,9 @@ function toArticle(a: ApiArticle): Article {
   const cat = (CATEGORIES.some(c => c.id === a.category) ? a.category : 'rankings') as CategoryId
   return {
     slug: a.slug, title: a.title, subtitle: a.subtitle ?? '', category: cat,
-    author: { name: a.author || 'Got Netty', role: 'Got Netty' }, date: a.date,
+    author: { name: a.author || 'PlayFooty', role: 'PlayFooty' }, date: a.date,
     readingTime: Math.max(1, Math.round(words / 200)), summary: a.summary,
-    heroSeed: a.heroSeed || a.slug, heroCredit: 'Got Netty',
+    heroSeed: a.heroSeed || a.slug, heroCredit: 'PlayFooty',
     body: a.body.map(b => ({ type: (b.type === 'h' || b.type === 'quote' ? b.type : 'p') as 'p' | 'h' | 'quote', text: b.text })),
     tags: { state: a.tags?.state, league: a.tags?.league, leagueId: a.tags?.leagueId, club: a.tags?.club, clubId: a.tags?.clubId },
     featured: true, trending: true, mostRead: true, breaking: false,
@@ -269,9 +269,9 @@ export function loadPublished(): Promise<void> {
 
 /**
  * PlayFooty public feed: real published (football-only, API-filtered) articles
- * only. The legacy netball SAMPLES are NOT surfaced publicly — when no football
+ * only. The legacy football SAMPLES are NOT surfaced publicly — when no football
  * articles exist yet the feeds are empty (football empty states), never seeded
- * with netball/Go Netty/CNCA fallback content.
+ * with football/PlayFooty/PlayFooty fallback content.
  */
 function LIVE_ALL(): Article[] {
   return [...published]
