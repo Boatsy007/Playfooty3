@@ -98,7 +98,7 @@ export default function Nav() {
             className="shrink-0 flex items-center"
             style={{ height: NAV_H - 8 }}
           >
-            <img src="/logo.webp?v=playfooty-header" alt="PlayFooty" style={{ height: 62, width: 'auto', maxWidth: 300, display: 'block', objectFit: 'contain' }} />
+            <img src="/logo.webp" alt="PlayFooty" style={{ height: 62, width: 'auto', maxWidth: 300, display: 'block', objectFit: 'contain' }} />
           </button>
 
           {/* Desktop links */}
