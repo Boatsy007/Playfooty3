@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 
-export const PLAYFOOTY_LOGO_SRC = '/logo.webp'
+// Cache-bust the public logo URL because /logo.webp replaced an older Go Netty image in production.
+// The file still resolves to public/logo.webp; the query only forces browsers/CDNs to fetch the current asset.
+export const PLAYFOOTY_LOGO_SRC = '/logo.webp?v=playfooty-football-logo-c176cbb'
 
 type PlayFootyLogoProps = {
   height?: number
