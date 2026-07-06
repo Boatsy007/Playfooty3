@@ -18,6 +18,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
   try {
     // Latest season present in the season table
     const latest = await prisma.clubLeagueSeason.findFirst({
+      where: { league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, isActive: true },
       orderBy: { season: 'desc' },
       select:  { season: true },
     })
@@ -25,13 +26,14 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
 
     const season = latest.season
 
-    // Only leagues with a live PlayHQ source — excludes manually-seeded leagues
-    // (e.g. the retired NGFNL pilot) so the directory matches the rankings.
-    const playhqSources = await prisma.leagueSource.findMany({
-      where:  { sourceType: 'PLAYHQ', season, isActive: true },
-      select: { leagueId: true },
+    // Only football leagues are public in the PlayFooty app. Leagues may be
+    // manually managed while PlayHQ access is pending, so do not require an
+    // active legacy PlayHQ LeagueSource row.
+    const footballLeagues = await prisma.league.findMany({
+      where:  { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+      select: { id: true },
     })
-    const leagueIds = [...new Set(playhqSources.map(s => s.leagueId))]
+    const leagueIds = [...new Set(footballLeagues.map(s => s.id))]
     if (leagueIds.length === 0) { res.json({ season, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
     // All club-season rows for this season, with club (+state) and league
@@ -48,7 +50,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
     const rankByClub = new Map<string, { rank: number; powerRating: number }>()
     if (run) {
       const entries = await prisma.rankingEntry.findMany({
-        where:  { runId: run.id },
+        where:  { runId: run.id, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
         select: { clubId: true, rank: true, powerRating: true },
       })
       for (const e of entries) rankByClub.set(e.clubId, { rank: e.rank, powerRating: e.powerRating })

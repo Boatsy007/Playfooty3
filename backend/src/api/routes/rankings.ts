@@ -27,6 +27,7 @@ async function getEntries(runId: string, limit?: number, state?: string) {
   return prisma.rankingEntry.findMany({
     where: {
       runId,
+      league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       ...(state ? { state } : {}),
     },
     orderBy: { rank: 'asc' },
@@ -179,6 +180,8 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
       where: { runId_clubId: { runId: run.id, clubId: String(req.params.clubId) } },
     })
     if (!entry) { res.status(404).json({ error: 'Club not found in the current rankings' }); return }
+    const publicLeague = await prisma.league.findFirst({ where: { id: entry.leagueId, sport: 'FOOTBALL', archivedAt: null, isActive: true }, select: { id: true } })
+    if (!publicLeague) { res.status(404).json({ error: 'Club not found in the current rankings' }); return }
 
     let componentScores: Record<string, number> = {}
     let recentForm: string[] = []

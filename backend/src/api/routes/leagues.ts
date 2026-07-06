@@ -18,7 +18,9 @@ router.get('/', publicRateLimit, cachePublic(3600), async (req, res) => {
 
     const leagues = await prisma.league.findMany({
       where: {
+        sport: 'FOOTBALL',
         isActive: true,
+        archivedAt: null,
         ...(state ? { state: { code: state } } : {}),
       },
       include: {
@@ -59,19 +61,19 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
       },
     })
 
-    if (!league) return res.status(404).json({ error: 'League not found' })
+    if (!league || league.sport !== 'FOOTBALL' || league.archivedAt) return res.status(404).json({ error: 'League not found' })
 
     // Latest completed run → ranked teams from this league (for the league page)
     const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
     const rankedTeams = run
       ? await prisma.rankingEntry.findMany({
-          where:   { runId: run.id, leagueName: league.name },
+          where:   { runId: run.id, leagueId: league.id, league: { sport: 'FOOTBALL', archivedAt: null } },
           orderBy: { rank: 'asc' },
           select:  { clubId: true, clubName: true, rank: true, previousRank: true, rankMovement: true, powerRating: true, state: true, recentForm: true },
         })
       : []
     // How many clubs were ranked nationally in this run (for "top X of N" context).
-    const totalRanked = run ? await prisma.rankingEntry.count({ where: { runId: run.id } }) : 0
+    const totalRanked = run ? await prisma.rankingEntry.count({ where: { runId: run.id, league: { sport: 'FOOTBALL', archivedAt: null } } }) : 0
 
     // League ladder from season stats (ladder position order)
     const season = run?.season
@@ -136,7 +138,7 @@ router.get('/search/global', publicRateLimit, cachePublic(120), async (req, res)
     const run = await prisma.rankingRun.findFirst({ where: { status: 'COMPLETED' }, orderBy: { completedAt: 'desc' } })
     const teams = run
       ? await prisma.rankingEntry.findMany({
-          where:   { runId: run.id, clubName: { contains: q, mode: 'insensitive' as const } },
+          where:   { runId: run.id, clubName: { contains: q, mode: 'insensitive' as const }, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
           orderBy: { rank: 'asc' },
           take:    12,
           select:  { clubId: true, clubName: true, leagueName: true, state: true, rank: true },
@@ -144,7 +146,7 @@ router.get('/search/global', publicRateLimit, cachePublic(120), async (req, res)
       : []
 
     const leagues = await prisma.league.findMany({
-      where:   { isActive: true, name: { contains: q, mode: 'insensitive' as const } },
+      where:   { sport: 'FOOTBALL', isActive: true, archivedAt: null, name: { contains: q, mode: 'insensitive' as const } },
       orderBy: { strengthScore: 'desc' },
       take:    12,
       select:  { id: true, name: true, strengthScore: true, state: { select: { code: true } } },

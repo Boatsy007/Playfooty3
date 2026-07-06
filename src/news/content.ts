@@ -267,11 +267,16 @@ export function loadPublished(): Promise<void> {
   return loadPromise
 }
 
-/** Combined feed: published (real) first, then sample content, deduped by slug. */
+/**
+ * PlayFooty public feed: real published (football-only, API-filtered) articles
+ * only. The legacy netball SAMPLES are NOT surfaced publicly — when no football
+ * articles exist yet the feeds are empty (football empty states), never seeded
+ * with netball/Go Netty/CNCA fallback content.
+ */
 function LIVE_ALL(): Article[] {
-  const seen = new Set(published.map(a => a.slug))
-  return [...published, ...SAMPLES.filter(a => !seen.has(a.slug))]
+  return [...published]
 }
+void SAMPLES // retained for reference/admin tooling; never shown on public feeds
 
 export const allArticles = () => [...LIVE_ALL()].sort(byDateDesc)
 export const getArticle = (slug: string) => LIVE_ALL().find(a => a.slug === slug) ?? null
