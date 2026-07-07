@@ -45,15 +45,11 @@ function useToast() {
   return { show, node }
 }
 
-const TABS = [
-  ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'], ['fixtures', 'Fixtures'], ['results', 'Results'],
-  ['imports', 'Imports'], ['reviews', 'Reviews'], ['settings', 'Settings'],
-] as const
-type Tab = typeof TABS[number][0] | 'publishing'
+type Tab = 'home' | 'leagues' | 'clubs' | 'fixtures' | 'results' | 'rankings' | 'articles' | 'publish' | 'advanced' | 'dashboard' | 'imports' | 'reviews' | 'settings' | 'publishing'
 
 export default function Admin() {
   const [authed, setAuthed] = useState(!!getKey())
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const [tab, setTab] = useState<Tab>('home')
   const [pending, setPending] = useState(0)
   const t = useToast()
 
@@ -69,25 +65,101 @@ export default function Admin() {
           <div><div style={{ color: C.pink, fontSize: 11, fontWeight: 950, letterSpacing: '.16em', textTransform: 'uppercase' }}>PlayFooty Admin</div><h1 style={{ margin: '4px 0 0', fontSize: 'clamp(28px, 6vw, 44px)', letterSpacing: '-.055em', lineHeight: 1 }}>Control Centre</h1></div>
           <button style={{ ...btn('#fff'), color: C.mute, border: `1px solid ${C.line}`, boxShadow: 'none' }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
-        <div className="pf-tabs" style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-          {TABS.map(([x, label]) => (
-            <button key={x} onClick={() => setTab(x)} style={{ ...btn(tab === x ? C.pink : '#fff'), color: tab === x ? '#fff' : C.text, border: `1px solid ${tab === x ? C.pink : C.line}`, boxShadow: tab === x ? '0 10px 22px rgba(215,25,32,.18)' : 'none' }}>
-              {label}{x === 'reviews' && pending > 0 && <span style={{ marginLeft: 6, background: C.gold, color: '#111', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{pending}</span>}
-            </button>
-          ))}
-        </div>
-        <AdminGlobalSearch toast={t.show} go={setTab} />
-        {tab === 'dashboard' && <Dashboard toast={t.show} go={setTab} />}
+        {tab !== 'home' && (
+          <button onClick={() => setTab('home')} style={{ ...btn('#fff'), marginBottom: 18 }}>← Home</button>
+        )}
+        {tab === 'home' && <OperationsHome go={setTab} pending={pending} />}
         {tab === 'leagues' && <LeaguesOperations toast={t.show} />}
-        {tab === 'clubs' && <Clubs toast={t.show} />}
-        {tab === 'fixtures' && <FixtureResultsOps kind="fixtures" toast={t.show} />}
-        {tab === 'results' && <FixtureResultsOps kind="results" toast={t.show} />}
-        {tab === 'imports' && <ImportsOps toast={t.show} />}
-        {tab === 'reviews' && <Reviews toast={t.show} />}
-        {tab === 'settings' && <SystemOps toast={t.show} />}
-        {tab === 'publishing' && <Publishing toast={t.show} />}
+        {tab === 'clubs' && <SimpleWorkspace title="Clubs" icon="🏉"><Clubs toast={t.show} /></SimpleWorkspace>}
+        {tab === 'fixtures' && <SimpleWorkspace title="Fixtures" icon="📅"><FixtureResultsOps kind="fixtures" toast={t.show} /></SimpleWorkspace>}
+        {tab === 'results' && <SimpleWorkspace title="Results" icon="🏉"><FixtureResultsOps kind="results" toast={t.show} /></SimpleWorkspace>}
+        {tab === 'rankings' && <SimpleWorkspace title="Rankings" icon="📊"><Rankings toast={t.show} /></SimpleWorkspace>}
+        {tab === 'articles' && <SimpleWorkspace title="Articles" icon="📰"><Publishing toast={t.show} /></SimpleWorkspace>}
+        {tab === 'publish' && <PublishWorkspace toast={t.show} />}
+        {tab === 'advanced' && <AdvancedWorkspace toast={t.show} go={setTab} pending={pending} />}
       </div>
       {t.node}
+    </div>
+  )
+}
+
+
+function OperationsHome({ go, pending }: { go: (t: Tab) => void; pending: number }) {
+  const cards: Array<{ icon: string; title: string; text: string; tab: Tab; badge?: string }> = [
+    { icon: '🏆', title: 'LEAGUES', text: 'Import and manage leagues.', tab: 'leagues' },
+    { icon: '🏉', title: 'CLUBS', text: 'Clubs and teams.', tab: 'clubs' },
+    { icon: '📅', title: 'FIXTURES', text: 'Upcoming matches.', tab: 'fixtures' },
+    { icon: '📊', title: 'RANKINGS', text: 'League rankings.', tab: 'rankings' },
+    { icon: '📰', title: 'ARTICLES', text: 'Stories and updates.', tab: 'articles' },
+    { icon: '🚀', title: 'PUBLISH', text: 'Send updates live.', tab: 'publish' },
+    { icon: '⚙️', title: 'ADVANCED', text: 'Import tools and settings.', tab: 'advanced', badge: pending ? `${pending} to review` : undefined },
+  ]
+  return (
+    <div style={{ display: 'grid', gap: 24 }}>
+      <section style={{ ...box, padding: 'clamp(26px, 7vw, 56px)', textAlign: 'center', background: 'linear-gradient(180deg,#fff,#fff8f8)' }}>
+        <div style={{ color: C.pink, fontSize: 12, fontWeight: 950, letterSpacing: '.16em' }}>PLAYFOOTY OPERATIONS</div>
+        <h2 style={{ margin: '12px auto 10px', fontSize: 'clamp(38px, 9vw, 84px)', lineHeight: .88, letterSpacing: '-.075em', maxWidth: 860 }}>What are we working on?</h2>
+        <p style={{ margin: '0 auto', color: C.mute, fontSize: 18, maxWidth: 620 }}>Choose one area. Everything is designed for quick touch-friendly football admin work.</p>
+      </section>
+      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 18 }}>
+        {cards.map(card => <LauncherCard key={card.title} {...card} onClick={() => go(card.tab)} />)}
+      </div>
+    </div>
+  )
+}
+
+function LauncherCard({ icon, title, text, badge, onClick }: { icon: string; title: string; text: string; badge?: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ ...box, minHeight: 220, aspectRatio: '1 / 1', display: 'grid', alignContent: 'center', justifyItems: 'center', textAlign: 'center', gap: 12, cursor: 'pointer', color: C.text, borderRadius: 28 }}>
+      <span style={{ fontSize: 48, lineHeight: 1 }}>{icon}</span>
+      <span style={{ fontSize: 24, fontWeight: 950, letterSpacing: '-.045em' }}>{title}</span>
+      <span style={{ color: C.mute, fontSize: 14 }}>{text}</span>
+      {badge && <span style={{ borderRadius: 999, background: C.soft, color: C.pink, padding: '6px 10px', fontSize: 12, fontWeight: 900 }}>{badge}</span>}
+    </button>
+  )
+}
+
+function SimpleWorkspace({ title, icon, children }: { title: string; icon: string; children: ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gap: 18 }}>
+      <div style={{ ...box, padding: '28px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <span style={{ fontSize: 42 }}>{icon}</span>
+        <div><h2 style={{ margin: 0, fontSize: 42, letterSpacing: '-.06em' }}>{title}</h2><p style={{ margin: '4px 0 0', color: C.mute }}>Simple tools for this area.</p></div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function PublishWorkspace({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  return (
+    <div style={{ display: 'grid', gap: 18 }}>
+      <div style={{ ...box, padding: '34px', textAlign: 'center' }}>
+        <div style={{ fontSize: 48 }}>🚀</div>
+        <h2 style={{ margin: '8px 0', fontSize: 48, letterSpacing: '-.065em' }}>Ready to publish?</h2>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 360, margin: '18px auto', textAlign: 'left', color: C.text, fontWeight: 800 }}>
+          {['Ladder', 'Fixtures', 'Results', 'Rankings'].map(x => <div key={x}>✓ {x}</div>)}
+        </div>
+        <button style={{ ...btn(C.pink), padding: '15px 28px', fontSize: 16 }} onClick={() => toast('Publishing tools are ready below.')}>PUBLISH</button>
+      </div>
+      <Publishing toast={toast} />
+    </div>
+  )
+}
+
+function AdvancedWorkspace({ toast, go, pending }: { toast: (t: string, ok?: boolean) => void; go: (t: Tab) => void; pending: number }) {
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={box}>
+        <h2 style={{ margin: 0, fontSize: 38, letterSpacing: '-.055em' }}>Advanced</h2>
+        <p style={{ color: C.mute, marginBottom: 0 }}>Technical import tools, review queues and settings live here so the main workflow stays simple.</p>
+      </div>
+      <AdminGlobalSearch toast={toast} go={go} />
+      <details style={box} open><summary style={{ cursor: 'pointer', fontWeight: 900 }}>Import tools</summary><div style={{ marginTop: 14 }}><ImportsOps toast={toast} /></div></details>
+      <details style={box}><summary style={{ cursor: 'pointer', fontWeight: 900 }}>Review queue {pending ? `(${pending})` : ''}</summary><div style={{ marginTop: 14 }}><Reviews toast={toast} /></div></details>
+      <details style={box}><summary style={{ cursor: 'pointer', fontWeight: 900 }}>Settings and system status</summary><div style={{ marginTop: 14 }}><SystemOps toast={toast} /></div></details>
+      <details style={box}><summary style={{ cursor: 'pointer', fontWeight: 900 }}>Legacy league tools</summary><div style={{ marginTop: 14 }}><Leagues toast={toast} /></div></details>
+      <details style={box}><summary style={{ cursor: 'pointer', fontWeight: 900 }}>Legacy dashboard</summary><div style={{ marginTop: 14 }}><Dashboard toast={toast} go={go} /></div></details>
     </div>
   )
 }
@@ -187,22 +259,7 @@ function ActionCard({ icon, title, text, button, status, tone = C.pink, onClick 
 }
 
 function LeaguesOperations({ toast }: { toast: (t: string, ok?: boolean) => void }) {
-  return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <div style={box}>
-        <b>League Operations</b>
-        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 0' }}>
-          The league is now the centre of the admin. Configure source settings, run dry syncs, import verified football rows, generate ladders, compare differences, publish approved data and trigger rankings from each selected league.
-        </p>
-      </div>
-      <FootballSources toast={toast} />
-      <details style={box}>
-        <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Legacy league utilities</summary>
-        <p style={{ color: C.mute, fontSize: 13 }}>Existing strength, archive, approval and ladder-edit tools are preserved here until each tool is moved inside the selected league workspace.</p>
-        <Leagues toast={toast} />
-      </details>
-    </div>
-  )
+  return <FootballSources toast={toast} />
 }
 
 function FixtureResultsOps({ kind, toast }: { kind: 'fixtures' | 'results'; toast: (t: string, ok?: boolean) => void }) {
@@ -323,88 +380,81 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 
-type LeagueImportMode = 'MANUAL_ENTRY' | 'PLAYHQ_SCRAPER' | 'PLAYHQ_API'
-type AdvancedPanel = 'source' | 'rounds' | 'ladder' | 'reviews' | null
 
-const sourceLabel = (s?: string | null) => s === 'PLAYHQ_SCRAPER' ? 'PlayHQ ladder URL' : s === 'PLAYHQ_API' ? 'PlayHQ API' : 'Manual entry'
-const ladderStatus = (n: number) => n > 0 ? `${n} row${n === 1 ? '' : 's'}` : 'Not imported'
+const sourceLabel = (s?: string | null) => s === 'PLAYHQ_SCRAPER' ? 'PlayHQ' : s === 'PLAYHQ_API' ? 'PlayHQ' : 'Manual'
+const ladderStatus = (n: number) => n > 0 ? 'Ready' : 'Waiting'
 const basePlayHqUrl = (url: string) => url.trim().replace(/\/ladder\/?$/i, '')
+const titleFromPlayHqUrl = (url: string) => {
+  try {
+    const parts = new URL(url).pathname.split('/').filter(Boolean)
+    const candidate = parts[3] || parts[2] || 'playhq-football-league'
+    return candidate.split('-').filter(Boolean).map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ')
+  } catch { return 'PlayHQ Football League' }
+}
+type AdvancedPanel = 'source' | 'rounds' | 'ladder' | 'reviews' | null
 
 function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [rows, setRows] = useState<FootballLeague[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [form, setForm] = useState({ name: '', state: 'VIC', season: '2026', grade: 'Senior Football', mode: 'MANUAL_ENTRY' as LeagueImportMode, ladderUrl: '', playhqOrganisationId: '', playhqCompetitionId: '', playhqSeasonId: '', playhqGradeId: '' })
+  const [ladderUrl, setLadderUrl] = useState('')
+  const [importedName, setImportedName] = useState<string | null>(null)
+  const [importedRows, setImportedRows] = useState<number | null>(null)
 
   const load = () => admin.listFootballLeagues().then(r => { setRows(r); setSelectedId(id => id ?? r[0]?.id ?? null) }).catch(e => toast(e.message, false))
   useEffect(() => { void load() }, [])
   const selected = rows.find(r => r.id === selectedId) ?? null
-  const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const createOrImport = async () => {
-    if (!form.name.trim()) return toast('Add a league name first', false)
-    setBusy(true)
+  const importLeague = async () => {
+    const url = ladderUrl.trim()
+    if (!url) return toast('Paste the PlayHQ ladder URL first', false)
+    setBusy(true); setImportedName(null); setImportedRows(null)
     try {
-      if (form.mode === 'MANUAL_ENTRY') {
-        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'MANUAL_ENTRY', sourceUrl: '' })
-        toast('Empty league created')
-        await load(); setSelectedId(row.id)
-      } else if (form.mode === 'PLAYHQ_SCRAPER') {
-        if (!form.ladderUrl.trim()) return toast('Paste the PlayHQ ladder URL first', false)
-        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'PLAYHQ_SCRAPER', sourceUrl: basePlayHqUrl(form.ladderUrl) })
-        const imported = await admin.importFootballLadderUrl(row.id, { season: form.season, grade: form.grade, ladderUrl: form.ladderUrl.trim() })
-        toast(`League created · ${imported.importedRows} ladder row${imported.importedRows === 1 ? '' : 's'} imported`, imported.importedRows > 0)
-        await load(); setSelectedId(row.id)
-      } else {
-        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'PLAYHQ_API', playhqOrganisationId: form.playhqOrganisationId, playhqCompetitionId: form.playhqCompetitionId, playhqSeasonId: form.playhqSeasonId, playhqGradeId: form.playhqGradeId })
-        const sync = await admin.syncFootballLeague(row.id, { sourceType: 'PLAYHQ_API', dryRun: false })
-        toast(sync.note ?? 'PlayHQ API import started')
-        await load(); setSelectedId(row.id)
-      }
-      setForm({ name: '', state: 'VIC', season: '2026', grade: 'Senior Football', mode: 'MANUAL_ENTRY', ladderUrl: '', playhqOrganisationId: '', playhqCompetitionId: '', playhqSeasonId: '', playhqGradeId: '' })
+      const name = titleFromPlayHqUrl(url)
+      const row = await admin.createFootballLeague({ name, state: 'VIC', primaryDataSource: 'PLAYHQ_SCRAPER', sourceUrl: basePlayHqUrl(url) })
+      const imported = await admin.importFootballLadderUrl(row.id, { season: '2026', grade: 'Senior Football', ladderUrl: url })
+      try { await admin.syncFootballLeague(row.id, { sourceType: 'PLAYHQ_SCRAPER', dryRun: false }) } catch (e) { toast((e as Error).message, false) }
+      setImportedName(row.name); setImportedRows(imported.importedRows)
+      toast(`Import started for ${row.name}`)
+      setLadderUrl('')
+      await load(); setSelectedId(row.id)
     } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
 
-  const actionLabel = form.mode === 'PLAYHQ_SCRAPER' ? 'Import from ladder URL' : form.mode === 'PLAYHQ_API' ? 'Import from PlayHQ API' : 'Create empty league'
-
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <div style={box}>
-        <b style={{ fontSize: 18 }}>Create / Import League</b>
-        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Start here. Choose how the league will get its data and only fill in the fields for that option.</p>
-        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 90px 120px 1.2fr', gap: 10, alignItems: 'end', marginTop: 12 }}>
-          <Field label="League name"><input style={input} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Gippsland League Seniors" /></Field>
-          <Field label="State"><select style={input} value={form.state} onChange={e => set('state', e.target.value)}>{['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].map(s => <option key={s}>{s}</option>)}</select></Field>
-          <Field label="Season"><input style={input} value={form.season} onChange={e => set('season', e.target.value)} /></Field>
-          <Field label="Grade"><input style={input} value={form.grade} onChange={e => set('grade', e.target.value)} /></Field>
+    <div style={{ display: 'grid', gap: 18 }}>
+      <div style={{ ...box, padding: 'clamp(24px, 5vw, 44px)', textAlign: 'center', background: 'linear-gradient(180deg,#fff,#fff8f8)' }}>
+        <div style={{ fontSize: 48 }}>🏆</div>
+        <h2 style={{ margin: '8px 0', fontSize: 'clamp(38px, 8vw, 72px)', lineHeight: .9, letterSpacing: '-.075em' }}>Import a League</h2>
+        <p style={{ color: C.mute, fontSize: 18, margin: '0 auto 24px', maxWidth: 560 }}>Paste the PlayHQ ladder URL. PlayFooty will automatically build the league.</p>
+        <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gap: 14 }}>
+          <input className="pf-break" style={{ ...input, padding: '18px 20px', borderRadius: 18, fontSize: 16 }} value={ladderUrl} onChange={e => setLadderUrl(e.target.value)} placeholder="PlayHQ Ladder URL" aria-label="PlayHQ Ladder URL" />
+          <button disabled={busy} style={{ ...btn(C.red), padding: '18px 28px', fontSize: 17, borderRadius: 18 }} onClick={importLeague}>{busy ? 'IMPORTING…' : 'IMPORT LEAGUE'}</button>
         </div>
-        <div style={{ marginTop: 12 }}>
-          <Field label="Data source"><select style={{ ...input, maxWidth: 320 }} value={form.mode} onChange={e => set('mode', e.target.value)}>
-            <option value="MANUAL_ENTRY">Manual entry</option>
-            <option value="PLAYHQ_SCRAPER">PlayHQ ladder URL</option>
-            <option value="PLAYHQ_API">PlayHQ API</option>
-          </select></Field>
-        </div>
-        {form.mode === 'PLAYHQ_SCRAPER' && <div style={{ marginTop: 10 }}><Field label="Paste PlayHQ ladder URL"><input className="pf-break" style={input} value={form.ladderUrl} onChange={e => set('ladderUrl', e.target.value)} placeholder="https://www.playhq.com/afl/org/.../ladder" /></Field></div>}
-        {form.mode === 'PLAYHQ_API' && <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 10 }}>
-          <Field label="Organisation ID"><input style={input} value={form.playhqOrganisationId} onChange={e => set('playhqOrganisationId', e.target.value)} /></Field>
-          <Field label="Competition ID"><input style={input} value={form.playhqCompetitionId} onChange={e => set('playhqCompetitionId', e.target.value)} /></Field>
-          <Field label="Season ID"><input style={input} value={form.playhqSeasonId} onChange={e => set('playhqSeasonId', e.target.value)} /></Field>
-          <Field label="Grade ID"><input style={input} value={form.playhqGradeId} onChange={e => set('playhqGradeId', e.target.value)} /></Field>
-        </div>}
-        <div style={{ marginTop: 14 }}><button disabled={busy} style={btn(C.red)} onClick={createOrImport}>{busy ? 'Working…' : actionLabel}</button></div>
       </div>
+
+      {importedName && (
+        <div style={{ ...box, padding: 28 }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 28, letterSpacing: '-.045em' }}>Importing {importedName}…</h3>
+          <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+            {['League Found', 'League Created', `${importedRows ?? 0} Ladder Rows`, 'Import Started', 'Fixtures Queued', 'Results Queued', 'Rankings Ready', 'Articles Ready'].map((x, i) => (
+              <div key={x} style={{ border: `1px solid ${C.line}`, borderRadius: 16, padding: 14, background: i < 4 ? '#f7fff9' : '#fff', color: i < 4 ? C.green : C.mute, fontWeight: 850 }}>{i < 4 ? '✓' : '•'} {x}</div>
+            ))}
+          </div>
+          {selected && <button style={{ ...btn(C.pink), marginTop: 18 }} onClick={() => setSelectedId(selected.id)}>OPEN LEAGUE</button>}
+        </div>
+      )}
 
       <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,.9fr) minmax(0,1.1fr)', gap: 16, alignItems: 'start' }}>
         <div style={box}>
-          <b>Leagues</b>
-          {rows.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Create or import one above.</p>}
+          <b style={{ fontSize: 22 }}>Leagues</b>
+          {rows.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Paste a PlayHQ ladder URL above.</p>}
           <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
             {rows.map(r => <LeagueSummaryCard key={r.id} league={r} selected={selectedId === r.id} onOpen={() => setSelectedId(r.id)} />)}
           </div>
         </div>
         <div style={{ minWidth: 0 }}>
-          {!selected ? <div style={box}><p style={{ color: C.mute }}>Choose a league to manage clubs, fixtures, results and ladder.</p></div>
+          {!selected ? <div style={box}><p style={{ color: C.mute }}>Choose a league to open it.</p></div>
             : <LeagueControlCentre key={selected.id} league={selected} toast={toast} onChanged={load} />}
         </div>
       </div>
@@ -453,27 +503,29 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
 
   return (
     <div style={{ display: 'grid', gap: 14 }}>
-      <div style={box}>
-        <b className="pf-break" style={{ fontSize: 18 }}>{league.name}</b>
-        <div style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>{league.state?.code ?? '—'} · {sourceLabel(league.primaryDataSource)} · Ladder {ladderStatus(ladderRows)}</div>
-        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
-          <Field label="Season"><input style={input} value={season} onChange={e => setSeason(e.target.value)} /></Field>
-          <Field label="Grade"><input style={input} value={grade} onChange={e => setGrade(e.target.value)} /></Field>
-        </div>
+      <div style={{ ...box, padding: 28, textAlign: 'center' }}>
+        <div style={{ fontSize: 46 }}>🏆</div>
+        <h2 className="pf-break" style={{ margin: '8px 0 6px', fontSize: 38, letterSpacing: '-.055em' }}>{league.name}</h2>
+        <div style={{ color: C.mute, fontSize: 14 }}>{league._count?.clubSeasons ?? 0} clubs · {fixtures} fixtures · {results} results · Ladder {ladderStatus(ladderRows)}</div>
       </div>
 
       <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-        <SimpleActionCard title="Clubs" count={`${league._count?.clubSeasons ?? 0} clubs`} action="Add club" onClick={() => toast('Use the Clubs workspace to add a club.')} />
-        <SimpleActionCard title="Fixtures" count={`${fixtures} fixtures`} action="Add fixture" onClick={() => openAdvanced('rounds')} />
-        <SimpleActionCard title="Results" count={`${results} results`} action="Add result" onClick={() => openAdvanced('rounds')} />
-        <SimpleActionCard title="Ladder" count={ladderStatus(ladderRows)} action="Import ladder" onClick={() => openAdvanced('ladder')} />
-        <SimpleActionCard title="Imports" count={league.lastSuccessfulSyncAt || league.lastSyncAt ? `Last import ${new Date(league.lastSuccessfulSyncAt ?? league.lastSyncAt ?? '').toLocaleDateString()}` : 'No imports yet'} action="Import settings" onClick={() => openAdvanced('source')} />
-        <SimpleActionCard title="Publish" count={busy ? 'Publishing…' : 'Approved data only'} action="Publish" onClick={() => publish(true)} />
+        <SimpleActionCard title="Ladder" count={ladderStatus(ladderRows)} action="VIEW LADDER" onClick={() => openAdvanced('ladder')} />
+        <SimpleActionCard title="Fixtures" count={`${fixtures} fixtures`} action="VIEW FIXTURES" onClick={() => openAdvanced('rounds')} />
+        <SimpleActionCard title="Results" count={`${results} results`} action="VIEW RESULTS" onClick={() => openAdvanced('rounds')} />
+        <SimpleActionCard title="Clubs" count={`${league._count?.clubSeasons ?? 0} clubs`} action="VIEW CLUBS" onClick={() => toast('Open Clubs from Home to manage clubs.')} />
+        <SimpleActionCard title="Rankings" count="Ready" action="VIEW RANKINGS" onClick={() => toast('Open Rankings from Home to review rankings.')} />
+        <SimpleActionCard title="Articles" count="Ready" action="VIEW ARTICLES" onClick={() => toast('Open Articles from Home to manage articles.')} />
+        <SimpleActionCard title="Publish" count={busy ? 'Publishing…' : 'Ready when approved'} action="PUBLISH" onClick={() => publish(true)} />
       </div>
 
       <details open={advancedOpen} onToggle={e => setAdvancedOpen((e.currentTarget as HTMLDetailsElement).open)} style={box}>
         <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Advanced import settings</summary>
         <p style={{ color: C.mute, fontSize: 12, margin: '8px 0 10px' }}>Source setup, round URL imports, review routing and provenance tools live here for operators who need them.</p>
+        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          <Field label="Season"><input style={input} value={season} onChange={e => setSeason(e.target.value)} /></Field>
+          <Field label="Grade"><input style={input} value={grade} onChange={e => setGrade(e.target.value)} /></Field>
+        </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
           {(['source', 'rounds', 'ladder', 'reviews'] as const).map(p => <button key={p} style={btn(advancedPanel === p ? C.pink : '#fff')} onClick={() => setAdvancedPanel(p)}>{p === 'source' ? 'Source setup' : p === 'rounds' ? 'Round imports' : p === 'ladder' ? 'Ladder tools' : 'Reviews'}</button>)}
         </div>
