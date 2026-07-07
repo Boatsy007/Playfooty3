@@ -36,17 +36,6 @@ const ADMIN_CSS = `
 }
 `
 
-function useIsMobile(bp = 640) {
-  const [m, setM] = useState(typeof window !== 'undefined' && window.matchMedia(`(max-width:${bp}px)`).matches)
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width:${bp}px)`)
-    const on = () => setM(mq.matches)
-    on(); mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [bp])
-  return m
-}
-
 function useToast() {
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null)
   const show = (t: string, ok = true) => { setMsg({ t, ok }); setTimeout(() => setMsg(null), 4000) }
@@ -333,57 +322,89 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label style={{ display: 'block', minWidth: 0 }}><small style={{ color: C.mute }}>{label}</small>{children}</label>
 }
 
+
+type LeagueImportMode = 'MANUAL_ENTRY' | 'PLAYHQ_SCRAPER' | 'PLAYHQ_API'
+type AdvancedPanel = 'source' | 'rounds' | 'ladder' | 'reviews' | null
+
+const sourceLabel = (s?: string | null) => s === 'PLAYHQ_SCRAPER' ? 'PlayHQ ladder URL' : s === 'PLAYHQ_API' ? 'PlayHQ API' : 'Manual entry'
+const ladderStatus = (n: number) => n > 0 ? `${n} row${n === 1 ? '' : 's'}` : 'Not imported'
+const basePlayHqUrl = (url: string) => url.trim().replace(/\/ladder\/?$/i, '')
+
 function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [rows, setRows] = useState<FootballLeague[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [form, setForm] = useState({ name: '', state: 'VIC', sourceUrl: '', primaryDataSource: 'MANUAL_ENTRY' })
-  const mobile = useIsMobile()
+  const [form, setForm] = useState({ name: '', state: 'VIC', season: '2026', grade: 'Senior Football', mode: 'MANUAL_ENTRY' as LeagueImportMode, ladderUrl: '', playhqOrganisationId: '', playhqCompetitionId: '', playhqSeasonId: '', playhqGradeId: '' })
 
   const load = () => admin.listFootballLeagues().then(r => { setRows(r); setSelectedId(id => id ?? r[0]?.id ?? null) }).catch(e => toast(e.message, false))
   useEffect(() => { void load() }, [])
   const selected = rows.find(r => r.id === selectedId) ?? null
+  const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const createLeague = async () => {
-    if (!form.name.trim()) return toast('League name required', false)
+  const createOrImport = async () => {
+    if (!form.name.trim()) return toast('Add a league name first', false)
     setBusy(true)
-    try { const row = await admin.createFootballLeague(form); toast('Football league created'); await load(); setSelectedId(row.id); setForm({ name: '', state: 'VIC', sourceUrl: '', primaryDataSource: 'MANUAL_ENTRY' }) }
-    catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
+    try {
+      if (form.mode === 'MANUAL_ENTRY') {
+        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'MANUAL_ENTRY', sourceUrl: '' })
+        toast('Empty league created')
+        await load(); setSelectedId(row.id)
+      } else if (form.mode === 'PLAYHQ_SCRAPER') {
+        if (!form.ladderUrl.trim()) return toast('Paste the PlayHQ ladder URL first', false)
+        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'PLAYHQ_SCRAPER', sourceUrl: basePlayHqUrl(form.ladderUrl) })
+        const imported = await admin.importFootballLadderUrl(row.id, { season: form.season, grade: form.grade, ladderUrl: form.ladderUrl.trim() })
+        toast(`League created · ${imported.importedRows} ladder row${imported.importedRows === 1 ? '' : 's'} imported`, imported.importedRows > 0)
+        await load(); setSelectedId(row.id)
+      } else {
+        const row = await admin.createFootballLeague({ name: form.name, state: form.state, primaryDataSource: 'PLAYHQ_API', playhqOrganisationId: form.playhqOrganisationId, playhqCompetitionId: form.playhqCompetitionId, playhqSeasonId: form.playhqSeasonId, playhqGradeId: form.playhqGradeId })
+        const sync = await admin.syncFootballLeague(row.id, { sourceType: 'PLAYHQ_API', dryRun: false })
+        toast(sync.note ?? 'PlayHQ API import started')
+        await load(); setSelectedId(row.id)
+      }
+      setForm({ name: '', state: 'VIC', season: '2026', grade: 'Senior Football', mode: 'MANUAL_ENTRY', ladderUrl: '', playhqOrganisationId: '', playhqCompetitionId: '', playhqSeasonId: '', playhqGradeId: '' })
+    } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
+
+  const actionLabel = form.mode === 'PLAYHQ_SCRAPER' ? 'Import from ladder URL' : form.mode === 'PLAYHQ_API' ? 'Import from PlayHQ API' : 'Create empty league'
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={box}>
-        <b>PlayFooty League Control Centre</b>
-        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Everything for one football league in one place — source setup, round-by-round backfill, fixtures, results, ladder, clubs, rankings, articles and reviews. Results drive the ladder; manual verified data wins; conflicts go to review.</p>
-        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 90px 1.6fr 160px auto', gap: 8, alignItems: 'end', marginTop: 10 }}>
-          <Field label="League"><input style={input} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Bellarine FNL - Senior Football" /></Field>
-          <Field label="State"><input style={input} value={form.state} onChange={e => setForm({ ...form, state: e.target.value.toUpperCase() })} /></Field>
-          <Field label="PlayHQ/source URL"><input style={input} value={form.sourceUrl} onChange={e => setForm({ ...form, sourceUrl: e.target.value })} placeholder="https://www.playhq.com/..." /></Field>
-          <Field label="Primary source"><select style={input} value={form.primaryDataSource} onChange={e => setForm({ ...form, primaryDataSource: e.target.value })}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></Field>
-          <button disabled={busy} style={btn()} onClick={createLeague}>Add league</button>
+        <b style={{ fontSize: 18 }}>Create / Import League</b>
+        <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Start here. Choose how the league will get its data and only fill in the fields for that option.</p>
+        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 90px 120px 1.2fr', gap: 10, alignItems: 'end', marginTop: 12 }}>
+          <Field label="League name"><input style={input} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Gippsland League Seniors" /></Field>
+          <Field label="State"><select style={input} value={form.state} onChange={e => set('state', e.target.value)}>{['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].map(s => <option key={s}>{s}</option>)}</select></Field>
+          <Field label="Season"><input style={input} value={form.season} onChange={e => set('season', e.target.value)} /></Field>
+          <Field label="Grade"><input style={input} value={form.grade} onChange={e => set('grade', e.target.value)} /></Field>
         </div>
+        <div style={{ marginTop: 12 }}>
+          <Field label="Data source"><select style={{ ...input, maxWidth: 320 }} value={form.mode} onChange={e => set('mode', e.target.value)}>
+            <option value="MANUAL_ENTRY">Manual entry</option>
+            <option value="PLAYHQ_SCRAPER">PlayHQ ladder URL</option>
+            <option value="PLAYHQ_API">PlayHQ API</option>
+          </select></Field>
+        </div>
+        {form.mode === 'PLAYHQ_SCRAPER' && <div style={{ marginTop: 10 }}><Field label="Paste PlayHQ ladder URL"><input className="pf-break" style={input} value={form.ladderUrl} onChange={e => set('ladderUrl', e.target.value)} placeholder="https://www.playhq.com/afl/org/.../ladder" /></Field></div>}
+        {form.mode === 'PLAYHQ_API' && <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 10 }}>
+          <Field label="Organisation ID"><input style={input} value={form.playhqOrganisationId} onChange={e => set('playhqOrganisationId', e.target.value)} /></Field>
+          <Field label="Competition ID"><input style={input} value={form.playhqCompetitionId} onChange={e => set('playhqCompetitionId', e.target.value)} /></Field>
+          <Field label="Season ID"><input style={input} value={form.playhqSeasonId} onChange={e => set('playhqSeasonId', e.target.value)} /></Field>
+          <Field label="Grade ID"><input style={input} value={form.playhqGradeId} onChange={e => set('playhqGradeId', e.target.value)} /></Field>
+        </div>}
+        <div style={{ marginTop: 14 }}><button disabled={busy} style={btn(C.red)} onClick={createOrImport}>{busy ? 'Working…' : actionLabel}</button></div>
       </div>
 
-      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,.85fr) minmax(0,1.15fr)', gap: 16, alignItems: 'start' }}>
+      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,.9fr) minmax(0,1.1fr)', gap: 16, alignItems: 'start' }}>
         <div style={box}>
-          <b>Football leagues ({rows.length})</b>
-          {rows.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Add one above to open its control centre.</p>}
-          <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
-            {rows.map(r => (
-              <button key={r.id} onClick={() => setSelectedId(r.id)} style={{ textAlign: 'left', cursor: 'pointer', border: `1px solid ${selectedId === r.id ? C.pink : C.line}`, borderRadius: 8, padding: 10, background: selectedId === r.id ? 'rgba(215,25,32,.07)' : '#f8fafc', color: C.text }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                  <b className="pf-break">{r.name}</b>
-                  <span style={{ color: r.syncStatus === 'SUCCESS' ? C.green : r.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute, fontSize: 12 }}>{r.syncStatus}</span>
-                </div>
-                <div style={{ color: C.mute, fontSize: 12, marginTop: 3 }}>{r.state?.code ?? '—'} · {r.primaryDataSource ?? 'no source'} · {r._count?.footballResults ?? 0} results · {r._count?.footballFixtures ?? 0} fixtures</div>
-              </button>
-            ))}
+          <b>Leagues</b>
+          {rows.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Create or import one above.</p>}
+          <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+            {rows.map(r => <LeagueSummaryCard key={r.id} league={r} selected={selectedId === r.id} onOpen={() => setSelectedId(r.id)} />)}
           </div>
         </div>
-
-        <div style={{ minWidth: 0, ...(mobile ? {} : {}) }}>
-          {!selected ? <div style={box}><p style={{ color: C.mute }}>Select a football league to open its control centre.</p></div>
+        <div style={{ minWidth: 0 }}>
+          {!selected ? <div style={box}><p style={{ color: C.mute }}>Choose a league to manage clubs, fixtures, results and ladder.</p></div>
             : <LeagueControlCentre key={selected.id} league={selected} toast={toast} onChanged={load} />}
         </div>
       </div>
@@ -391,102 +412,82 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   )
 }
 
-// ─── League Control Centre — one league, ten operational tabs ────────────────
-const LC_TABS = ['Overview', 'Source Setup', 'Round Backfill', 'Fixtures', 'Results', 'Ladder', 'Clubs', 'Rankings', 'Articles', 'Reviews'] as const
-type LcTab = typeof LC_TABS[number]
+function LeagueSummaryCard({ league, selected, onOpen }: { league: FootballLeague; selected: boolean; onOpen: () => void }) {
+  const fixtures = league._count?.footballFixtures ?? 0
+  const results = league._count?.footballResults ?? 0
+  const ladderRows = league._count?.footballLadderEntries ?? 0
+  return (
+    <div style={{ border: `1px solid ${selected ? C.pink : C.line}`, borderRadius: 14, padding: 14, background: '#fff', boxShadow: selected ? '0 12px 30px rgba(215,25,32,.12)' : '0 8px 24px rgba(15,23,42,.06)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'start' }}>
+        <div><b className="pf-break">{league.name}</b><div style={{ color: C.mute, fontSize: 12, marginTop: 3 }}>{league.state?.code ?? '—'} · {sourceLabel(league.primaryDataSource)}</div></div>
+        <button style={btn(selected ? C.pink : '#fff')} onClick={onOpen}>Open</button>
+      </div>
+      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginTop: 12, fontSize: 12, color: C.mute }}>
+        <span>Clubs: <b style={{ color: C.text }}>{league._count?.clubSeasons ?? 0}</b></span>
+        <span>Fixtures: <b style={{ color: C.text }}>{fixtures}</b></span>
+        <span>Results: <b style={{ color: C.text }}>{results}</b></span>
+        <span>Ladder: <b style={{ color: C.text }}>{ladderStatus(ladderRows)}</b></span>
+      </div>
+      <div style={{ color: C.mute, fontSize: 12, marginTop: 8 }}>Last import: {league.lastSuccessfulSyncAt || league.lastSyncAt ? new Date(league.lastSuccessfulSyncAt ?? league.lastSyncAt ?? '').toLocaleString() : 'Never'}</div>
+    </div>
+  )
+}
 
-interface Round { key: string; name: string; resultsUrl: string; fixtureUrl: string; dateRange: string; selected: boolean; status: 'not imported' | 'imported' | 'needs review' | 'published'; note?: string }
-const newRound = (n: number): Round => ({ key: Math.random().toString(36).slice(2), name: `Round ${n}`, resultsUrl: '', fixtureUrl: '', dateRange: '', selected: false, status: 'not imported' })
+function SimpleActionCard({ title, count, action, onClick }: { title: string; count?: string | number; action: string; onClick: () => void }) {
+  return <div style={{ ...box, boxShadow: '0 10px 26px rgba(15,23,42,.06)' }}><b>{title}</b>{count != null && <div style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>{count}</div>}<button style={{ ...btn(C.red), marginTop: 12 }} onClick={onClick}>{action}</button></div>
+}
 
 function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLeague; toast: (t: string, ok?: boolean) => void; onChanged: () => void }) {
-  const [tab, setTab] = useState<LcTab>('Overview')
   const [season, setSeason] = useState(league.currentSeason ?? '2026')
   const [grade, setGrade] = useState('Senior Football')
   const [busy, setBusy] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [advancedPanel, setAdvancedPanel] = useState<AdvancedPanel>('source')
 
   const results = league._count?.footballResults ?? 0
   const fixtures = league._count?.footballFixtures ?? 0
   const ladderRows = league._count?.footballLadderEntries ?? 0
-
-  const generate = async () => { setBusy(true); try { const o = await admin.generateFootballLadder(league.id, { season, grade }); toast(`Generated ${o.rows ?? o.ladder?.length ?? 0} ladder rows from results`); onChanged() } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
   const publish = async (recalculate: boolean) => { if (!confirm(`Publish approved ${season} ${grade} results + ladder${recalculate ? ' and recalculate rankings' : ''}?`)) return; setBusy(true); try { const o = await admin.publishFootballLeague(league.id, { season, grade, recalculate }); toast(`Published ${o.publishedResults} results · ${o.publishedLadderRows} ladder rows`); onChanged() } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
-  const recalc = async () => { setBusy(true); try { const r = await admin.recalculate(); toast(`Recalculated — ${r.clubsRanked} clubs, ${r.leagues.length} leagues`) } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) } }
+
+  const openAdvanced = (panel: AdvancedPanel) => { setAdvancedPanel(panel); setAdvancedOpen(true) }
 
   return (
     <div style={{ display: 'grid', gap: 14 }}>
       <div style={box}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <b className="pf-break" style={{ fontSize: 16 }}>{league.name}</b>
-          <span style={{ color: league.syncStatus === 'SUCCESS' ? C.green : league.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute, fontSize: 12 }}>{league.state?.code ?? '—'} · {league.syncStatus} · last sync {league.lastSyncAt ? new Date(league.lastSyncAt).toLocaleString() : 'never'}</span>
-        </div>
-        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+        <b className="pf-break" style={{ fontSize: 18 }}>{league.name}</b>
+        <div style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>{league.state?.code ?? '—'} · {sourceLabel(league.primaryDataSource)} · Ladder {ladderStatus(ladderRows)}</div>
+        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
           <Field label="Season"><input style={input} value={season} onChange={e => setSeason(e.target.value)} /></Field>
           <Field label="Grade"><input style={input} value={grade} onChange={e => setGrade(e.target.value)} /></Field>
         </div>
-        <div style={{ background: 'rgba(53,198,107,0.08)', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginTop: 10, fontSize: 12, color: C.mute }}>
-          <b style={{ color: C.green }}>Results are the source of truth.</b> Imported results generate the ladder. Ladder import is validation/fallback only. Manual verified data always wins, and any conflict is routed to the review queue — nothing is silently overwritten.
-        </div>
       </div>
 
-      <div className="pf-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {LC_TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? C.pink : '#fff'), color: tab === t ? '#fff' : C.mute, padding: '5px 10px', fontSize: 12, whiteSpace: 'nowrap' }}>{t}</button>)}
+      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+        <SimpleActionCard title="Clubs" count={`${league._count?.clubSeasons ?? 0} clubs`} action="Add club" onClick={() => toast('Use the Clubs workspace to add a club.')} />
+        <SimpleActionCard title="Fixtures" count={`${fixtures} fixtures`} action="Add fixture" onClick={() => openAdvanced('rounds')} />
+        <SimpleActionCard title="Results" count={`${results} results`} action="Add result" onClick={() => openAdvanced('rounds')} />
+        <SimpleActionCard title="Ladder" count={ladderStatus(ladderRows)} action="Import ladder" onClick={() => openAdvanced('ladder')} />
+        <SimpleActionCard title="Imports" count={league.lastSuccessfulSyncAt || league.lastSyncAt ? `Last import ${new Date(league.lastSuccessfulSyncAt ?? league.lastSyncAt ?? '').toLocaleDateString()}` : 'No imports yet'} action="Import settings" onClick={() => openAdvanced('source')} />
+        <SimpleActionCard title="Publish" count={busy ? 'Publishing…' : 'Approved data only'} action="Publish" onClick={() => publish(true)} />
       </div>
 
-      {tab === 'Overview' && (
-        <div style={box}>
-          <b>Overview</b>
-          <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 10 }}>
-            {[['Results', results], ['Fixtures', fixtures], ['Ladder rows', ladderRows], ['Clubs', league._count?.clubSeasons ?? 0]].map(([l, v]) => (
-              <div key={l} style={{ background: '#f8fafc', border: `1px solid ${C.line}`, borderRadius: 8, padding: 12 }}><div style={{ fontSize: 24, fontWeight: 800 }}>{v}</div><div style={{ color: C.mute, fontSize: 11 }}>{l}</div></div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            <button style={btn()} onClick={() => setTab('Round Backfill')}>Backfill rounds</button>
-            <button style={btn(C.green)} disabled={busy} onClick={generate}>Generate ladder</button>
-            <button style={btn(C.red)} disabled={busy} onClick={() => publish(true)}>Publish + recalculate</button>
-          </div>
-          {league.dataSourceSyncError && <div style={{ color: C.gold, fontSize: 13, marginTop: 10 }}>{league.dataSourceSyncError}</div>}
+      <details open={advancedOpen} onToggle={e => setAdvancedOpen((e.currentTarget as HTMLDetailsElement).open)} style={box}>
+        <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Advanced import settings</summary>
+        <p style={{ color: C.mute, fontSize: 12, margin: '8px 0 10px' }}>Source setup, round URL imports, review routing and provenance tools live here for operators who need them.</p>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          {(['source', 'rounds', 'ladder', 'reviews'] as const).map(p => <button key={p} style={btn(advancedPanel === p ? C.pink : '#fff')} onClick={() => setAdvancedPanel(p)}>{p === 'source' ? 'Source setup' : p === 'rounds' ? 'Round imports' : p === 'ladder' ? 'Ladder tools' : 'Reviews'}</button>)}
         </div>
-      )}
-
-      {tab === 'Source Setup' && <SourceSetup league={league} toast={toast} onChanged={onChanged} />}
-      {tab === 'Round Backfill' && <RoundBackfill league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} goReviews={() => setTab('Reviews')} />}
-      {(tab === 'Fixtures' || tab === 'Results') && (
-        <div style={box}>
-          <b>{tab}</b>
-          <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>{tab === 'Fixtures' ? fixtures : results} {tab.toLowerCase()} recorded for this league. Add or correct {tab.toLowerCase()} from <b>Round Backfill</b> (paste rows per round). Future-round fixture URLs feed club <i>Up Next</i> once the public fixtures wiring is connected.</p>
-          <div style={{ background: '#f8fafc', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginTop: 8, color: C.mute, fontSize: 12 }}>
-            No admin endpoint lists individual football {tab.toLowerCase()} rows yet — counts and imports are available; a per-row {tab.toLowerCase()} browser needs a backend list endpoint (see report).
-          </div>
-        </div>
-      )}
-      {tab === 'Ladder' && <LadderPanel league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} />}
-      {tab === 'Clubs' && (
-        <div style={box}>
-          <b>Clubs</b>
-          <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>{league._count?.clubSeasons ?? 0} club-season memberships. Football clubs are created from imported results/ladders. Full club editing lives in the <b>Clubs</b> tab; a league-scoped football club list needs a dedicated backend endpoint (see report).</p>
-        </div>
-      )}
-      {tab === 'Rankings' && (
-        <div style={box}>
-          <b>Rankings</b>
-          <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 10px' }}>Publishing this league feeds the national ranking engine (formula unchanged). Recalculate rebuilds standings after new results are published.</p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button style={btn(C.red)} disabled={busy} onClick={() => publish(true)}>Publish + recalculate</button>
-            <button style={btn(C.green)} disabled={busy} onClick={recalc}>Recalculate rankings only</button>
-          </div>
-        </div>
-      )}
-      {tab === 'Articles' && (
-        <div style={box}>
-          <b>Articles</b>
-          <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>Round summaries and match reports are generated from published results in the <b>Newsroom</b> tab. A league-filtered article view needs a backend filter (see report). Nothing is auto-published.</p>
-        </div>
-      )}
-      {tab === 'Reviews' && <LeagueReviews league={league} toast={toast} />}
+        {advancedPanel === 'source' && <SourceSetup league={league} toast={toast} onChanged={onChanged} />}
+        {advancedPanel === 'rounds' && <RoundBackfill league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} goReviews={() => setAdvancedPanel('reviews')} />}
+        {advancedPanel === 'ladder' && <LadderPanel league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} />}
+        {advancedPanel === 'reviews' && <LeagueReviews league={league} toast={toast} />}
+      </details>
     </div>
   )
 }
+
+interface Round { key: string; name: string; resultsUrl: string; fixtureUrl: string; dateRange: string; selected: boolean; status: 'not imported' | 'imported' | 'needs review' | 'published'; note?: string }
+const newRound = (n: number): Round => ({ key: Math.random().toString(36).slice(2), name: `Round ${n}`, resultsUrl: '', fixtureUrl: '', dateRange: '', selected: false, status: 'not imported' })
 
 function SourceSetup({ league, toast, onChanged }: { league: FootballLeague; toast: (t: string, ok?: boolean) => void; onChanged: () => void }) {
   const [f, setF] = useState({ primaryDataSource: league.primaryDataSource ?? 'MANUAL_ENTRY', sourceUrl: league.sourceUrl ?? '', ladderUrl: '', fixtureUrl: '', playhqOrganisationId: league.playhqOrganisationId ?? '', playhqCompetitionId: league.playhqCompetitionId ?? '', playhqSeasonId: league.playhqSeasonId ?? '', playhqGradeId: league.playhqGradeId ?? '' })
