@@ -23,7 +23,8 @@ router.get('/', publicRateLimit, cachePublic(3600), async (req, res) => {
         archivedAt: null,
         ...(state ? { state: { code: state } } : {}),
       },
-      include: {
+      select: {
+        id: true, name: true, strengthScore: true, lastSyncedAt: true,
         state:   { select: { code: true, name: true } },
         sources: { where: { isActive: true }, select: { sourceType: true } },
         _count:  { select: { clubSeasons: true } },

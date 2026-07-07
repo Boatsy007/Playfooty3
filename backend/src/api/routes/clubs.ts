@@ -41,7 +41,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
           ...(state ? { state: { code: state } } : {}),
           leagueSeasons: { some: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(league ? { name: { contains: league, mode: 'insensitive' as const } } : {}) } } },
         },
-        include: { state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, include: { league: { select: { name: true } } }, take: 1 } },
+        select: { id: true, name: true, logoUrl: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
         orderBy: { name: 'asc' },
         take: 200,
       })
