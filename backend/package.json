@@ -24,7 +24,8 @@
     "playfooty:seed-football-template": "tsx src/jobs/playfooty-football-seed-template.ts",
     "typecheck": "tsc --noEmit",
     "db:verify:football-schema": "node scripts/verify-football-schema.mjs",
-    "db:repair:playhq-afl-sport": "node scripts/repair-playhq-afl-import-sport.mjs"
+    "db:repair:playhq-afl-sport": "node scripts/repair-playhq-afl-import-sport.mjs",
+    "db:verify:football-rankings": "node scripts/verify-football-rankings.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
