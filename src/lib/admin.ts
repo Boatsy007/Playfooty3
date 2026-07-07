@@ -40,7 +40,7 @@ export interface FootballLeague extends AdminLeague {
   _count?: AdminLeague['_count'] & { footballFixtures?: number; footballResults?: number; footballLadderEntries?: number; footballImports?: number }
 }
 export interface FootballImportResult {
-  importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string
+  importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string; workflowFile?: string; htmlUrl?: string; workflowRun?: WorkflowRun | null
 }
 export interface RoundImportReport {
   round: string; resultsFound: number; resultsImported: number; fixturesFound: number; fixturesImported: number

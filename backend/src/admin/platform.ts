@@ -529,17 +529,28 @@ router.post('/football/leagues/:id/sync', async (req, res) => {
   const now = new Date()
   if (source === 'PLAYHQ_API' && !league.apiEnabled) return res.status(400).json({ error: 'PLAYHQ_API is not enabled for this league' })
   if (source === 'PLAYHQ_SCRAPER' && !league.scrapeEnabled) return res.status(400).json({ error: 'PLAYHQ_SCRAPER is not enabled for this league' })
-  await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: now, syncStatus: dryRun ? 'READY' : 'RUNNING', dataSourceSyncError: null, syncError: null } })
-  const payload = { leagueId: league.id, source, sourceUrl: league.sourceUrl, note: 'Sync dispatch placeholder. PlayHQ API credentials are not configured in this system yet.' }
+  if (source === 'PLAYHQ_SCRAPER' && !league.sourceUrl) return res.status(400).json({ error: 'PLAYHQ_SCRAPER requires a saved sourceUrl before dispatching.' })
+
+  const payload = { leagueId: league.id, source, sourceUrl: league.sourceUrl, dryRun, workflow: WF_URL_IMPORT }
+  const payloadHash = stableHash(payload)
   const imp = await prisma.footballDataImport.upsert({
-    where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', payloadHash: stableHash(payload) } },
-    create: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', sourceUrl: league.sourceUrl, payloadHash: stableHash(payload), dryRun, status: 'PREVIEWED', recordsFound: 0, confidence: 0.2, payload: JSON.stringify(payload), scrapedAt: now },
-    update: { dryRun, status: 'PREVIEWED', payload: JSON.stringify(payload), scrapedAt: now },
+    where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', payloadHash } },
+    create: { leagueId: league.id, sourceType: source, dataType: 'ROUNDS', sourceUrl: league.sourceUrl, payloadHash, dryRun, status: 'PENDING', recordsFound: 0, confidence: 0.5, payload: JSON.stringify(payload), scrapedAt: now },
+    update: { dryRun, status: 'PENDING', payload: JSON.stringify(payload), scrapedAt: now },
   })
-  await createFootballReview(league.id, 'FOOTBALL_SYNC_NOT_CONNECTED', 'PlayHQ credentials/scraper execution are not connected for this league yet.', payload, 0.2)
-  await prisma.league.update({ where: { id: league.id }, data: { syncStatus: 'NEEDS_REVIEW', dataSourceSyncError: 'Sync queued for review: external source connector not configured.', syncError: 'Sync queued for review: external source connector not configured.', lastSyncAt: now } })
-  await audit('FOOTBALL_SYNC_DRY_RUN', 'FootballDataImport', imp.id, payload, source)
-  res.status(202).json({ data: { importId: imp.id, dryRun, status: 'NEEDS_REVIEW', note: 'Dry-run recorded and routed to review. No external data was scraped or imported.' } })
+
+  try {
+    const out = await dispatchWorkflow(WF_URL_IMPORT, { sync_league_id: league.id, dry_run: String(dryRun) })
+    await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: now, syncStatus: 'RUNNING', dataSourceSyncError: null, syncError: null } })
+    await prisma.footballDataImport.update({ where: { id: imp.id }, data: { status: dryRun ? 'PREVIEWED' : 'PENDING', payload: JSON.stringify({ ...payload, workflowRun: out.run ?? null, htmlUrl: out.htmlUrl }) } }).catch(() => {})
+    await audit('FOOTBALL_SYNC_DISPATCH', 'FootballDataImport', imp.id, { ...payload, workflowRun: out.run ?? null, htmlUrl: out.htmlUrl }, source)
+    return res.status(202).json({ data: { importId: imp.id, dryRun, status: 'DISPATCHED', note: `GitHub Actions workflow dispatched (${WF_URL_IMPORT}) on ref ${githubConfig().ref}.`, workflowFile: WF_URL_IMPORT, workflowRun: out.run, htmlUrl: out.htmlUrl } })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'GitHub Actions dispatch failed'
+    await prisma.league.update({ where: { id: league.id }, data: { lastSyncAt: now, syncStatus: 'FAILED', dataSourceSyncError: message, syncError: message } }).catch(() => {})
+    await prisma.footballDataImport.update({ where: { id: imp.id }, data: { status: 'FAILED', error: message, payload: JSON.stringify({ ...payload, error: message }) } }).catch(() => {})
+    return res.status(502).json({ error: message })
+  }
 })
 
 router.post('/football/leagues/:id/import', async (req, res) => {

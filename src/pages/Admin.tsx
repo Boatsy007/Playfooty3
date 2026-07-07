@@ -821,7 +821,7 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           {engine && <span style={{ fontSize: 12, color: engine.configured ? C.green : C.red }}>{engine.configured ? `● connected · ${engine.repo} @ ${engine.ref}` : '● not configured'}</span>}
         </div>
         <p style={{ color: C.mute, fontSize: 12, margin: '6px 0 0' }}>PlayHQ scraping runs in a headless browser on GitHub's runners (not in the serverless API), then writes to the same database and re-ranks. Every action here dispatches a workflow and tracks it below.</p>
-        {engine && !engine.configured && <p style={{ color: C.red, fontSize: 12, margin: '6px 0 0' }}>Set <code>GITHUB_DISPATCH_TOKEN</code> (Actions: read &amp; write) in the API environment to enable one-click dispatch.</p>}
+        {engine && !engine.configured && <p style={{ color: C.red, fontSize: 12, margin: '6px 0 0' }}>Set <code>GITHUB_DISPATCH_TOKEN</code> plus <code>GITHUB_REPO</code> and <code>GITHUB_REF=work</code> in the API environment to enable one-click dispatch.</p>}
       </div>
 
       <div style={box}>

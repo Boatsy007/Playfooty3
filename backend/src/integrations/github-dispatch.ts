@@ -11,7 +11,7 @@
  * Configuration (server env — never logged, never returned to the client):
  *   GITHUB_DISPATCH_TOKEN   fine-grained PAT with "Actions: read & write" on the repo
  *   GITHUB_REPO             "owner/repo" (default: Boatsy007/CNCA)
- *   GITHUB_REF              branch to run the workflow on (default: the feature branch)
+ *   GITHUB_REF              branch to run the workflow on (default: work)
  *
  * If the token is missing, dispatch() throws a clear, non-sensitive error so the
  * admin UI can tell the operator to configure it — it never falls back to
@@ -27,14 +27,14 @@ export interface DispatchConfig { repo: string; ref: string; hasToken: boolean }
 export function githubConfig(): DispatchConfig {
   return {
     repo: process.env.GITHUB_REPO ?? 'Boatsy007/CNCA',
-    ref:  process.env.GITHUB_REF  ?? 'claude/acnc-event-website-jt0kjq',
+    ref:  process.env.GITHUB_REF  ?? 'work',
     hasToken: !!process.env.GITHUB_DISPATCH_TOKEN,
   }
 }
 
 function token(): string {
   const t = process.env.GITHUB_DISPATCH_TOKEN
-  if (!t) throw new Error('GitHub Actions is not configured on the server (missing GITHUB_DISPATCH_TOKEN). Ask an administrator to set it.')
+  if (!t) throw new Error('GitHub Actions dispatch is not configured: missing GITHUB_DISPATCH_TOKEN. Set it in the Vercel/API environment with GitHub Actions read/write permission, and set GITHUB_REPO plus GITHUB_REF=work.')
   return t
 }
 
