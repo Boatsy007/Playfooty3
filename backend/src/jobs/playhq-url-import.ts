@@ -306,6 +306,7 @@ const FOOTBALL_SEASON = '2026'
 const stableHash = (v: unknown) => createHash('sha256').update(JSON.stringify(v ?? null)).digest('hex')
 const num = (v: unknown, fallback = 0) => Number.isFinite(Number(v)) ? Number(v) : fallback
 const points = (goals?: number, behinds?: number, total?: number) => Number.isFinite(Number(total)) ? Number(total) : num(goals) * 6 + num(behinds)
+const visibleFootballLeagueFields = { sport: 'FOOTBALL', isActive: true, enabled: true, hidden: false, archivedAt: null, status: 'ACTIVE', approvalStatus: 'APPROVED', primaryDataSource: 'PLAYHQ_SCRAPER', scrapeEnabled: true } as const
 
 async function importFootballLeagueFromPlayHq(ladderUrl: string, rawUrl: string, opts: { rerank?: boolean } = {}): Promise<ImportReport> {
   const report = emptyReport('SUCCESS')
@@ -339,15 +340,16 @@ async function importFootballLeagueFromPlayHq(ladderUrl: string, rawUrl: string,
   const isNew = !league
   if (!league) {
     league = await prisma.league.create({ data: {
-      name: leagueName, shortName: leagueName, stateId: state.id, isActive: true, enabled: true, sport: 'FOOTBALL', primaryDataSource: 'PLAYHQ_SCRAPER',
+      name: leagueName, shortName: leagueName, stateId: state.id, ...visibleFootballLeagueFields,
       sourceUrl: baseUrl, ladderUrl, playhqOrgSlug: parsed.orgSlug || null, playhqGradeId: parsed.gradeId || null, playhqGradeName: grade, currentSeason: season,
-      scrapeEnabled: true, syncStatus: 'RUNNING', lastSyncAt: new Date(), strengthScore: 60, strengthTier: 3, automaticStrengthRating: 3, finalStrengthRating: 3, strengthConfidence: 0.5,
+      syncStatus: 'RUNNING', lastSyncAt: new Date(), dataSourceSyncError: null, syncError: null, strengthScore: 60, strengthTier: 3, automaticStrengthRating: 3, finalStrengthRating: 3, strengthConfidence: 0.5,
     } })
   } else {
-    league = await prisma.league.update({ where: { id: league.id }, data: { sport: 'FOOTBALL', primaryDataSource: 'PLAYHQ_SCRAPER', sourceUrl: baseUrl, ladderUrl, playhqOrgSlug: parsed.orgSlug || league.playhqOrgSlug, playhqGradeId: parsed.gradeId || league.playhqGradeId, playhqGradeName: grade, currentSeason: season, scrapeEnabled: true, syncStatus: 'RUNNING', lastSyncAt: new Date(), dataSourceSyncError: null } })
+    league = await prisma.league.update({ where: { id: league.id }, data: { ...visibleFootballLeagueFields, sourceUrl: baseUrl, ladderUrl, playhqOrgSlug: parsed.orgSlug || league.playhqOrgSlug, playhqGradeId: parsed.gradeId || league.playhqGradeId, playhqGradeName: grade, currentSeason: season, syncStatus: 'RUNNING', lastSyncAt: new Date(), dataSourceSyncError: null, syncError: null } })
   }
   report.league = league.name; report.leagueId = league.id; report.isNew = isNew
   console.log(`[playhq-football] league ${isNew ? 'created' : 'updated'}: ${league.name} (${league.id})`)
+  await ensurePlayHqLeagueSource(league.id, season, ladderUrl, baseUrl)
 
   const clubByName = new Map<string, string>()
   let ladderWritten = 0
@@ -381,7 +383,7 @@ async function importFootballLeagueFromPlayHq(ladderUrl: string, rawUrl: string,
   await recordFootballImport(league.id, 'RESULTS', baseUrl, resultRows, resultsWritten, resultRows ? 0.8 : 0.2, resultRows ? 'COMMITTED' : 'PREVIEWED', { roundSummaries })
   console.log(`[playhq-football] parsed fixtures=${fixtureRows} results=${resultRows}; written fixtures=${fixturesWritten} results=${resultsWritten}`)
 
-  await prisma.league.update({ where: { id: league.id }, data: { syncStatus: 'SUCCESS', lastSuccessfulSyncAt: new Date(), lastSuccessAt: new Date(), syncError: null, dataSourceSyncError: null } })
+  await prisma.league.update({ where: { id: league.id }, data: { ...visibleFootballLeagueFields, syncStatus: 'SUCCESS', lastSuccessfulSyncAt: new Date(), lastSuccessAt: new Date(), lastSyncedAt: new Date(), syncError: null, dataSourceSyncError: null } })
 
   if (opts.rerank !== false) {
     const { clubsRanked } = await rankAndStore(getISOWeekLabel())
@@ -390,6 +392,14 @@ async function importFootballLeagueFromPlayHq(ladderUrl: string, rawUrl: string,
   }
   console.log(`[playhq-football] database records written: ladder=${ladderWritten} fixtures=${fixturesWritten} results=${resultsWritten} rankings=${report.rankingRecalculated}`)
   return report
+}
+
+
+async function ensurePlayHqLeagueSource(leagueId: string, season: string, ladderUrl: string, baseUrl: string): Promise<void> {
+  const existing = await prisma.leagueSource.findFirst({ where: { leagueId, season, sourceType: 'PLAYHQ' } })
+  const data = { ladderUrl, fixturesUrl: baseUrl, resultsUrl: baseUrl, isActive: true, lastStatus: 'SUCCESS', lastScrapedAt: new Date(), notes: 'Imported by PlayHQ URL workflow.' }
+  if (existing) await prisma.leagueSource.update({ where: { id: existing.id }, data })
+  else await prisma.leagueSource.create({ data: { leagueId, sourceType: 'PLAYHQ', season, ...data } })
 }
 
 function discoverRoundUrls(baseUrl: string, html: string): string[] {
