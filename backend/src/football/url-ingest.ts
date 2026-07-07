@@ -13,15 +13,22 @@
 
 import { logger } from '../utils/logger.js'
 
-export interface ResultRow { homeName: string; awayName: string; homeGoals?: number; homeBehinds?: number; homePoints?: number; awayGoals?: number; awayBehinds?: number; awayPoints?: number; round?: string; matchDate?: string; venue?: string }
-export interface FixtureRow { homeName: string; awayName: string; round?: string; matchDate?: string; time?: string; venue?: string }
-export interface LadderRow { clubName: string; position?: number; played?: number; wins?: number; losses?: number; draws?: number; pointsFor?: number; pointsAgainst?: number; percentage?: number; points?: number }
+export interface ResultRow { homeName: string; awayName: string; homeGoals?: number; homeBehinds?: number; homePoints?: number; awayGoals?: number; awayBehinds?: number; awayPoints?: number; round?: string; matchDate?: string; time?: string; venue?: string; status?: string; sourceUrl?: string }
+export interface FixtureRow { homeName: string; awayName: string; round?: string; matchDate?: string; time?: string; venue?: string; status?: string; sourceUrl?: string }
+export interface LadderRow { clubName: string; position?: number; played?: number; wins?: number; losses?: number; draws?: number; byes?: number; pointsFor?: number; pointsAgainst?: number; percentage?: number; points?: number; forfeits?: number; disqualified?: number; adjustedPoints?: number }
 export interface ParseOutcome<T> { rows: T[]; confidence: number; strategy: string; warnings: string[] }
 
 export interface FetchedPage { url: string; ok: boolean; status: number; contentType: string; body: string; error?: string }
 
 /** Fetch a page's text. Never throws — returns ok:false with a reason. */
 export async function fetchPage(url: string, timeoutMs = 15000): Promise<FetchedPage> {
+  if (shouldRenderPlayHq(url)) {
+    const rendered = await fetchRenderedPlayHqPage(url, timeoutMs).catch(e => {
+      logger.warn('PlayHQ rendered fetch failed, falling back to plain fetch', { url, detail: String(e) })
+      return null
+    })
+    if (rendered?.ok && rendered.body) return rendered
+  }
   try {
     const res = await fetch(url, {
       redirect: 'follow',
@@ -34,6 +41,53 @@ export async function fetchPage(url: string, timeoutMs = 15000): Promise<Fetched
   } catch (e) {
     logger.warn('fetchPage failed', { url, detail: String(e) })
     return { url, ok: false, status: 0, contentType: '', body: '', error: String(e) }
+  }
+}
+
+function shouldRenderPlayHq(url: string): boolean {
+  return /\/\/(?:www\.)?playhq\.com\//i.test(url) && process.env.PLAYFOOTY_RENDER_PLAYHQ === '1'
+}
+
+async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<FetchedPage> {
+  const { chromium } = await import('playwright')
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
+  const capturedJson: unknown[] = []
+  try {
+    const ctx = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      locale: 'en-AU',
+    })
+    const page = await ctx.newPage()
+    page.on('response', async response => {
+      const ct = response.headers()['content-type'] ?? ''
+      if (!ct.includes('json')) return
+      if (/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|analytics/i.test(response.url())) return
+      try { capturedJson.push(await response.json()) } catch { /* ignore */ }
+    })
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs })
+    if (/\/ladder(?:$|[?#])/i.test(url)) await enableAdvancedLadder(page)
+    await page.waitForTimeout(3500)
+    const html = await page.content()
+    return { url, ok: true, status: 200, contentType: 'text/html; rendered=playwright', body: `${html}\n<script id="__PLAYFOOTY_CAPTURED_JSON__" type="application/json">${JSON.stringify(capturedJson).replace(/</g, '\\u003c')}</script>` }
+  } finally {
+    await browser.close()
+  }
+}
+
+async function enableAdvancedLadder(page: import('playwright').Page): Promise<void> {
+  const controls = [
+    page.getByRole('button', { name: /show advanced ladder/i }),
+    page.getByRole('checkbox', { name: /show advanced ladder/i }),
+    page.getByText(/show advanced ladder/i),
+  ]
+  for (const control of controls) {
+    try {
+      if (await control.first().isVisible({ timeout: 1500 })) {
+        await control.first().click({ timeout: 3000 })
+        await page.waitForTimeout(1500)
+        return
+      }
+    } catch { /* try next selector */ }
   }
 }
 
@@ -54,6 +108,12 @@ function extractNextData(html: string): unknown | null {
   const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i.exec(html)
   if (!m) return null
   try { return JSON.parse(m[1]) } catch { return null }
+}
+
+function extractCapturedJson(html: string): unknown[] {
+  const m = /<script id="__PLAYFOOTY_CAPTURED_JSON__"[^>]*>([\s\S]*?)<\/script>/i.exec(html)
+  if (!m) return []
+  try { const json = JSON.parse(m[1]); return Array.isArray(json) ? json : [json] } catch { return [] }
 }
 
 /** Deep-walk a JSON value collecting objects that satisfy `pick`. */
@@ -77,21 +137,24 @@ const teamName = (v: unknown): string | undefined => {
 // ── structured (JSON / __NEXT_DATA__) extraction ──────────────────────────────
 function resultsFromJson(root: unknown): ResultRow[] {
   return walk<ResultRow>(root, o => {
-    const home = teamName(o.homeTeam ?? o.home ?? o.homeTeamName ?? o.homeName)
-    const away = teamName(o.awayTeam ?? o.away ?? o.awayTeamName ?? o.awayName)
+    const home = teamName(o.homeTeam ?? o.home ?? o.homeTeamName ?? o.homeName ?? o.homeCompetitor ?? o.homeSide)
+    const away = teamName(o.awayTeam ?? o.away ?? o.awayTeamName ?? o.awayName ?? o.awayCompetitor ?? o.awaySide)
     if (!home || !away) return null
-    const hg = asNum(o.homeGoals), hb = asNum(o.homeBehinds), hp = asNum(o.homeScore ?? o.homePoints)
-    const ag = asNum(o.awayGoals), ab = asNum(o.awayBehinds), ap = asNum(o.awayScore ?? o.awayPoints)
+    const hs = parseScoreValue(o.homeScore ?? o.homePoints ?? o.homeResult ?? o.home)
+    const as = parseScoreValue(o.awayScore ?? o.awayPoints ?? o.awayResult ?? o.away)
+    const hg = asNum(o.homeGoals) ?? hs?.goals, hb = asNum(o.homeBehinds) ?? hs?.behinds, hp = asNum(o.homeScore ?? o.homePoints) ?? hs?.total
+    const ag = asNum(o.awayGoals) ?? as?.goals, ab = asNum(o.awayBehinds) ?? as?.behinds, ap = asNum(o.awayScore ?? o.awayPoints) ?? as?.total
     if (hg == null && hp == null && ag == null && ap == null) return null // fixtures, not results
-    return { homeName: home, awayName: away, homeGoals: hg, homeBehinds: hb, homePoints: hp, awayGoals: ag, awayBehinds: ab, awayPoints: ap, round: str(o.round ?? o.roundName), matchDate: str(o.date ?? o.startDate ?? o.matchDate), venue: teamName(o.venue) }
+    return { homeName: home, awayName: away, homeGoals: hg, homeBehinds: hb, homePoints: hp, awayGoals: ag, awayBehinds: ab, awayPoints: ap, round: str(o.round ?? o.roundName), matchDate: str(o.date ?? o.startDate ?? o.matchDate ?? o.startTime), time: str(o.time ?? o.matchTime), venue: teamName(o.venue ?? o.venueName), status: str(o.status ?? o.matchStatus) }
   })
 }
 function fixturesFromJson(root: unknown): FixtureRow[] {
   return walk<FixtureRow>(root, o => {
-    const home = teamName(o.homeTeam ?? o.home ?? o.homeTeamName ?? o.homeName)
-    const away = teamName(o.awayTeam ?? o.away ?? o.awayTeamName ?? o.awayName)
+    const home = teamName(o.homeTeam ?? o.home ?? o.homeTeamName ?? o.homeName ?? o.homeCompetitor ?? o.homeSide)
+    const away = teamName(o.awayTeam ?? o.away ?? o.awayTeamName ?? o.awayName ?? o.awayCompetitor ?? o.awaySide)
     if (!home || !away) return null
-    return { homeName: home, awayName: away, round: str(o.round ?? o.roundName), matchDate: str(o.date ?? o.startDate ?? o.matchDate), time: str(o.time ?? o.startTime), venue: teamName(o.venue) }
+    if (parseScoreValue(o.homeScore ?? o.homePoints ?? o.homeResult) || parseScoreValue(o.awayScore ?? o.awayPoints ?? o.awayResult)) return null
+    return { homeName: home, awayName: away, round: str(o.round ?? o.roundName), matchDate: str(o.date ?? o.startDate ?? o.matchDate ?? o.startTime), time: str(o.time ?? o.startTime ?? o.matchTime), venue: teamName(o.venue ?? o.venueName), status: str(o.status ?? o.matchStatus) ?? 'upcoming' }
   })
 }
 function ladderFromJson(root: unknown): LadderRow[] {
@@ -100,10 +163,20 @@ function ladderFromJson(root: unknown): LadderRow[] {
     const played = asNum(o.played ?? o.P ?? o.games)
     const pts = asNum(o.points ?? o.premiershipPoints ?? o.pts)
     if (!club || (played == null && pts == null)) return null
-    return { clubName: club, position: asNum(o.position ?? o.rank), played, wins: asNum(o.wins ?? o.won ?? o.W), losses: asNum(o.losses ?? o.lost ?? o.L), draws: asNum(o.draws ?? o.drawn ?? o.D), pointsFor: asNum(o.pointsFor ?? o.for ?? o.scoreFor), pointsAgainst: asNum(o.pointsAgainst ?? o.against ?? o.scoreAgainst), percentage: asNum(o.percentage ?? o.percent), points: pts }
+    return { clubName: club, position: asNum(o.position ?? o.rank), played, wins: asNum(o.wins ?? o.won ?? o.W), losses: asNum(o.losses ?? o.lost ?? o.L), draws: asNum(o.draws ?? o.drawn ?? o.D), byes: asNum(o.bye ?? o.byes), pointsFor: asNum(o.pointsFor ?? o.for ?? o.scoreFor), pointsAgainst: asNum(o.pointsAgainst ?? o.against ?? o.scoreAgainst), percentage: asNum(o.percentage ?? o.percent), points: pts, forfeits: asNum(o.forfeit ?? o.forfeits), disqualified: asNum(o.disqualified), adjustedPoints: asNum(o.adjustedPoints ?? o.adjusted) }
   })
 }
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? clean(v) : undefined)
+const parseScoreValue = (v: unknown): { goals?: number; behinds?: number; total?: number } | null => {
+  if (typeof v === 'number') return { total: v }
+  if (typeof v === 'string') return parseScoreToken(v)
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    const goals = asNum(o.goals), behinds = asNum(o.behinds), total = asNum(o.total ?? o.points ?? o.score)
+    if (goals != null || behinds != null || total != null) return { goals, behinds, total: total ?? ((goals ?? 0) * 6 + (behinds ?? 0)) }
+  }
+  return null
+}
 
 // ── HTML text fallback (AFL score lines) ──────────────────────────────────────
 /** "Home Team 12.8 (80) def/d/v/beat Away Team 9.10 (64)". */
@@ -121,20 +194,58 @@ function resultsFromText(text: string): ResultRow[] {
   return out
 }
 
+function ladderFromHtml(html: string): LadderRow[] {
+  const tableMatches = [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map(m => m[0])
+  for (const table of tableMatches) {
+    const rowHtml = [...table.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map(m => m[0])
+    const rows = rowHtml.map(r => [...r.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(c => stripTags(c[1]))).filter(r => r.length >= 4)
+    if (rows.length < 2) continue
+    const headers = rows[0].map(h => h.toUpperCase())
+    const teamIdx = headers.findIndex(h => h === 'TEAM' || h.includes('TEAM') || h === 'CLUB')
+    if (teamIdx < 0) continue
+    const idx = (names: string[]) => headers.findIndex(h => names.some(n => h === n || h.includes(n)))
+    const posIdx = idx(['POS', 'POSITION'])
+    const playedIdx = idx(['PLAYED', 'PLD', 'P'])
+    const pointsIdx = idx(['PTS', 'POINTS'])
+    const pctIdx = idx(['%', 'PERC', 'PCT'])
+    const winsIdx = idx(['WINS', 'WON', 'W'])
+    const lossesIdx = idx(['LOSSES', 'LOST', 'L'])
+    const drawsIdx = idx(['DRAWS', 'DRAWN', 'D'])
+    const byeIdx = idx(['BYE'])
+    const forIdx = idx(['FOR'])
+    const againstIdx = idx(['AGAINST'])
+    const forfeitIdx = idx(['FORFEIT'])
+    const dqIdx = idx(['DISQUALIFIED'])
+    const adjustedIdx = idx(['ADJUSTED'])
+    const numAt = (r: string[], i: number) => i >= 0 ? asNum(r[i]?.replace(/[^\d.-]/g, '')) : undefined
+    const out = rows.slice(1).map((r, i): LadderRow | null => {
+      const clubName = clean(r[teamIdx] ?? '')
+      if (!clubName || clubName.toUpperCase() === 'TEAM') return null
+      return { clubName, position: numAt(r, posIdx) ?? i + 1, played: numAt(r, playedIdx), wins: numAt(r, winsIdx), losses: numAt(r, lossesIdx), draws: numAt(r, drawsIdx), byes: numAt(r, byeIdx), pointsFor: numAt(r, forIdx), pointsAgainst: numAt(r, againstIdx), percentage: numAt(r, pctIdx), points: numAt(r, pointsIdx), forfeits: numAt(r, forfeitIdx), disqualified: numAt(r, dqIdx), adjustedPoints: numAt(r, adjustedIdx) }
+    }).filter((r): r is LadderRow => !!r)
+    if (out.length >= 4) return out
+  }
+  return []
+}
+
 // ── public parse API ──────────────────────────────────────────────────────────
 export function parseResults(page: FetchedPage): ParseOutcome<ResultRow> {
   const warnings: string[] = []
   if (!page.ok) return { rows: [], confidence: 0, strategy: 'none', warnings: [page.error ?? 'fetch failed'] }
   // 1) JSON body
   if (page.contentType.includes('json')) {
-    try { const rows = resultsFromJson(JSON.parse(page.body)); if (rows.length) return { rows, confidence: 0.85, strategy: 'json', warnings } } catch { warnings.push('json parse failed') }
+    try { const rows = resultsFromJson(JSON.parse(page.body)); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.85, strategy: 'json', warnings } } catch { warnings.push('json parse failed') }
   }
   // 2) __NEXT_DATA__
   const nd = extractNextData(page.body)
-  if (nd) { const rows = resultsFromJson(nd); if (rows.length) return { rows, confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
+  if (nd) { const rows = resultsFromJson(nd); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
+  for (const json of extractCapturedJson(page.body)) {
+    const rows = resultsFromJson(json)
+    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings }
+  }
   // 3) HTML text
   const rows = resultsFromText(stripTags(page.body))
-  if (rows.length) return { rows, confidence: 0.6, strategy: 'html-text', warnings }
+  if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.6, strategy: 'html-text', warnings }
   warnings.push('no results could be extracted from this page (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
@@ -143,10 +254,14 @@ export function parseFixtures(page: FetchedPage): ParseOutcome<FixtureRow> {
   const warnings: string[] = []
   if (!page.ok) return { rows: [], confidence: 0, strategy: 'none', warnings: [page.error ?? 'fetch failed'] }
   if (page.contentType.includes('json')) {
-    try { const rows = fixturesFromJson(JSON.parse(page.body)); if (rows.length) return { rows, confidence: 0.85, strategy: 'json', warnings } } catch { warnings.push('json parse failed') }
+    try { const rows = fixturesFromJson(JSON.parse(page.body)); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.85, strategy: 'json', warnings } } catch { warnings.push('json parse failed') }
   }
   const nd = extractNextData(page.body)
-  if (nd) { const rows = fixturesFromJson(nd); if (rows.length) return { rows, confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
+  if (nd) { const rows = fixturesFromJson(nd); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
+  for (const json of extractCapturedJson(page.body)) {
+    const rows = fixturesFromJson(json)
+    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings }
+  }
   warnings.push('no fixtures could be extracted (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
@@ -159,6 +274,12 @@ export function parseLadder(page: FetchedPage): ParseOutcome<LadderRow> {
   }
   const nd = extractNextData(page.body)
   if (nd) { const rows = ladderFromJson(nd); if (rows.length) return { rows, confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
+  for (const json of extractCapturedJson(page.body)) {
+    const rows = ladderFromJson(json)
+    if (rows.length) return { rows, confidence: 0.9, strategy: 'playwright-json', warnings }
+  }
+  const rows = ladderFromHtml(page.body)
+  if (rows.length) return { rows, confidence: 0.7, strategy: 'html-table', warnings }
   warnings.push('no ladder could be extracted (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
