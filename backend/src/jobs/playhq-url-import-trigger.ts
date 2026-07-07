@@ -26,6 +26,7 @@ async function main() {
     const report = await importFromUrl(url, { rerank: true })
     console.log('\n═══ PLAYHQ URL IMPORT ═══')
     console.log(JSON.stringify(report, null, 2))
+    if (report.status !== 'SUCCESS') process.exitCode = 1
   } else if (syncId) {
     if (dryRun) {
       const league = await prisma.league.findUnique({ where: { id: syncId }, select: { id: true, name: true, sourceUrl: true, ladderUrl: true } })
@@ -35,6 +36,7 @@ async function main() {
       const report = await syncLeague(syncId, { rerank: true })
       console.log('\n═══ LEAGUE SYNC ═══')
       console.log(JSON.stringify(report, null, 2))
+      if (report.status !== 'SUCCESS') process.exitCode = 1
     }
   } else if (syncAll) {
     const leagues = await prisma.league.findMany({

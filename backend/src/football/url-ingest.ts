@@ -18,7 +18,7 @@ export interface FixtureRow { homeName: string; awayName: string; round?: string
 export interface LadderRow { clubName: string; position?: number; played?: number; wins?: number; losses?: number; draws?: number; byes?: number; pointsFor?: number; pointsAgainst?: number; percentage?: number; points?: number; forfeits?: number; disqualified?: number; adjustedPoints?: number }
 export interface ParseOutcome<T> { rows: T[]; confidence: number; strategy: string; warnings: string[] }
 
-export interface FetchedPage { url: string; ok: boolean; status: number; contentType: string; body: string; error?: string }
+export interface FetchedPage { url: string; ok: boolean; status: number; contentType: string; body: string; error?: string; diagnostics?: Record<string, unknown> }
 
 /** Fetch a page's text. Never throws — returns ok:false with a reason. */
 export async function fetchPage(url: string, timeoutMs = 15000): Promise<FetchedPage> {
@@ -65,16 +65,26 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<
       try { capturedJson.push(await response.json()) } catch { /* ignore */ }
     })
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs })
-    if (/\/ladder(?:$|[?#])/i.test(url)) await enableAdvancedLadder(page)
+    const title = await page.title().catch(() => '')
+    let advancedLadderFound = false
+    if (/\/ladder(?:$|[?#])/i.test(url)) advancedLadderFound = await enableAdvancedLadder(page)
     await page.waitForTimeout(3500)
+    const tableCount = await page.locator('table, [role="table"], [role="grid"]').count().catch(() => 0)
     const html = await page.content()
-    return { url, ok: true, status: 200, contentType: 'text/html; rendered=playwright', body: `${html}\n<script id="__PLAYFOOTY_CAPTURED_JSON__" type="application/json">${JSON.stringify(capturedJson).replace(/</g, '\\u003c')}</script>` }
+    const diagnostics = { title, advancedLadderFound, tableCount, capturedJsonCount: capturedJson.length }
+    logger.info('PlayHQ rendered page loaded', { url, ...diagnostics })
+    console.log(`[playhq-render] url=${url}`)
+    console.log(`[playhq-render] page title=${title || '(empty)'}`)
+    console.log(`[playhq-render] advanced ladder button found=${advancedLadderFound ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] tables found=${tableCount}`)
+    console.log(`[playhq-render] JSON responses captured=${capturedJson.length}`)
+    return { url, ok: true, status: 200, contentType: 'text/html; rendered=playwright', body: `${html}\n<script id="__PLAYFOOTY_CAPTURED_JSON__" type="application/json">${JSON.stringify(capturedJson).replace(/</g, '\\u003c')}</script>`, diagnostics }
   } finally {
     await browser.close()
   }
 }
 
-async function enableAdvancedLadder(page: import('playwright').Page): Promise<void> {
+async function enableAdvancedLadder(page: import('playwright').Page): Promise<boolean> {
   const controls = [
     page.getByRole('button', { name: /show advanced ladder/i }),
     page.getByRole('checkbox', { name: /show advanced ladder/i }),
@@ -85,10 +95,11 @@ async function enableAdvancedLadder(page: import('playwright').Page): Promise<vo
       if (await control.first().isVisible({ timeout: 1500 })) {
         await control.first().click({ timeout: 3000 })
         await page.waitForTimeout(1500)
-        return
+        return true
       }
     } catch { /* try next selector */ }
   }
+  return false
 }
 
 // ── low-level helpers ─────────────────────────────────────────────────────────
@@ -196,6 +207,7 @@ function resultsFromText(text: string): ResultRow[] {
 
 function ladderFromHtml(html: string): LadderRow[] {
   const tableMatches = [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map(m => m[0])
+  console.log(`[playhq-parse] HTML tables found=${tableMatches.length}`)
   for (const table of tableMatches) {
     const rowHtml = [...table.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map(m => m[0])
     const rows = rowHtml.map(r => [...r.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(c => stripTags(c[1]))).filter(r => r.length >= 4)
@@ -241,11 +253,11 @@ export function parseResults(page: FetchedPage): ParseOutcome<ResultRow> {
   if (nd) { const rows = resultsFromJson(nd); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
   for (const json of extractCapturedJson(page.body)) {
     const rows = resultsFromJson(json)
-    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings }
+    if (rows.length) { console.log(`[playhq-parse] result rows parsed=${rows.length} strategy=playwright-json`); return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings } }
   }
   // 3) HTML text
   const rows = resultsFromText(stripTags(page.body))
-  if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.6, strategy: 'html-text', warnings }
+  if (rows.length) { console.log(`[playhq-parse] result rows parsed=${rows.length} strategy=html-text`); return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.6, strategy: 'html-text', warnings } }
   warnings.push('no results could be extracted from this page (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
@@ -260,7 +272,7 @@ export function parseFixtures(page: FetchedPage): ParseOutcome<FixtureRow> {
   if (nd) { const rows = fixturesFromJson(nd); if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
   for (const json of extractCapturedJson(page.body)) {
     const rows = fixturesFromJson(json)
-    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings }
+    if (rows.length) { console.log(`[playhq-parse] fixture rows parsed=${rows.length} strategy=playwright-json`); return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings } }
   }
   warnings.push('no fixtures could be extracted (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
@@ -276,10 +288,10 @@ export function parseLadder(page: FetchedPage): ParseOutcome<LadderRow> {
   if (nd) { const rows = ladderFromJson(nd); if (rows.length) return { rows, confidence: 0.8, strategy: '__NEXT_DATA__', warnings } }
   for (const json of extractCapturedJson(page.body)) {
     const rows = ladderFromJson(json)
-    if (rows.length) return { rows, confidence: 0.9, strategy: 'playwright-json', warnings }
+    if (rows.length) { console.log(`[playhq-parse] ladder rows parsed=${rows.length} strategy=playwright-json`); return { rows, confidence: 0.9, strategy: 'playwright-json', warnings } }
   }
   const rows = ladderFromHtml(page.body)
-  if (rows.length) return { rows, confidence: 0.7, strategy: 'html-table', warnings }
+  if (rows.length) { console.log(`[playhq-parse] ladder rows parsed=${rows.length} strategy=html-table`); return { rows, confidence: 0.7, strategy: 'html-table', warnings } }
   warnings.push('no ladder could be extracted (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
