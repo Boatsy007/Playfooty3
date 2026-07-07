@@ -1,17 +1,17 @@
 /**
- * Got Netty Admin Panel — hybrid data engine control surface.
- * Password-gated (admin key stored locally). Tabs: Leagues, Clubs, Image
- * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
+ * PlayFooty Admin Panel — simple league operations control centre.
+ * Password-gated (admin key stored locally). Public-site inspired admin UI;
+ * backend workflows and data actions are unchanged.
  */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
 
-const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
-const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16, maxWidth: '100%', minWidth: 0 }
-const input: CSSProperties = { background: '#0d1220', border: `1px solid ${C.line}`, color: C.text, borderRadius: 6, padding: '7px 9px', fontSize: 13, width: '100%', maxWidth: '100%', boxSizing: 'border-box' }
-const btn = (bg = C.pink): CSSProperties => ({ background: bg, color: bg === C.gold ? '#111' : '#fff', border: 'none', borderRadius: 6, padding: '7px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer' })
-const th: CSSProperties = { textAlign: 'left', padding: '8px 10px', color: C.mute, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: `1px solid ${C.line}`, whiteSpace: 'nowrap' }
-const td: CSSProperties = { padding: '8px 10px', borderBottom: `1px solid ${C.line}`, fontSize: 13 }
+const C = { bg: '#f6f7fb', panel: '#ffffff', line: '#e6eaf2', text: '#172033', mute: '#68758a', pink: '#d71920', gold: '#f4c14d', green: '#128a4a', red: '#d71920', soft: '#fff4f4' }
+const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 18, padding: 20, maxWidth: '100%', minWidth: 0, boxShadow: '0 16px 38px rgba(23,32,51,.08)' }
+const input: CSSProperties = { background: '#fff', border: `1px solid ${C.line}`, color: C.text, borderRadius: 12, padding: '10px 12px', fontSize: 14, width: '100%', maxWidth: '100%', boxSizing: 'border-box', outlineColor: C.pink }
+const btn = (bg = C.pink): CSSProperties => ({ background: bg, color: bg === C.gold ? '#111' : bg === '#fff' ? C.text : '#fff', border: bg === '#fff' ? `1px solid ${C.line}` : 'none', borderRadius: 999, padding: '10px 15px', fontSize: 13, fontWeight: 850, cursor: 'pointer', boxShadow: bg === C.pink ? '0 10px 22px rgba(215,25,32,.18)' : 'none' })
+const th: CSSProperties = { textAlign: 'left', padding: '10px 12px', color: C.mute, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.6, borderBottom: `1px solid ${C.line}`, whiteSpace: 'nowrap' }
+const td: CSSProperties = { padding: '10px 12px', borderBottom: `1px solid ${C.line}`, fontSize: 13 }
 
 /**
  * Scoped mobile-safety CSS. Prevents horizontal page overflow, wraps long URLs,
@@ -26,7 +26,9 @@ const ADMIN_CSS = `
 .pf-admin .pf-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
 .pf-admin .pf-break { overflow-wrap: anywhere; word-break: break-word; }
 .pf-admin table { border-collapse: collapse; }
-.pf-admin button { max-width: 100%; white-space: normal; }
+.pf-admin button { max-width: 100%; white-space: normal; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.pf-admin button:hover { transform: translateY(-1px); }
+.pf-admin summary { color: #172033; }
 @media (max-width: 640px) {
   .pf-admin .pf-grid { grid-template-columns: 1fr !important; }
   .pf-admin .pf-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -56,9 +58,9 @@ function useToast() {
 
 const TABS = [
   ['dashboard', 'Dashboard'], ['leagues', 'Leagues'], ['clubs', 'Clubs'], ['fixtures', 'Fixtures'], ['results', 'Results'],
-  ['rankings', 'Rankings'], ['newsroom', 'Newsroom'], ['reviews', 'Review Queue'], ['system', 'System'],
+  ['imports', 'Imports'], ['reviews', 'Reviews'], ['settings', 'Settings'],
 ] as const
-type Tab = typeof TABS[number][0]
+type Tab = typeof TABS[number][0] | 'publishing'
 
 export default function Admin() {
   const [authed, setAuthed] = useState(!!getKey())
@@ -71,16 +73,16 @@ export default function Admin() {
   if (!authed) return <Login onIn={() => setAuthed(true)} />
 
   return (
-    <div className="pf-admin" style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="pf-admin" style={{ background: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
       <style>{ADMIN_CSS}</style>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px clamp(12px, 4vw, 20px)' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '24px clamp(14px, 4vw, 28px) 48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 10, flexWrap: 'wrap' }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(18px, 5vw, 22px)', letterSpacing: 0.5 }}>PLAYFOOTY <span style={{ color: C.pink }}>Admin</span></h1>
-          <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
+          <div><div style={{ color: C.pink, fontSize: 11, fontWeight: 950, letterSpacing: '.16em', textTransform: 'uppercase' }}>PlayFooty Admin</div><h1 style={{ margin: '4px 0 0', fontSize: 'clamp(28px, 6vw, 44px)', letterSpacing: '-.055em', lineHeight: 1 }}>Control Centre</h1></div>
+          <button style={{ ...btn('#fff'), color: C.mute, border: `1px solid ${C.line}`, boxShadow: 'none' }} onClick={() => { clearKey(); setAuthed(false) }}>Sign out</button>
         </div>
         <div className="pf-tabs" style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
           {TABS.map(([x, label]) => (
-            <button key={x} onClick={() => setTab(x)} style={{ ...btn(tab === x ? C.pink : '#1b2233'), color: tab === x ? '#fff' : C.mute }}>
+            <button key={x} onClick={() => setTab(x)} style={{ ...btn(tab === x ? C.pink : '#fff'), color: tab === x ? '#fff' : C.text, border: `1px solid ${tab === x ? C.pink : C.line}`, boxShadow: tab === x ? '0 10px 22px rgba(215,25,32,.18)' : 'none' }}>
               {label}{x === 'reviews' && pending > 0 && <span style={{ marginLeft: 6, background: C.gold, color: '#111', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{pending}</span>}
             </button>
           ))}
@@ -91,10 +93,10 @@ export default function Admin() {
         {tab === 'clubs' && <Clubs toast={t.show} />}
         {tab === 'fixtures' && <FixtureResultsOps kind="fixtures" toast={t.show} />}
         {tab === 'results' && <FixtureResultsOps kind="results" toast={t.show} />}
-        {tab === 'newsroom' && <Publishing toast={t.show} />}
+        {tab === 'imports' && <ImportsOps toast={t.show} />}
         {tab === 'reviews' && <Reviews toast={t.show} />}
-        {tab === 'rankings' && <Rankings toast={t.show} />}
-        {tab === 'system' && <SystemOps toast={t.show} />}
+        {tab === 'settings' && <SystemOps toast={t.show} />}
+        {tab === 'publishing' && <Publishing toast={t.show} />}
       </div>
       {t.node}
     </div>
@@ -120,24 +122,26 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
   const lastSync = football.map(l => l.lastSuccessfulSyncAt ?? l.lastSyncAt).filter(Boolean).sort().at(-1)
   const latestImport = football.map(l => ({ name: l.name, count: l._count?.footballImports ?? 0, sync: l.lastSyncAt })).filter(x => x.count || x.sync).sort((a, b) => String(b.sync ?? '').localeCompare(String(a.sync ?? '')))[0]
   const waitingArticles = articles.filter(a => a.status !== 'PUBLISHED').length
-  const stat = (label: string, value: number | string, colour = C.text, onClick?: () => void) => (
-    <div style={{ ...box, cursor: onClick ? 'pointer' : 'default', minWidth: 130 }} onClick={onClick}>
-      <div style={{ fontSize: 28, fontWeight: 800, color: colour }}>{value}</div>
-      <div style={{ color: C.mute, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
-    </div>
-  )
   const fmt = (s?: string | null) => s ? new Date(s).toLocaleString() : '—'
+  const actions: Array<{ icon: string; title: string; text: string; button: string; status?: string; tone?: string; tab: Tab }> = [
+    { icon: '🏟️', title: 'Build a League', text: 'Create a league, choose the data source and open its control centre.', button: 'Start league', status: `${football.length} live`, tab: 'leagues' },
+    { icon: '🛡️', title: 'Add Club', text: 'Add or review clubs connected to a football league.', button: 'Manage clubs', status: `${footballClubs || 0} clubs`, tab: 'clubs' },
+    { icon: '👥', title: 'Add Team', text: 'Prepare team records through the club workspace before fixtures go live.', button: 'Open clubs', status: 'Club first', tab: 'clubs' },
+    { icon: '📅', title: 'Add Fixture', text: 'Add upcoming matches from a league workspace or import feed.', button: 'View fixtures', status: `${fixtures} fixtures`, tab: 'fixtures' },
+    { icon: '🏉', title: 'Add Result', text: 'Record scores, regenerate ladders and send conflicts to review.', button: 'Enter results', status: `${results} results`, tab: 'results' },
+    { icon: '🔴', title: 'Import from PlayHQ', text: 'Dispatch or track PlayHQ imports without running scraping in Vercel.', button: 'Open imports', status: latestImport ? 'Recent import' : 'Ready', tab: 'imports' },
+    { icon: '✅', title: 'Review Data', text: 'Approve conflicts, duplicate checks and items needing attention.', button: 'Review queue', status: `${d.counts.pendingReviews} pending`, tone: d.counts.pendingReviews ? C.gold : C.green, tab: 'reviews' },
+    { icon: '🚀', title: 'Publish Updates', text: 'Review drafts and publish approved updates when data is ready.', button: 'Publish', status: `${waitingArticles} waiting`, tone: waitingArticles ? C.gold : C.green, tab: 'publishing' },
+  ]
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        {stat('Football leagues', football.length, C.text, () => go('leagues'))}
-        {stat('Football clubs', footballClubs || '—', C.text, () => go('clubs'))}
-        {stat('Current season', football[0]?.currentSeason ?? '—')}
-        {stat('Fixtures', fixtures, C.text, () => go('fixtures'))}
-        {stat('Results', results, C.text, () => go('results'))}
-        {stat('Pending reviews', d.counts.pendingReviews, d.counts.pendingReviews ? C.gold : C.green, () => go('reviews'))}
-        {stat('Articles waiting', waitingArticles, waitingArticles ? C.gold : C.green, () => go('newsroom'))}
-        {stat('Warnings', d.warnings, d.warnings ? C.red : C.green)}
+    <div style={{ display: 'grid', gap: 20 }}>
+      <section style={{ ...box, padding: '26px clamp(18px, 4vw, 34px)', background: 'linear-gradient(135deg,#fff,#fff7f7)' }}>
+        <span style={{ display: 'inline-flex', borderRadius: 999, background: C.soft, color: C.pink, padding: '7px 10px', fontSize: 11, fontWeight: 950, letterSpacing: '.12em', textTransform: 'uppercase' }}>Today in PlayFooty</span>
+        <h2 style={{ margin: '14px 0 8px', fontSize: 'clamp(32px,7vw,62px)', lineHeight: .9, letterSpacing: '-.07em' }}>What would you like to do?</h2>
+        <p style={{ margin: 0, color: C.mute, fontSize: 16, maxWidth: 720 }}>Choose a simple action below. The technical import, review and publish tools stay available, but the first screen focuses on everyday league operations.</p>
+      </section>
+      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 16 }}>
+        {actions.map(a => <ActionCard key={a.title} {...a} onClick={() => go(a.tab)} />)}
       </div>
       <div style={box}>
         <b>Operations status</b>
@@ -160,7 +164,9 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
           </div>
         </div>
       )}
-      <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <details style={box}>
+        <summary style={{ cursor: 'pointer', fontWeight: 900 }}>Advanced activity</summary>
+        <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 14 }}>
         <div style={box}>
           <b>Recent football leagues</b>
           <div style={{ marginTop: 8 }}>{football.slice(0, 8).map(l => <div key={l.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{l.name} <span style={{ float: 'right' }}>{l.syncStatus}</span></div>)}</div>
@@ -171,8 +177,23 @@ function Dashboard({ toast, go }: { toast: (t: string, ok?: boolean) => void; go
           <div style={{ marginTop: 8 }}>{articles.filter(a => a.status === 'PUBLISHED').slice(0, 8).map(a => <div key={a.id} style={{ fontSize: 13, padding: '3px 0', color: C.mute }}>{a.title} <span style={{ float: 'right' }}>{fmt(a.publishedAt)}</span></div>)}</div>
           {articles.filter(a => a.status === 'PUBLISHED').length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No published articles yet.</p>}
         </div>
-      </div>
+        </div>
+      </details>
     </div>
+  )
+}
+
+function ActionCard({ icon, title, text, button, status, tone = C.pink, onClick }: { icon: string; title: string; text: string; button: string; status?: string; tone?: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ ...box, textAlign: 'left', cursor: 'pointer', minHeight: 210, display: 'flex', flexDirection: 'column', alignItems: 'stretch', color: C.text }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+        <span style={{ width: 44, height: 44, borderRadius: 16, background: C.soft, display: 'grid', placeItems: 'center', fontSize: 22 }}>{icon}</span>
+        {status && <span style={{ borderRadius: 999, border: `1px solid ${C.line}`, color: tone, padding: '5px 8px', fontSize: 11, fontWeight: 900 }}>{status}</span>}
+      </div>
+      <h3 style={{ margin: '18px 0 8px', fontSize: 23, letterSpacing: '-.04em', lineHeight: 1.02 }}>{title}</h3>
+      <p style={{ margin: 0, color: C.mute, fontSize: 13, lineHeight: 1.45 }}>{text}</p>
+      <span style={{ marginTop: 'auto', color: C.pink, fontSize: 12, fontWeight: 950, letterSpacing: '.1em', textTransform: 'uppercase', paddingTop: 16 }}>{button} →</span>
+    </button>
   )
 }
 
@@ -230,21 +251,38 @@ function FixtureResultsOps({ kind, toast }: { kind: 'fixtures' | 'results'; toas
   )
 }
 
-function SystemOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
-  const [section, setSection] = useState<'playhq' | 'csv' | 'ocr' | 'audit' | 'backups' | 'settings'>('playhq')
+function ImportsOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [section, setSection] = useState<'playhq' | 'csv' | 'image'>('playhq')
   const sections = [
-    ['playhq', 'PlayHQ Import'], ['csv', 'CSV Import'], ['ocr', 'Image Import'], ['audit', 'Audit Log'], ['backups', 'Backups'], ['settings', 'Settings'],
+    ['playhq', 'PlayHQ'], ['csv', 'CSV'], ['image', 'Image'],
+  ] as const
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ ...box, background: 'linear-gradient(135deg,#fff,#fff7f7)' }}>
+        <b style={{ fontSize: 22 }}>Imports</b>
+        <p style={{ color: C.mute, fontSize: 14, margin: '8px 0 14px', maxWidth: 720 }}>Bring data into PlayFooty from PlayHQ, CSV files or image uploads. Imports stay separated from publishing so admins can review first.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{sections.map(([id, label]) => <button key={id} style={{ ...btn(section === id ? C.pink : '#fff'), color: section === id ? '#fff' : C.text, border: `1px solid ${section === id ? C.pink : C.line}`, boxShadow: section === id ? '0 10px 22px rgba(215,25,32,.18)' : 'none' }} onClick={() => setSection(id)}>{label}</button>)}</div>
+      </div>
+      {section === 'playhq' && <PlayHQImport toast={toast} />}
+      {section === 'csv' && <CsvImport toast={toast} />}
+      {section === 'image' && <ImageImport toast={toast} />}
+    </div>
+  )
+}
+
+function SystemOps({ toast }: { toast: (t: string, ok?: boolean) => void }) {
+  const [section, setSection] = useState<'audit' | 'backups' | 'settings' | 'rankings'>('settings')
+  const sections = [
+    ['settings', 'Settings'], ['rankings', 'Rankings'], ['audit', 'Audit Log'], ['backups', 'Backups'],
   ] as const
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={box}>
-        <b>System</b>
-        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 12px' }}>Legacy utilities are preserved here so the main admin navigation stays focused on operating leagues.</p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{sections.map(([id, label]) => <button key={id} style={btn(section === id ? C.pink : '#1b2233')} onClick={() => setSection(id)}>{label}</button>)}</div>
+        <b style={{ fontSize: 22 }}>Settings</b>
+        <p style={{ color: C.mute, fontSize: 13, margin: '6px 0 12px' }}>Advanced tools are tucked away here so day-to-day admin stays simple.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{sections.map(([id, label]) => <button key={id} style={{ ...btn(section === id ? C.pink : '#fff'), color: section === id ? '#fff' : C.text, border: `1px solid ${section === id ? C.pink : C.line}`, boxShadow: section === id ? '0 10px 22px rgba(215,25,32,.18)' : 'none' }} onClick={() => setSection(id)}>{label}</button>)}</div>
       </div>
-      {section === 'playhq' && <PlayHQImport toast={toast} />}
-      {section === 'csv' && <CsvImport toast={toast} />}
-      {section === 'ocr' && <ImageImport toast={toast} />}
+      {section === 'rankings' && <Rankings toast={toast} />}
       {section === 'audit' && <AuditLog toast={toast} />}
       {section === 'backups' && <Backups toast={toast} />}
       {section === 'settings' && <Settings toast={toast} />}
@@ -271,7 +309,7 @@ function AdminGlobalSearch({ toast, go }: { toast: (t: string, ok?: boolean) => 
   const results = needle.length < 2 ? [] : [
     ...leagues.filter(l => l.name.toLowerCase().includes(needle)).slice(0, 5).map(l => ({ type: 'League', label: l.name, meta: `${l.state?.code ?? '—'} · ${l.syncStatus}`, tab: 'leagues' as Tab })),
     ...clubs.filter(c => c.name.toLowerCase().includes(needle)).slice(0, 5).map(c => ({ type: 'Club', label: c.name, meta: c.state?.code ?? '—', tab: 'clubs' as Tab })),
-    ...articles.filter(a => a.title.toLowerCase().includes(needle)).slice(0, 5).map(a => ({ type: 'Article', label: a.title, meta: a.status, tab: 'newsroom' as Tab })),
+    ...articles.filter(a => a.title.toLowerCase().includes(needle)).slice(0, 5).map(a => ({ type: 'Article', label: a.title, meta: a.status, tab: 'publishing' as Tab })),
   ]
   return (
     <div style={{ ...box, marginBottom: 18, padding: 12 }}>
@@ -333,7 +371,7 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
           {rows.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No football leagues yet. Add one above to open its control centre.</p>}
           <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
             {rows.map(r => (
-              <button key={r.id} onClick={() => setSelectedId(r.id)} style={{ textAlign: 'left', cursor: 'pointer', border: `1px solid ${selectedId === r.id ? C.pink : C.line}`, borderRadius: 8, padding: 10, background: selectedId === r.id ? 'rgba(255,44,145,.08)' : '#0d1220', color: C.text }}>
+              <button key={r.id} onClick={() => setSelectedId(r.id)} style={{ textAlign: 'left', cursor: 'pointer', border: `1px solid ${selectedId === r.id ? C.pink : C.line}`, borderRadius: 8, padding: 10, background: selectedId === r.id ? 'rgba(215,25,32,.07)' : '#f8fafc', color: C.text }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                   <b className="pf-break">{r.name}</b>
                   <span style={{ color: r.syncStatus === 'SUCCESS' ? C.green : r.syncStatus === 'NEEDS_REVIEW' ? C.gold : C.mute, fontSize: 12 }}>{r.syncStatus}</span>
@@ -391,7 +429,7 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
       </div>
 
       <div className="pf-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {LC_TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? C.pink : '#1b2233'), color: tab === t ? '#fff' : C.mute, padding: '5px 10px', fontSize: 12, whiteSpace: 'nowrap' }}>{t}</button>)}
+        {LC_TABS.map(t => <button key={t} onClick={() => setTab(t)} style={{ ...btn(tab === t ? C.pink : '#fff'), color: tab === t ? '#fff' : C.mute, padding: '5px 10px', fontSize: 12, whiteSpace: 'nowrap' }}>{t}</button>)}
       </div>
 
       {tab === 'Overview' && (
@@ -399,7 +437,7 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
           <b>Overview</b>
           <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 10 }}>
             {[['Results', results], ['Fixtures', fixtures], ['Ladder rows', ladderRows], ['Clubs', league._count?.clubSeasons ?? 0]].map(([l, v]) => (
-              <div key={l} style={{ background: '#0d1220', border: `1px solid ${C.line}`, borderRadius: 8, padding: 12 }}><div style={{ fontSize: 24, fontWeight: 800 }}>{v}</div><div style={{ color: C.mute, fontSize: 11 }}>{l}</div></div>
+              <div key={l} style={{ background: '#f8fafc', border: `1px solid ${C.line}`, borderRadius: 8, padding: 12 }}><div style={{ fontSize: 24, fontWeight: 800 }}>{v}</div><div style={{ color: C.mute, fontSize: 11 }}>{l}</div></div>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
@@ -417,7 +455,7 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
         <div style={box}>
           <b>{tab}</b>
           <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>{tab === 'Fixtures' ? fixtures : results} {tab.toLowerCase()} recorded for this league. Add or correct {tab.toLowerCase()} from <b>Round Backfill</b> (paste rows per round). Future-round fixture URLs feed club <i>Up Next</i> once the public fixtures wiring is connected.</p>
-          <div style={{ background: '#0d1220', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginTop: 8, color: C.mute, fontSize: 12 }}>
+          <div style={{ background: '#f8fafc', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginTop: 8, color: C.mute, fontSize: 12 }}>
             No admin endpoint lists individual football {tab.toLowerCase()} rows yet — counts and imports are available; a per-row {tab.toLowerCase()} browser needs a backend list endpoint (see report).
           </div>
         </div>
@@ -480,7 +518,7 @@ function SourceSetup({ league, toast, onChanged }: { league: FootballLeague; toa
       <p style={{ color: C.mute, fontSize: 11, marginTop: 8 }}>Note: the source endpoint persists the primary source, PlayHQ IDs and source URL. A dedicated persisted Ladder/Fixture URL field is not stored server-side yet (see report) — these are applied as import provenance.</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
         <button disabled={busy} style={btn()} onClick={save}>Save source setup</button>
-        <button disabled={busy} style={btn('#2a3145')} onClick={drySync}>Run dry sync</button>
+        <button disabled={busy} style={btn('#fff')} onClick={drySync}>Run dry sync</button>
       </div>
     </div>
   )
@@ -529,7 +567,7 @@ function RoundBackfill({ league, season, grade, toast, onChanged, goReviews }: {
         <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 10px' }}>Add every round and paste its Results URL (and Fixture URL for future rounds). The backend fetches each page, parses the football scores, auto-creates any missing clubs, stores provenance, routes conflicts to review, and regenerates the ladder from results. Idempotent — re-importing never duplicates. No row copying.</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <Field label="Import source"><select style={{ ...input, width: 170 }} value={source} onChange={e => setSource(e.target.value)}>{DATA_SOURCES.map(s => <option key={s}>{s}</option>)}</select></Field>
-          <button style={btn('#2a3145')} onClick={add}>+ Add round</button>
+          <button style={btn('#fff')} onClick={add}>+ Add round</button>
           <button disabled={busy} style={btn(C.green)} onClick={() => importRounds(rounds, 'Entire season')}>Import entire season</button>
           <button disabled={busy} style={btn()} onClick={() => importRounds(rounds.filter(r => r.selected), 'Selected')}>Import selected</button>
           <button disabled={busy} style={btn()} onClick={() => importRounds(previousRounds(), 'Previous rounds')}>Import previous rounds</button>
@@ -552,7 +590,7 @@ function RoundBackfill({ league, season, grade, toast, onChanged, goReviews }: {
             <span style={{ flex: 1 }} />
             <button disabled={busy} style={btn(C.green)} onClick={() => importOne(r)}>Import round</button>
             <button style={btn(C.gold)} onClick={goReviews}>Review</button>
-            <button style={{ ...btn('#2a3145'), color: C.red }} onClick={() => remove(r.key)}>Remove</button>
+            <button style={{ ...btn('#fff'), color: C.red }} onClick={() => remove(r.key)}>Remove</button>
           </div>
         </div>
       ))}
@@ -628,12 +666,12 @@ function LeagueReviews({ league, toast }: { league: FootballLeague; toast: (t: s
       {items.length === 0 && <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>No pending reviews tied to this league. Conflicts and uncertain imports appear here.</p>}
       <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
         {items.map(it => (
-          <div key={it.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: '#0d1220' }}>
+          <div key={it.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, background: '#f8fafc' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ background: '#1b2233', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
+              <span style={{ background: '#fff', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button style={btn(C.green)} onClick={() => resolve(it.id, 'APPROVED')}>Approve</button>
-                <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
+                <button style={{ ...btn('#fff'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
                 <button style={btn(C.red)} onClick={() => resolve(it.id, 'REJECTED')}>Reject</button>
               </div>
             </div>
@@ -688,7 +726,7 @@ function CsvImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
             {CSV_ENTITIES.map(x => <option key={x} value={x}>{x[0].toUpperCase() + x.slice(1)}</option>)}
           </select>
           <input type="file" accept=".csv,text/csv" onChange={e => onFile(e.target.files?.[0] ?? null)} style={{ color: C.mute, fontSize: 13 }} />
-          <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setCsv(CSV_TEMPLATES[entity] + '\n')}>Insert header template</button>
+          <button style={{ ...btn('#fff'), color: C.mute }} onClick={() => setCsv(CSV_TEMPLATES[entity] + '\n')}>Insert header template</button>
         </div>
         <textarea style={{ ...input, marginTop: 10, minHeight: 120, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} placeholder={CSV_TEMPLATES[entity]} value={csv} onChange={e => setCsv(e.target.value)} />
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
@@ -802,8 +840,8 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
       <div style={{ ...box, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <b style={{ marginRight: 8 }}>Bulk</b>
         <button disabled={busy} style={btn()} onClick={() => dispatch(() => admin.syncAll(), 'Sync-all dispatched')}>↻ Sync all leagues (weekly)</button>
-        <button disabled={busy} style={btn('#2a3145')} onClick={() => dispatch(() => admin.discover({}), 'Discovery dispatched')}>Discover new leagues</button>
-        <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={loadRuns}>Refresh status</button>
+        <button disabled={busy} style={btn('#fff')} onClick={() => dispatch(() => admin.discover({}), 'Discovery dispatched')}>Discover new leagues</button>
+        <button style={{ ...btn('#fff'), color: C.mute }} onClick={loadRuns}>Refresh status</button>
       </div>
 
       <RunList runs={runs} title="Recent import / sync runs" />
@@ -847,7 +885,7 @@ function Publishing({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
           {['ALL', 'DRAFT', 'APPROVED', 'PUBLISHED', 'ARCHIVED'].map(s => (
-            <button key={s} onClick={() => setStatus(s)} style={{ ...btn(status === s ? C.pink : '#1b2233'), color: status === s ? '#fff' : C.mute, padding: '5px 11px', fontSize: 12 }}>
+            <button key={s} onClick={() => setStatus(s)} style={{ ...btn(status === s ? C.pink : '#fff'), color: status === s ? '#fff' : C.mute, padding: '5px 11px', fontSize: 12 }}>
               {s[0] + s.slice(1).toLowerCase()}{s !== 'ALL' && countOf(s) > 0 && <span style={{ marginLeft: 6, background: ART_STATUS_COLOUR[s], color: '#111', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{countOf(s)}</span>}
             </button>
           ))}
@@ -859,7 +897,7 @@ function Publishing({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           <span style={{ color: C.mute, fontSize: 13 }}>{sel.size} selected</span>
           <button disabled={busy} style={btn('#4dd9f4')} onClick={() => bulk('APPROVED')}>Approve all</button>
           <button disabled={busy} style={btn(C.green)} onClick={() => bulk('PUBLISHED')}>Publish all</button>
-          <button disabled={busy} style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => bulk('ARCHIVED')}>Archive all</button>
+          <button disabled={busy} style={{ ...btn('#fff'), color: C.mute }} onClick={() => bulk('ARCHIVED')}>Archive all</button>
         </div>
       )}
 
@@ -867,20 +905,20 @@ function Publishing({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         {items.length === 0 && <p style={{ color: C.mute, fontSize: 13 }}>No articles yet. Click “Generate weekly drafts” after importing this week's results.</p>}
         <div style={{ display: 'grid', gap: 8 }}>
           {items.map(a => (
-            <div key={a.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: '#0d1220', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div key={a.id} style={{ border: `1px solid ${C.line}`, borderRadius: 8, padding: 12, background: '#f8fafc', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <input type="checkbox" checked={sel.has(a.id)} onChange={() => toggle(a.id)} style={{ marginTop: 5 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#1b2233', color: ART_STATUS_COLOUR[a.status], padding: '2px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em' }}>{a.status}</span>
+                  <span style={{ background: '#fff', color: ART_STATUS_COLOUR[a.status], padding: '2px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em' }}>{a.status}</span>
                   <span style={{ color: C.mute, fontSize: 11 }}>{a.kind.replace(/_/g, ' ').toLowerCase()}{a.weekLabel ? ` · ${a.weekLabel}` : ''}</span>
                 </div>
                 <div style={{ fontSize: 14.5, fontWeight: 700, marginTop: 5 }}>{a.title}</div>
                 <div style={{ color: C.mute, fontSize: 12.5, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{a.summary}</div>
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 260 }}>
-                <button style={{ ...btn('#2a3145'), color: C.text }} onClick={async () => { try { setEditing(await admin.getArticle(a.id)) } catch (e) { toast((e as Error).message, false) } }}>Edit</button>
+                <button style={{ ...btn('#fff'), color: C.text }} onClick={async () => { try { setEditing(await admin.getArticle(a.id)) } catch (e) { toast((e as Error).message, false) } }}>Edit</button>
                 {a.status !== 'PUBLISHED' && <button style={btn(C.green)} onClick={() => setStatusOne(a.id, 'PUBLISHED')}>Publish</button>}
-                {a.status === 'PUBLISHED' && <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setStatusOne(a.id, 'DRAFT')}>Unpublish</button>}
+                {a.status === 'PUBLISHED' && <button style={{ ...btn('#fff'), color: C.mute }} onClick={() => setStatusOne(a.id, 'DRAFT')}>Unpublish</button>}
                 {a.status === 'DRAFT' && <button style={btn('#4dd9f4')} onClick={() => setStatusOne(a.id, 'APPROVED')}>Approve</button>}
               </div>
             </div>
@@ -911,7 +949,7 @@ function ArticleEditor({ article, onClose, onSaved, toast }: { article: ArticleF
     <div style={{ display: 'grid', gap: 14 }}>
       <div style={{ ...box, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <b>Edit article <span style={{ color: C.mute, fontWeight: 400, fontSize: 12 }}>· {article.kind.replace(/_/g, ' ').toLowerCase()}</span></b>
-        <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={onClose}>← Back</button>
+        <button style={{ ...btn('#fff'), color: C.mute }} onClick={onClose}>← Back</button>
       </div>
       <div style={box}>
         <label style={{ color: C.mute, fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Headline</label>
@@ -968,9 +1006,9 @@ function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ ...box, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <b style={{ marginRight: 4 }}>Filter</b>
-        <button style={{ ...btn(kind === '' ? C.pink : '#1b2233'), color: kind === '' ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind('')}>All</button>
+        <button style={{ ...btn(kind === '' ? C.pink : '#fff'), color: kind === '' ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind('')}>All</button>
         {kinds.map(k => (
-          <button key={k.kind} style={{ ...btn(kind === k.kind ? C.pink : '#1b2233'), color: kind === k.kind ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind(kind === k.kind ? '' : k.kind)}>
+          <button key={k.kind} style={{ ...btn(kind === k.kind ? C.pink : '#fff'), color: kind === k.kind ? '#fff' : C.mute, padding: '4px 10px', fontSize: 12 }} onClick={() => setKind(kind === k.kind ? '' : k.kind)}>
             {k.kind.replace(/_/g, ' ').toLowerCase()} <span style={{ background: C.gold, color: '#111', borderRadius: 8, padding: '0 6px', marginLeft: 4 }}>{k.count}</span>
           </button>
         ))}
@@ -978,7 +1016,7 @@ function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         <select style={{ ...input, width: 130 }} value={status} onChange={e => setStatus(e.target.value)}>
           <option value="PENDING">Pending</option><option value="ALL">All</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="IGNORED">Ignored</option>
         </select>
-        <button disabled={busy} style={btn('#2a3145')} onClick={sweep}>{busy ? 'Working…' : '⟳ Run quality sweep'}</button>
+        <button disabled={busy} style={btn('#fff')} onClick={sweep}>{busy ? 'Working…' : '⟳ Run quality sweep'}</button>
       </div>
 
       <div style={box}>
@@ -988,7 +1026,7 @@ function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ color: C.mute, fontSize: 12 }}>{selected.size} selected</span>
               <button disabled={busy} style={btn(C.green)} onClick={() => bulk('APPROVED')}>Approve all</button>
-              <button disabled={busy} style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => bulk('IGNORED')}>Ignore all</button>
+              <button disabled={busy} style={{ ...btn('#fff'), color: C.mute }} onClick={() => bulk('IGNORED')}>Ignore all</button>
               <button disabled={busy} style={btn(C.red)} onClick={() => bulk('REJECTED')}>Reject all</button>
             </div>
           )}
@@ -1002,12 +1040,12 @@ function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         )}
         <div style={{ display: 'grid', gap: 8 }}>
           {items.map(it => (
-            <div key={it.id} style={{ border: `1px solid ${selected.has(it.id) ? C.pink : C.line}`, borderRadius: 8, padding: 12, background: '#0d1220' }}>
+            <div key={it.id} style={{ border: `1px solid ${selected.has(it.id) ? C.pink : C.line}`, borderRadius: 8, padding: 12, background: '#f8fafc' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   {it.status === 'PENDING' && <input type="checkbox" checked={selected.has(it.id)} onChange={() => toggle(it.id)} style={{ marginTop: 4 }} />}
                   <div>
-                    <span style={{ background: '#1b2233', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
+                    <span style={{ background: '#fff', color: C.gold, padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>{it.kind}</span>
                     <span style={{ color: C.mute, fontSize: 12, marginLeft: 8 }}>{it.entityType} · {new Date(it.createdAt).toLocaleDateString()}</span>
                     {it.confidence != null && <span style={{ color: confColour(it.confidence), fontSize: 12, marginLeft: 8, fontWeight: 700 }}>conf {it.confidence.toFixed(2)}</span>}
                     <div style={{ fontSize: 13, marginTop: 4 }}>{it.reason}</div>
@@ -1017,7 +1055,7 @@ function Reviews({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button style={btn(C.green)} onClick={() => resolve(it.id, 'APPROVED')}>Approve</button>
                     <button style={btn(C.gold)} onClick={() => resolve(it.id, 'MERGED')}>Merge</button>
-                    <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
+                    <button style={{ ...btn('#fff'), color: C.mute }} onClick={() => resolve(it.id, 'IGNORED')}>Ignore</button>
                     <button style={btn(C.red)} onClick={() => resolve(it.id, 'REJECTED')}>Reject</button>
                   </div>
                 ) : <span style={{ color: C.mute, fontSize: 12 }}>{it.status}</span>}
@@ -1148,7 +1186,7 @@ function Login({ onIn }: { onIn: () => void }) {
   return (
     <div style={{ background: C.bg, color: C.text, minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'system-ui' }}>
       <div style={{ ...box, width: 340 }}>
-        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>GOT NETTY <span style={{ color: C.pink }}>Admin</span></h1>
+        <h1 style={{ margin: '0 0 4px', fontSize: 20 }}>PlayFooty <span style={{ color: C.pink }}>Admin</span></h1>
         <p style={{ color: C.mute, fontSize: 13, marginTop: 0 }}>Enter the admin key to continue.</p>
         <input style={input} type="password" placeholder="Admin key" value={k} onChange={e => setK(e.target.value)} onKeyDown={e => e.key === 'Enter' && k && (setKey(k), onIn())} />
         <button style={{ ...btn(), width: '100%', marginTop: 12 }} onClick={() => { if (k) { setKey(k); onIn() } }}>Unlock</button>
@@ -1208,7 +1246,7 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                     </select>
                   </td>
                   <td style={td}>
-                    <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename league', l.name); if (n && n !== l.name) save(() => admin.editLeague(l.id, { name: n })) }}>Edit</button>
+                    <button style={{ ...btn('#fff'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename league', l.name); if (n && n !== l.name) save(() => admin.editLeague(l.id, { name: n })) }}>Edit</button>
                     <button title="Re-scrape stored PlayHQ URL on GitHub Actions" style={{ ...btn('#1b3a2a'), color: C.green, marginRight: 6 }} onClick={() => save(async () => { await admin.syncLeague(l.id); return { note: 'sync dispatched to GitHub Actions' } })}>Sync</button>
                     {l.approvalStatus === 'PENDING' && <button style={{ ...btn(C.green), marginRight: 6 }} onClick={() => save(() => admin.approveLeague(l.id))}>Approve</button>}
                     {l.archivedAt
@@ -1218,7 +1256,7 @@ function Leagues({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                 </tr>,
                 ...(whyId === l.id && l.strengthReasoning ? [
                   <tr key={`${l.id}-why`}>
-                    <td colSpan={8} style={{ ...td, background: '#0d1220', color: C.mute, fontSize: 12, lineHeight: 1.6 }}>
+                    <td colSpan={8} style={{ ...td, background: '#f8fafc', color: C.mute, fontSize: 12, lineHeight: 1.6 }}>
                       <b style={{ color: C.gold }}>Why {l.name} is rated {l.finalStrengthRating.toFixed(1)}★:</b> {l.strengthReasoning}
                       {l.strengthCalculatedAt && <span style={{ color: C.mute }}> — calculated {new Date(l.strengthCalculatedAt).toLocaleString()}</span>}
                     </td>
@@ -1290,8 +1328,8 @@ function Clubs({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   <td style={td}>{c.state?.code ?? '—'}</td>
                   <td style={td}>{c.region ?? '—'}</td>
                   <td style={td}>
-                    <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename club', c.name); if (n && n !== c.name) save(() => admin.editClub(c.id, { name: n })) }}>Edit</button>
-                    <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6 }} onClick={() => { const to = prompt('Move to leagueId'); if (to) save(() => admin.moveClub(c.id, to)) }}>Move</button>
+                    <button style={{ ...btn('#fff'), color: C.mute, marginRight: 6 }} onClick={() => { const n = prompt('Rename club', c.name); if (n && n !== c.name) save(() => admin.editClub(c.id, { name: n })) }}>Edit</button>
+                    <button style={{ ...btn('#fff'), color: C.mute, marginRight: 6 }} onClick={() => { const to = prompt('Move to leagueId'); if (to) save(() => admin.moveClub(c.id, to)) }}>Move</button>
                     {c.archivedAt
                       ? <button style={btn(C.green)} onClick={() => save(() => admin.restoreClub(c.id))}>Restore</button>
                       : <button style={btn(C.red)} onClick={() => { if (confirm(`Archive ${c.name}? Recoverable — nothing permanently deleted.`)) save(() => admin.deleteClub(c.id)) }}>Archive</button>}
@@ -1381,7 +1419,7 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                     <td style={td}><input style={{ ...input, width: 150 }} value={r.team} onChange={e => setCell(i, 'team', e.target.value)} /></td>
                     <td style={td}>
                       {r.match.clubId
-                        ? <span>{r.match.matchedName} <span style={{ color: r.match.confident ? C.green : C.gold }}>({r.match.score})</span> <button style={{ ...btn('#2a3145'), color: C.mute, padding: '2px 6px', fontSize: 11 }} onClick={() => setMatch(i, null, null)}>new</button></span>
+                        ? <span>{r.match.matchedName} <span style={{ color: r.match.confident ? C.green : C.gold }}>({r.match.score})</span> <button style={{ ...btn('#fff'), color: C.mute, padding: '2px 6px', fontSize: 11 }} onClick={() => setMatch(i, null, null)}>new</button></span>
                         : <span style={{ color: C.pink }}>+ create “{r.team}”</span>}
                     </td>
                     {(['played', 'wins', 'losses', 'draws', 'goalsFor', 'goalsAgainst', 'points'] as (keyof OcrRow)[]).map(k => (
@@ -1410,7 +1448,7 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   <td style={{ ...td, color: (h.confidence ?? 1) < 0.75 ? C.gold : C.mute }}>{h.confidence != null ? h.confidence.toFixed(2) : '—'}</td>
                   <td style={td}><span style={{ color: h.status === 'COMMITTED' ? C.green : h.status === 'DISCARDED' ? C.mute : C.gold, fontWeight: 700 }}>{h.status}</span></td>
                   <td style={td}>
-                    <button style={{ ...btn('#2a3145'), color: C.mute, marginRight: 6, padding: '3px 8px', fontSize: 11 }} onClick={async () => { try { setDetail(await admin.ocrHistoryDetail(h.id)) } catch (e) { toast((e as Error).message, false) } }}>View</button>
+                    <button style={{ ...btn('#fff'), color: C.mute, marginRight: 6, padding: '3px 8px', fontSize: 11 }} onClick={async () => { try { setDetail(await admin.ocrHistoryDetail(h.id)) } catch (e) { toast((e as Error).message, false) } }}>View</button>
                     {h.status === 'PREVIEWED' && <button style={{ ...btn(C.red), padding: '3px 8px', fontSize: 11 }} onClick={async () => { try { await admin.ocrDiscard(h.id); toast('Discarded (kept in history)'); loadHistory() } catch (e) { toast((e as Error).message, false) } }}>Discard</button>}
                   </td>
                 </tr>
@@ -1424,7 +1462,7 @@ function ImageImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         <div style={box}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <b>Import {new Date(detail.createdAt).toLocaleString()} — {detail.status}</b>
-            <button style={{ ...btn('#2a3145'), color: C.mute }} onClick={() => setDetail(null)}>Close</button>
+            <button style={{ ...btn('#fff'), color: C.mute }} onClick={() => setDetail(null)}>Close</button>
           </div>
           <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
             <img src={detail.image} alt="original upload" style={{ maxHeight: 280, maxWidth: '48%', borderRadius: 8, border: `1px solid ${C.line}` }} />
@@ -1466,7 +1504,7 @@ function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
           <button disabled={busy} style={btn(C.green)} onClick={recalc}>{busy ? 'Working…' : '↻ Recalculate national rankings'}</button>
           <button disabled={busy} style={btn()} onClick={() => run(() => admin.rerank().then(r => toast(`Re-ranked ${r.data.clubsRanked} clubs`)), 'done')}>Re-rank only</button>
           <button disabled={busy} style={btn(C.gold)} onClick={() => run(admin.lock, 'Rankings locked')}>Lock</button>
-          <button disabled={busy} style={btn('#2a3145')} onClick={() => run(admin.unlock, 'Rankings unlocked')}>Unlock</button>
+          <button disabled={busy} style={btn('#fff')} onClick={() => run(admin.unlock, 'Rankings unlocked')}>Unlock</button>
         </div>
       </div>
       {report && (
@@ -1497,7 +1535,7 @@ function Rankings({ toast }: { toast: (t: string, ok?: boolean) => void }) {
                   <td style={td}>{t.rank}</td><td style={td}>{t.clubName}</td><td style={{ ...td, color: C.mute }}>{t.leagueName ?? '—'}</td><td style={td}>{t.powerRating.toFixed(2)}</td>
                   <td style={td}>{t.clubId && <button style={{ background: 'none', border: 'none', color: explain[t.rank] ? C.pink : C.mute, cursor: 'pointer', fontSize: 11 }} onClick={() => whyClub(t.rank, t.clubId!)}>why?</button>}</td>
                 </tr>,
-                ...(explain[t.rank] ? [<tr key={`${t.rank}-why`}><td colSpan={5} style={{ ...td, background: '#0d1220', color: C.mute, fontSize: 11, lineHeight: 1.6 }}>{explain[t.rank]}</td></tr>] : []),
+                ...(explain[t.rank] ? [<tr key={`${t.rank}-why`}><td colSpan={5} style={{ ...td, background: '#f8fafc', color: C.mute, fontSize: 11, lineHeight: 1.6 }}>{explain[t.rank]}</td></tr>] : []),
               ])}</tbody>
             </table>
           </div>
