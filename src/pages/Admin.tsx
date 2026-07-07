@@ -790,8 +790,12 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
   const [busy, setBusy] = useState(false)
   const [engine, setEngine] = useState<EngineInfo | null>(null)
   const [runs, setRuns] = useState<WorkflowRun[]>([])
+  const [bulkState, setBulkState] = useState('VIC')
+  const [bulkLimit, setBulkLimit] = useState('5')
+  const [bulkDryRun, setBulkDryRun] = useState(true)
 
   const loadRuns = () => admin.engineRuns('playhq-url-import.yml').then(setRuns).catch(() => {})
+  const loadBulkRuns = () => admin.engineRuns('playhq-football-bulk-discovery.yml').then(setRuns).catch(() => {})
   useEffect(() => { admin.engineInfo().then(setEngine).catch(() => {}); loadRuns() }, [])
   // Poll while any run is active.
   useEffect(() => {
@@ -807,6 +811,7 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
     catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
   const doImport = () => { if (!url.trim()) return toast('paste a PlayHQ URL', false); dispatch(() => admin.importUrl(url), 'Import dispatched') }
+  const doFootballBulk = () => dispatch(() => admin.footballBulkDiscover({ state: bulkState, limit: bulkLimit, dryRun: bulkDryRun, season: '2026', grade: 'Senior Football', roundLimit: '15' }), 'Football bulk discovery dispatched')
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
@@ -837,11 +842,24 @@ function PlayHQImport({ toast }: { toast: (t: string, ok?: boolean) => void }) {
         )}
       </div>
 
-      <div style={{ ...box, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <b style={{ marginRight: 8 }}>Bulk</b>
-        <button disabled={busy} style={btn()} onClick={() => dispatch(() => admin.syncAll(), 'Sync-all dispatched')}>↻ Sync all leagues (weekly)</button>
-        <button disabled={busy} style={btn('#fff')} onClick={() => dispatch(() => admin.discover({}), 'Discovery dispatched')}>Discover new leagues</button>
-        <button style={{ ...btn('#fff'), color: C.mute }} onClick={loadRuns}>Refresh status</button>
+      <div style={{ ...box, display: 'grid', gap: 10 }}>
+        <b>Bulk</b>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button disabled={busy} style={btn()} onClick={() => dispatch(() => admin.syncAll(), 'Sync-all dispatched')}>↻ Sync all leagues (weekly)</button>
+          <button disabled={busy} style={btn('#fff')} onClick={() => dispatch(() => admin.discover({}), 'Discovery dispatched')}>Discover new leagues</button>
+          <button style={{ ...btn('#fff'), color: C.mute }} onClick={loadRuns}>Refresh status</button>
+        </div>
+        <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 10 }}>
+          <b style={{ fontSize: 13 }}>Controlled football ladder discovery</b>
+          <p style={{ color: C.mute, fontSize: 12, margin: '4px 0 8px' }}>Safe first run: VIC, limit 5, dry run. Creates/imports only when dry run is off.</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <select style={input} value={bulkState} onChange={e => setBulkState(e.target.value)}>{['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'NT', 'ACT'].map(s => <option key={s}>{s}</option>)}</select>
+            <input style={{ ...input, width: 90 }} value={bulkLimit} onChange={e => setBulkLimit(e.target.value)} aria-label="League limit" />
+            <label style={{ color: C.mute, fontSize: 13 }}><input type="checkbox" checked={bulkDryRun} onChange={e => setBulkDryRun(e.target.checked)} /> Dry run</label>
+            <button disabled={busy} style={btn(C.green)} onClick={doFootballBulk}>Run football discovery</button>
+            <button style={{ ...btn('#fff'), color: C.mute }} onClick={loadBulkRuns}>Latest football runs</button>
+          </div>
+        </div>
       </div>
 
       <RunList runs={runs} title="Recent import / sync runs" />

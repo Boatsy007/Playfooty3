@@ -20,6 +20,7 @@ import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
 const WF_URL_IMPORT   = 'playhq-url-import.yml'
+const WF_FOOTBALL_BULK = 'playhq-football-bulk-discovery.yml'
 const WF_DISCOVER     = 'discover-import.yml'
 const WF_WEEKLY_UPDATE = 'weekly-update.yml'
 
@@ -185,6 +186,27 @@ router.post('/playhq/sync-all', async (_req, res) => {
     res.status(202).json({ data: out })
   } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
 })
+
+// Controlled football bulk discovery/import — safe defaults are VIC, limit=5,
+// dryRun=true. The browser-backed workflow runs on GitHub Actions, not Vercel.
+router.post('/playhq/football-bulk-discover', async (req, res) => {
+  const b = req.body as { state?: string; limit?: string | number; dryRun?: boolean; season?: string; grade?: string; seedUrls?: string; roundLimit?: string | number }
+  try {
+    const inputs: Record<string, string> = {
+      state: str(b.state, 'VIC').toUpperCase(),
+      limit: String(b.limit ?? 5),
+      dry_run: String(b.dryRun ?? true),
+      season: str(b.season, '2026'),
+      grade: str(b.grade, 'Senior Football'),
+      seed_urls: str(b.seedUrls, ''),
+      round_limit: String(b.roundLimit ?? 15),
+    }
+    const out = await dispatchWorkflow(WF_FOOTBALL_BULK, inputs)
+    await audit('PLAYHQ_FOOTBALL_BULK_DISCOVERY_DISPATCH', 'League', null, { runId: out.run?.id ?? null, inputs }, 'PLAYHQ_DISCOVERY')
+    res.status(202).json({ data: out })
+  } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
+})
+
 // Discovery scrape (crawl PlayHQ + import discovered A-Grade leagues).
 router.post('/playhq/discover', async (req, res) => {
   const { assocFilter, maxAssociations } = req.body as { assocFilter?: string; maxAssociations?: string }

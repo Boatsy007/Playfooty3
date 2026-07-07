@@ -188,6 +188,7 @@ export const admin = {
   syncLeague:  (id: string) => req<{ data: DispatchResult }>('POST', `/admin/platform/leagues/${id}/sync`).then(r => r.data),
   syncAll:     () => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/sync-all').then(r => r.data),
   discover:    (b: { assocFilter?: string; maxAssociations?: string }) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/discover', b).then(r => r.data),
+  footballBulkDiscover: (b: { state?: string; limit?: string; dryRun?: boolean; season?: string; grade?: string; seedUrls?: string; roundLimit?: string }) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/football-bulk-discover', b).then(r => r.data),
   // Execution engine (GitHub Actions) status
   engineInfo:  () => req<{ data: EngineInfo }>('GET', '/admin/platform/engine').then(r => r.data),
   engineRuns:  (workflow?: string) => req<{ data: WorkflowRun[] }>('GET', `/admin/platform/engine/runs${workflow ? `?workflow=${workflow}` : ''}`).then(r => r.data),

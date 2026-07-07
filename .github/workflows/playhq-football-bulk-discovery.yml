@@ -1,0 +1,74 @@
+name: PlayHQ Football Bulk Discovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      state:
+        description: 'State filter (VIC, NSW, QLD, SA, WA, TAS, NT, ACT)'
+        required: true
+        default: 'VIC'
+        type: choice
+        options: [VIC, NSW, QLD, SA, WA, TAS, NT, ACT]
+      limit:
+        description: 'Maximum leagues to process'
+        required: true
+        default: '5'
+        type: string
+      dry_run:
+        description: 'Preview only; do not write leagues/clubs/ladders/results'
+        required: true
+        default: true
+        type: boolean
+      season:
+        description: 'Season label/year'
+        required: true
+        default: '2026'
+        type: string
+      grade:
+        description: 'Football grade to store'
+        required: true
+        default: 'Senior Football'
+        type: string
+      seed_urls:
+        description: 'Optional comma/newline-separated PlayHQ football seed URLs'
+        required: false
+        default: ''
+        type: string
+      round_limit:
+        description: 'Round URLs to probe using /R1..../R{round_limit}'
+        required: true
+        default: '15'
+        type: string
+
+jobs:
+  discover:
+    name: Controlled PlayHQ football discovery/import
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:    ${{ secrets.DIRECT_URL }}
+      PLAYFOOTY_RENDER_PLAYHQ: '1'
+      STATE:      ${{ inputs.state }}
+      LIMIT:      ${{ inputs.limit }}
+      DRY_RUN:    ${{ inputs.dry_run }}
+      SEASON:     ${{ inputs.season }}
+      GRADE:      ${{ inputs.grade }}
+      SEED_URLS:  ${{ inputs.seed_urls }}
+      ROUND_LIMIT: ${{ inputs.round_limit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm', cache-dependency-path: 'backend/package-lock.json' }
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+      - name: Install Playwright Chromium
+        working-directory: backend
+        run: npx playwright install chromium --with-deps
+      - name: Run controlled football discovery
+        working-directory: backend
+        run: npx tsx src/jobs/playhq-football-bulk-discovery.ts
