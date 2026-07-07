@@ -57,6 +57,7 @@ jobs:
           SYNC_ID:    ${{ inputs.sync_league_id }}
           SYNC_ALL:   ${{ inputs.sync_all }}
           DRY_RUN:    ${{ inputs.dry_run }}
+          PLAYFOOTY_ARTIFACT_DIR: ../artifacts/playhq
         run: |
           if [ -n "$IMPORT_URL" ]; then
             npx tsx src/jobs/playhq-url-import-trigger.ts "--url=$IMPORT_URL"
@@ -71,3 +72,10 @@ jobs:
           else
             echo "Nothing to do — provide url, sync_league_id, or sync_all."
           fi
+      - name: Upload PlayHQ diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playhq-url-import-diagnostics
+          path: artifacts/playhq
+          if-no-files-found: ignore

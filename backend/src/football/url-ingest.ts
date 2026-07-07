@@ -48,10 +48,75 @@ function shouldRenderPlayHq(url: string): boolean {
   return /\/\/(?:www\.)?playhq\.com\//i.test(url) && process.env.PLAYFOOTY_RENDER_PLAYHQ === '1'
 }
 
+
+type RenderDiagnostics = {
+  finalUrl?: string
+  title?: string
+  authWall?: boolean
+  appShellLoaded?: boolean
+  ladderTabSelected?: boolean
+  advancedToggleExists?: boolean
+  advancedToggleClicked?: boolean
+  tableCount?: number
+  rowCount?: number
+  textSample?: string
+  domRows?: string[][]
+  capturedJsonCount?: number
+  capturedResponses?: Array<Record<string, unknown>>
+  screenshotPath?: string
+  htmlPath?: string
+}
+
+const usefulResponse = (url: string) => !/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|analytics/i.test(url)
+const topKeys = (value: unknown): string[] => value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value as Record<string, unknown>).slice(0, 16) : []
+const bodyShape = (value: unknown): Record<string, unknown> => {
+  if (Array.isArray(value)) return { type: 'array', length: value.length, firstKeys: topKeys(value[0]) }
+  if (value && typeof value === 'object') return { type: 'object', keys: topKeys(value) }
+  return { type: typeof value }
+}
+
+async function collectRenderedDiagnostics(page: import('playwright').Page): Promise<RenderDiagnostics> {
+  return page.evaluate(() => {
+    const doc = (globalThis as any).document
+    const text = String(doc?.body?.innerText ?? '').replace(/\s+/g, ' ').trim()
+    const rows = Array.from(doc?.querySelectorAll?.('table tr, [role="row"]') ?? []).map((el: any) => String(el.innerText ?? '').split('\n').map((x: string) => x.trim()).filter(Boolean)).filter((r: string[]) => r.length >= 2).slice(0, 200)
+    const tableCount = Number(doc?.querySelectorAll?.('table, [role="table"], [role="grid"]')?.length ?? 0)
+    const advancedToggleExists = /show advanced ladder/i.test(text) || Array.from(doc?.querySelectorAll?.('button,label,[role="button"]') ?? []).some((el: any) => /show advanced ladder/i.test(String(el.innerText ?? el.textContent ?? '')))
+    const selected = Array.from(doc?.querySelectorAll?.('[aria-selected="true"], [aria-current="page"], a, button') ?? []).map((el: any) => String(el.innerText ?? el.textContent ?? '').trim()).find((label: string) => /ladder/i.test(label))
+    return {
+      finalUrl: String((globalThis as any).location?.href ?? ''),
+      title: String(doc?.title ?? ''),
+      authWall: /\b(log in|login|sign in|unauthori[sz]ed|access denied|authentication required)\b/i.test(text),
+      appShellLoaded: Boolean(doc?.querySelector?.('#__next, [data-testid], main')) || /PlayHQ/i.test(text),
+      ladderTabSelected: Boolean(selected),
+      advancedToggleExists,
+      tableCount,
+      rowCount: rows.length,
+      textSample: text.slice(0, 1200),
+      domRows: rows,
+    }
+  }).catch(e => ({ textSample: `diagnostic evaluate failed: ${String(e)}` }))
+}
+
+async function writePlayHqArtifacts(page: import('playwright').Page, url: string, html: string): Promise<Pick<RenderDiagnostics, 'screenshotPath' | 'htmlPath'>> {
+  if (process.env.GITHUB_ACTIONS !== 'true' && process.env.PLAYFOOTY_DEBUG_ARTIFACTS !== '1') return {}
+  const { mkdir, writeFile } = await import('node:fs/promises')
+  const safe = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 120)
+  const dir = process.env.PLAYFOOTY_ARTIFACT_DIR || 'artifacts/playhq'
+  await mkdir(dir, { recursive: true })
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const htmlPath = `${dir}/${stamp}-${safe}.html`
+  const screenshotPath = `${dir}/${stamp}-${safe}.png`
+  await writeFile(htmlPath, html, 'utf8')
+  await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined)
+  return { htmlPath, screenshotPath }
+}
+
 async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<FetchedPage> {
   const { chromium } = await import('playwright')
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
   const capturedJson: unknown[] = []
+  const capturedResponses: Array<Record<string, unknown>> = []
   try {
     const ctx = await browser.newContext({
       userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -59,26 +124,48 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<
     })
     const page = await ctx.newPage()
     page.on('response', async response => {
+      const responseUrl = response.url()
+      if (!usefulResponse(responseUrl)) return
       const ct = response.headers()['content-type'] ?? ''
       if (!ct.includes('json')) return
-      if (/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|analytics/i.test(response.url())) return
-      try { capturedJson.push(await response.json()) } catch { /* ignore */ }
+      try {
+        const json = await response.json()
+        capturedJson.push(json)
+        capturedResponses.push({ url: responseUrl, status: response.status(), contentType: ct, shape: bodyShape(json) })
+      } catch {
+        capturedResponses.push({ url: responseUrl, status: response.status(), contentType: ct, shape: { type: 'unreadable-json' } })
+      }
     })
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs })
-    const title = await page.title().catch(() => '')
-    let advancedLadderFound = false
-    if (/\/ladder(?:$|[?#])/i.test(url)) advancedLadderFound = await enableAdvancedLadder(page)
+    let advancedToggleClicked = false
+    if (/\/ladder(?:$|[?#])/i.test(url)) advancedToggleClicked = await enableAdvancedLadder(page)
     await page.waitForTimeout(3500)
-    const tableCount = await page.locator('table, [role="table"], [role="grid"]').count().catch(() => 0)
     const html = await page.content()
-    const diagnostics = { title, advancedLadderFound, tableCount, capturedJsonCount: capturedJson.length }
-    logger.info('PlayHQ rendered page loaded', { url, ...diagnostics })
+    const diagnostics: RenderDiagnostics = {
+      ...(await collectRenderedDiagnostics(page)),
+      advancedToggleClicked,
+      capturedJsonCount: capturedJson.length,
+      capturedResponses: capturedResponses.slice(0, 40),
+      ...(await writePlayHqArtifacts(page, url, html)),
+    }
+    logger.info('PlayHQ rendered page loaded', { url, ...diagnostics, textSample: diagnostics.textSample?.slice(0, 240) })
     console.log(`[playhq-render] url=${url}`)
-    console.log(`[playhq-render] page title=${title || '(empty)'}`)
-    console.log(`[playhq-render] advanced ladder button found=${advancedLadderFound ? 'yes' : 'no'}`)
-    console.log(`[playhq-render] tables found=${tableCount}`)
-    console.log(`[playhq-render] JSON responses captured=${capturedJson.length}`)
-    return { url, ok: true, status: 200, contentType: 'text/html; rendered=playwright', body: `${html}\n<script id="__PLAYFOOTY_CAPTURED_JSON__" type="application/json">${JSON.stringify(capturedJson).replace(/</g, '\\u003c')}</script>`, diagnostics }
+    console.log(`[playhq-render] final page URL=${diagnostics.finalUrl || '(unknown)'}`)
+    console.log(`[playhq-render] page title=${diagnostics.title || '(empty)'}`)
+    console.log(`[playhq-render] auth wall appears=${diagnostics.authWall ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] app shell loaded=${diagnostics.appShellLoaded ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] ladder tab selected=${diagnostics.ladderTabSelected ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] advanced ladder toggle exists=${diagnostics.advancedToggleExists ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] advanced ladder toggle clicked=${diagnostics.advancedToggleClicked ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] tables found=${diagnostics.tableCount ?? 0}`)
+    console.log(`[playhq-render] rows found=${diagnostics.rowCount ?? 0}`)
+    console.log(`[playhq-render] text sample=${diagnostics.textSample || '(empty)'}`)
+    console.log(`[playhq-render] captured network response URLs=${capturedResponses.map(r => `${r.status} ${r.url}`).join(' | ') || 'none'}`)
+    console.log(`[playhq-render] captured JSON response status codes=${capturedResponses.map(r => r.status).join(',') || 'none'}`)
+    console.log(`[playhq-render] sample JSON body shapes=${JSON.stringify(capturedResponses.slice(0, 8).map(r => r.shape))}`)
+    if (diagnostics.screenshotPath) console.log(`[playhq-render] screenshot artifact=${diagnostics.screenshotPath}`)
+    if (diagnostics.htmlPath) console.log(`[playhq-render] HTML artifact=${diagnostics.htmlPath}`)
+    return { url, ok: true, status: 200, contentType: 'text/html; rendered=playwright', body: `${html}\n<script id="__PLAYFOOTY_CAPTURED_JSON__" type="application/json">${JSON.stringify(capturedJson).replace(/</g, '\\u003c')}</script>\n<script id="__PLAYFOOTY_RENDER_DIAGNOSTICS__" type="application/json">${JSON.stringify(diagnostics).replace(/</g, '\\u003c')}</script>`, diagnostics }
   } finally {
     await browser.close()
   }
@@ -127,6 +214,12 @@ function extractCapturedJson(html: string): unknown[] {
   try { const json = JSON.parse(m[1]); return Array.isArray(json) ? json : [json] } catch { return [] }
 }
 
+function extractRenderDiagnostics(html: string): RenderDiagnostics | null {
+  const m = /<script id="__PLAYFOOTY_RENDER_DIAGNOSTICS__"[^>]*>([\s\S]*?)<\/script>/i.exec(html)
+  if (!m) return null
+  try { return JSON.parse(m[1]) as RenderDiagnostics } catch { return null }
+}
+
 /** Deep-walk a JSON value collecting objects that satisfy `pick`. */
 function walk<T>(root: unknown, pick: (o: Record<string, unknown>) => T | null, out: T[] = [], seen = new Set<unknown>(), depth = 0): T[] {
   if (out.length > 2000 || depth > 12 || root == null || typeof root !== 'object' || seen.has(root)) return out
@@ -138,10 +231,51 @@ function walk<T>(root: unknown, pick: (o: Record<string, unknown>) => T | null, 
   return out
 }
 
-const asNum = (v: unknown): number | undefined => { const n = Number(v); return Number.isFinite(n) ? n : undefined }
+const asNum = (v: unknown): number | undefined => {
+  if (v == null || v === '') return undefined
+  const n = Number(String(v).replace(/[^\d.-]/g, ''))
+  return Number.isFinite(n) ? n : undefined
+}
 const teamName = (v: unknown): string | undefined => {
   if (typeof v === 'string' && v.trim()) return clean(v)
-  if (v && typeof v === 'object') { const o = v as Record<string, unknown>; return teamName(o.name ?? o.teamName ?? o.displayName ?? o.title) }
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    return teamName(o.name ?? o.teamName ?? o.displayName ?? o.title ?? o.clubName ?? o.shortName)
+  }
+  return undefined
+}
+const normalKey = (key: string) => key.toLowerCase().replace(/[^a-z0-9%]+/g, '')
+function metric(obj: unknown, keys: string[], seen = new Set<unknown>()): number | undefined {
+  if (!obj || typeof obj !== 'object' || seen.has(obj)) return undefined
+  seen.add(obj)
+  const wanted = keys.map(normalKey)
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      if (item && typeof item === 'object') {
+        const row = item as Record<string, unknown>
+        const label = String(row.name ?? row.label ?? row.key ?? row.stat ?? row.statistic ?? row.type ?? '').toLowerCase()
+        if (wanted.some(k => normalKey(label) === k || normalKey(label).includes(k))) {
+          const n = asNum(row.value ?? row.total ?? row.count ?? row.points)
+          if (n != null) return n
+        }
+      }
+      const nested = metric(item, keys, seen)
+      if (nested != null) return nested
+    }
+    return undefined
+  }
+  const o = obj as Record<string, unknown>
+  for (const [k, v] of Object.entries(o)) {
+    const nk = normalKey(k)
+    if (wanted.some(w => nk === w || nk.includes(w))) {
+      const n = asNum(v)
+      if (n != null) return n
+    }
+  }
+  for (const v of Object.values(o)) {
+    const nested = metric(v, keys, seen)
+    if (nested != null) return nested
+  }
   return undefined
 }
 
@@ -169,14 +303,31 @@ function fixturesFromJson(root: unknown): FixtureRow[] {
   })
 }
 function ladderFromJson(root: unknown): LadderRow[] {
-  return walk<LadderRow>(root, o => {
-    const club = teamName(o.team ?? o.club ?? o.clubName ?? o.teamName ?? o.name)
-    const played = asNum(o.played ?? o.P ?? o.games)
-    const pts = asNum(o.points ?? o.premiershipPoints ?? o.pts)
-    if (!club || (played == null && pts == null)) return null
-    return { clubName: club, position: asNum(o.position ?? o.rank), played, wins: asNum(o.wins ?? o.won ?? o.W), losses: asNum(o.losses ?? o.lost ?? o.L), draws: asNum(o.draws ?? o.drawn ?? o.D), byes: asNum(o.bye ?? o.byes), pointsFor: asNum(o.pointsFor ?? o.for ?? o.scoreFor), pointsAgainst: asNum(o.pointsAgainst ?? o.against ?? o.scoreAgainst), percentage: asNum(o.percentage ?? o.percent), points: pts, forfeits: asNum(o.forfeit ?? o.forfeits), disqualified: asNum(o.disqualified), adjustedPoints: asNum(o.adjustedPoints ?? o.adjusted) }
+  const rows = walk<LadderRow>(root, o => {
+    const club = teamName(o.team ?? o.club ?? o.competitor ?? o.organisation ?? o.participant ?? o.clubName ?? o.teamName ?? o.name)
+    const played = metric(o, ['played', 'games', 'gamesPlayed', 'P', 'GP'])
+    const pts = metric(o, ['points', 'premiershipPoints', 'competitionPoints', 'PTS'])
+    if (!club || (played == null && pts == null && metric(o, ['wins', 'won', 'W']) == null)) return null
+    return {
+      clubName: club,
+      position: metric(o, ['position', 'rank', 'pos']),
+      played,
+      wins: metric(o, ['wins', 'won', 'W']),
+      losses: metric(o, ['losses', 'lost', 'L']),
+      draws: metric(o, ['draws', 'drawn', 'D']),
+      byes: metric(o, ['bye', 'byes']),
+      pointsFor: metric(o, ['pointsFor', 'scoreFor', 'for', 'F', 'PF']),
+      pointsAgainst: metric(o, ['pointsAgainst', 'scoreAgainst', 'against', 'A', 'PA']),
+      percentage: metric(o, ['percentage', 'percent', 'pct', '%']),
+      points: pts,
+      forfeits: metric(o, ['forfeit', 'forfeits']),
+      disqualified: metric(o, ['disqualified', 'disqualifications']),
+      adjustedPoints: metric(o, ['adjustedPoints', 'adjusted', 'adjustments']),
+    }
   })
+  return dedupeLadderRows(rows)
 }
+
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? clean(v) : undefined)
 const parseScoreValue = (v: unknown): { goals?: number; behinds?: number; total?: number } | null => {
   if (typeof v === 'number') return { total: v }
@@ -205,37 +356,63 @@ function resultsFromText(text: string): ResultRow[] {
   return out
 }
 
+const ladderHeaderIndex = (headers: string[], labels: string[]) => headers.findIndex(h => labels.some(n => h === n || h.includes(n)))
+function ladderFromCellRows(rows: string[][]): LadderRow[] {
+  if (rows.length < 2) return []
+  const headerAt = rows.findIndex(r => r.some(c => /team|club/i.test(c)) && r.length >= 4)
+  if (headerAt < 0) return []
+  const headers = rows[headerAt].map(h => h.toUpperCase())
+  const teamIdx = ladderHeaderIndex(headers, ['TEAM', 'CLUB'])
+  if (teamIdx < 0) return []
+  const posIdx = ladderHeaderIndex(headers, ['POS', 'POSITION', '#'])
+  const playedIdx = ladderHeaderIndex(headers, ['PLAYED', 'PLD', 'P'])
+  const pointsIdx = ladderHeaderIndex(headers, ['PTS', 'POINTS'])
+  const pctIdx = ladderHeaderIndex(headers, ['%', 'PERC', 'PCT'])
+  const winsIdx = ladderHeaderIndex(headers, ['WINS', 'WON', 'W'])
+  const lossesIdx = ladderHeaderIndex(headers, ['LOSSES', 'LOST', 'L'])
+  const drawsIdx = ladderHeaderIndex(headers, ['DRAWS', 'DRAWN', 'D'])
+  const byeIdx = ladderHeaderIndex(headers, ['BYE'])
+  const forIdx = ladderHeaderIndex(headers, ['FOR', 'F', 'PF'])
+  const againstIdx = ladderHeaderIndex(headers, ['AGAINST', 'A', 'PA'])
+  const forfeitIdx = ladderHeaderIndex(headers, ['FORFEIT'])
+  const dqIdx = ladderHeaderIndex(headers, ['DISQUALIFIED'])
+  const adjustedIdx = ladderHeaderIndex(headers, ['ADJUSTED'])
+  const numAt = (r: string[], i: number) => i >= 0 ? asNum(r[i]) : undefined
+  const out = rows.slice(headerAt + 1).map((r, i): LadderRow | null => {
+    const clubName = clean(r[teamIdx] ?? '')
+    if (!clubName || /^(team|club)$/i.test(clubName) || /^\d+$/.test(clubName)) return null
+    const row: LadderRow = { clubName, position: numAt(r, posIdx) ?? i + 1, played: numAt(r, playedIdx), wins: numAt(r, winsIdx), losses: numAt(r, lossesIdx), draws: numAt(r, drawsIdx), byes: numAt(r, byeIdx), pointsFor: numAt(r, forIdx), pointsAgainst: numAt(r, againstIdx), percentage: numAt(r, pctIdx), points: numAt(r, pointsIdx), forfeits: numAt(r, forfeitIdx), disqualified: numAt(r, dqIdx), adjustedPoints: numAt(r, adjustedIdx) }
+    return row.played != null || row.points != null || row.wins != null ? row : null
+  }).filter((r): r is LadderRow => !!r)
+  return out.length >= 4 ? out : []
+}
+function dedupeLadderRows(rows: LadderRow[]): LadderRow[] {
+  const seen = new Set<string>()
+  return rows.filter(r => {
+    const key = r.clubName.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  }).sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+}
+
 function ladderFromHtml(html: string): LadderRow[] {
   const tableMatches = [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map(m => m[0])
   console.log(`[playhq-parse] HTML tables found=${tableMatches.length}`)
   for (const table of tableMatches) {
     const rowHtml = [...table.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map(m => m[0])
     const rows = rowHtml.map(r => [...r.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(c => stripTags(c[1]))).filter(r => r.length >= 4)
-    if (rows.length < 2) continue
-    const headers = rows[0].map(h => h.toUpperCase())
-    const teamIdx = headers.findIndex(h => h === 'TEAM' || h.includes('TEAM') || h === 'CLUB')
-    if (teamIdx < 0) continue
-    const idx = (names: string[]) => headers.findIndex(h => names.some(n => h === n || h.includes(n)))
-    const posIdx = idx(['POS', 'POSITION'])
-    const playedIdx = idx(['PLAYED', 'PLD', 'P'])
-    const pointsIdx = idx(['PTS', 'POINTS'])
-    const pctIdx = idx(['%', 'PERC', 'PCT'])
-    const winsIdx = idx(['WINS', 'WON', 'W'])
-    const lossesIdx = idx(['LOSSES', 'LOST', 'L'])
-    const drawsIdx = idx(['DRAWS', 'DRAWN', 'D'])
-    const byeIdx = idx(['BYE'])
-    const forIdx = idx(['FOR'])
-    const againstIdx = idx(['AGAINST'])
-    const forfeitIdx = idx(['FORFEIT'])
-    const dqIdx = idx(['DISQUALIFIED'])
-    const adjustedIdx = idx(['ADJUSTED'])
-    const numAt = (r: string[], i: number) => i >= 0 ? asNum(r[i]?.replace(/[^\d.-]/g, '')) : undefined
-    const out = rows.slice(1).map((r, i): LadderRow | null => {
-      const clubName = clean(r[teamIdx] ?? '')
-      if (!clubName || clubName.toUpperCase() === 'TEAM') return null
-      return { clubName, position: numAt(r, posIdx) ?? i + 1, played: numAt(r, playedIdx), wins: numAt(r, winsIdx), losses: numAt(r, lossesIdx), draws: numAt(r, drawsIdx), byes: numAt(r, byeIdx), pointsFor: numAt(r, forIdx), pointsAgainst: numAt(r, againstIdx), percentage: numAt(r, pctIdx), points: numAt(r, pointsIdx), forfeits: numAt(r, forfeitIdx), disqualified: numAt(r, dqIdx), adjustedPoints: numAt(r, adjustedIdx) }
-    }).filter((r): r is LadderRow => !!r)
-    if (out.length >= 4) return out
+    const out = ladderFromCellRows(rows)
+    if (out.length) return out
+  }
+  const diagnostics = extractRenderDiagnostics(html)
+  const domRows = diagnostics?.domRows ?? []
+  if (domRows.length) {
+    const out = ladderFromCellRows(domRows)
+    if (out.length) {
+      console.log(`[playhq-parse] ladder rows parsed=${out.length} strategy=rendered-dom-rows`)
+      return out
+    }
   }
   return []
 }
@@ -292,6 +469,13 @@ export function parseLadder(page: FetchedPage): ParseOutcome<LadderRow> {
   }
   const rows = ladderFromHtml(page.body)
   if (rows.length) { console.log(`[playhq-parse] ladder rows parsed=${rows.length} strategy=html-table`); return { rows, confidence: 0.7, strategy: 'html-table', warnings } }
-  warnings.push('no ladder could be extracted (JS-rendered page or unsupported format — PlayHQ API credentials may be required)')
+  const diagnostics = extractRenderDiagnostics(page.body) ?? page.diagnostics as RenderDiagnostics | undefined
+  if (diagnostics) {
+    if (diagnostics.authWall) warnings.push('PlayHQ rendered page appears to show an authentication wall')
+    warnings.push(`rendered diagnostics: finalUrl=${diagnostics.finalUrl ?? page.url}; title=${diagnostics.title ?? 'unknown'}; appShellLoaded=${diagnostics.appShellLoaded ? 'yes' : 'no'}; ladderTabSelected=${diagnostics.ladderTabSelected ? 'yes' : 'no'}; advancedToggleExists=${diagnostics.advancedToggleExists ? 'yes' : 'no'}; advancedToggleClicked=${diagnostics.advancedToggleClicked ? 'yes' : 'no'}; tables=${diagnostics.tableCount ?? 0}; rows=${diagnostics.rowCount ?? 0}; jsonResponses=${diagnostics.capturedJsonCount ?? 0}; screenshot=${diagnostics.screenshotPath ?? 'not-written'}; html=${diagnostics.htmlPath ?? 'not-written'}`)
+    const endpoints = (diagnostics.capturedResponses ?? []).map(r => `${r.status ?? '?'} ${r.url ?? 'unknown'}`).slice(0, 12).join(' | ')
+    if (endpoints) warnings.push(`captured JSON endpoints: ${endpoints}`)
+  }
+  warnings.push('no ladder could be extracted from rendered DOM, embedded JSON, or captured network JSON')
   return { rows: [], confidence: 0, strategy: 'none', warnings }
 }
