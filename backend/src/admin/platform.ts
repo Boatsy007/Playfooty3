@@ -440,6 +440,32 @@ router.post('/football/leagues', async (req, res) => {
       ...flags,
     },
   })
+  if (league.sourceUrl && source === 'PLAYHQ_SCRAPER') {
+    const existingSource = await prisma.leagueSource.findFirst({
+      where: { leagueId: league.id, sourceType: 'PLAYHQ_SCRAPER', season: league.currentSeason ?? '2026' },
+      select: { id: true },
+    })
+    const sourceData = {
+      ladderUrl: league.sourceUrl,
+      fixturesUrl: league.sourceUrl,
+      resultsUrl: league.sourceUrl,
+      isActive: true,
+      lastStatus: 'PENDING_REVIEW',
+      notes: 'Created from football league source URL; scraping is dispatched via GitHub Actions.',
+    }
+    if (existingSource) {
+      await prisma.leagueSource.update({ where: { id: existingSource.id }, data: sourceData })
+    } else {
+      await prisma.leagueSource.create({
+        data: {
+          leagueId: league.id,
+          sourceType: 'PLAYHQ_SCRAPER',
+          season: league.currentSeason ?? '2026',
+          ...sourceData,
+        },
+      })
+    }
+  }
   await audit('CREATE_FOOTBALL_LEAGUE', 'League', league.id, league)
   res.status(201).json({ data: league })
 })
