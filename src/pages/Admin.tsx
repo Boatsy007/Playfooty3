@@ -4,7 +4,7 @@
  * Import, Rankings. Utilitarian internal-tool styling, not the public brand.
  */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
+import { admin, getKey, setKey, clearKey, type AdminLeague, type AdminClub, type FootballLeague, type FootballImportRow, type FootballFixtureRow, type FootballResultRow, type OcrPreview, type OcrRow, type DashboardData, type ReviewItem, type BackupRow, type AuditRow, type SettingRow, type ParsedUrl, type WorkflowRun, type EngineInfo, type CsvEntity, type CsvPreview, type OcrHistoryRow, type OcrHistoryDetail, type ArticleRow, type ArticleFull } from '../lib/admin'
 
 const C = { bg: '#0b0e17', panel: '#141926', line: '#232b3d', text: '#e8ecf5', mute: '#8a94ab', pink: '#ff2c91', gold: '#f4c14d', green: '#35c66b', red: '#ff5470' }
 const box: CSSProperties = { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 16, maxWidth: '100%', minWidth: 0 }
@@ -316,7 +316,7 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={box}>
-        <b>PlayFooty League Control Centre</b>
+        <b>Football League Control Centre</b>
         <p style={{ color: C.mute, fontSize: 13, marginTop: 4 }}>Everything for one football league in one place — source setup, round-by-round backfill, fixtures, results, ladder, clubs, rankings, articles and reviews. Results drive the ladder; manual verified data wins; conflicts go to review.</p>
         <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 90px 1.6fr 160px auto', gap: 8, alignItems: 'end', marginTop: 10 }}>
           <Field label="League"><input style={input} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Bellarine FNL - Senior Football" /></Field>
@@ -408,20 +408,14 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
             <button style={btn(C.red)} disabled={busy} onClick={() => publish(true)}>Publish + recalculate</button>
           </div>
           {league.dataSourceSyncError && <div style={{ color: C.gold, fontSize: 13, marginTop: 10 }}>{league.dataSourceSyncError}</div>}
+          <FootballImportHistory league={league} toast={toast} />
         </div>
       )}
 
       {tab === 'Source Setup' && <SourceSetup league={league} toast={toast} onChanged={onChanged} />}
       {tab === 'Round Backfill' && <RoundBackfill league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} goReviews={() => setTab('Reviews')} />}
-      {(tab === 'Fixtures' || tab === 'Results') && (
-        <div style={box}>
-          <b>{tab}</b>
-          <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>{tab === 'Fixtures' ? fixtures : results} {tab.toLowerCase()} recorded for this league. Add or correct {tab.toLowerCase()} from <b>Round Backfill</b> (paste rows per round). Future-round fixture URLs feed club <i>Up Next</i> once the public fixtures wiring is connected.</p>
-          <div style={{ background: '#0d1220', border: `1px solid ${C.line}`, borderRadius: 8, padding: 10, marginTop: 8, color: C.mute, fontSize: 12 }}>
-            No admin endpoint lists individual football {tab.toLowerCase()} rows yet — counts and imports are available; a per-row {tab.toLowerCase()} browser needs a backend list endpoint (see report).
-          </div>
-        </div>
-      )}
+      {tab === 'Fixtures' && <FootballFixturesBrowser league={league} season={season} grade={grade} toast={toast} />}
+      {tab === 'Results' && <FootballResultsBrowser league={league} season={season} grade={grade} toast={toast} />}
       {tab === 'Ladder' && <LadderPanel league={league} season={season} grade={grade} toast={toast} onChanged={onChanged} />}
       {tab === 'Clubs' && (
         <div style={box}>
@@ -446,6 +440,53 @@ function LeagueControlCentre({ league, toast, onChanged }: { league: FootballLea
         </div>
       )}
       {tab === 'Reviews' && <LeagueReviews league={league} toast={toast} />}
+    </div>
+  )
+}
+
+
+function FootballImportHistory({ league, toast }: { league: FootballLeague; toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<FootballImportRow[]>([])
+  const [busy, setBusy] = useState(false)
+  const load = () => { setBusy(true); admin.listFootballImports(league.id).then(setRows).catch(e => toast(e.message, false)).finally(() => setBusy(false)) }
+  useEffect(() => { load() }, [league.id])
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}><b>Import history</b><button disabled={busy} style={btn('#2a3145')} onClick={load}>Refresh</button></div>
+      <div className="pf-scroll" style={{ marginTop: 8 }}>
+        <table style={{ width: '100%' }}><thead><tr><th style={th}>When</th><th style={th}>Type</th><th style={th}>Source</th><th style={th}>Status</th><th style={th}>Rows</th><th style={th}>URL</th></tr></thead>
+          <tbody>{rows.map(r => <tr key={r.id}><td style={td}>{new Date(r.createdAt).toLocaleString()}</td><td style={td}>{r.dataType}</td><td style={td}>{r.sourceType}</td><td style={td}>{r.status}{r.dryRun ? ' (dry)' : ''}</td><td style={td}>{r.recordsImported}/{r.recordsFound}</td><td style={td} className="pf-break">{r.sourceUrl ? <a href={r.sourceUrl} target="_blank" rel="noreferrer" style={{ color: C.pink }}>source ↗</a> : '—'}</td></tr>)}</tbody>
+        </table>
+      </div>
+      {rows.length === 0 && <p style={{ color: C.mute, fontSize: 12 }}>No football imports recorded yet.</p>}
+    </div>
+  )
+}
+
+function FootballFixturesBrowser({ league, season, grade, toast }: { league: FootballLeague; season: string; grade: string; toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<FootballFixtureRow[]>([])
+  useEffect(() => { admin.listFootballFixtures(league.id, season, grade).then(setRows).catch(e => toast(e.message, false)) }, [league.id, season, grade])
+  return <FootballRowsTable title={`Fixtures (${rows.length})`} empty="No fixtures imported for this season/grade yet." rows={rows} />
+}
+
+function FootballResultsBrowser({ league, season, grade, toast }: { league: FootballLeague; season: string; grade: string; toast: (t: string, ok?: boolean) => void }) {
+  const [rows, setRows] = useState<FootballResultRow[]>([])
+  useEffect(() => { admin.listFootballResults(league.id, season, grade).then(setRows).catch(e => toast(e.message, false)) }, [league.id, season, grade])
+  return <FootballRowsTable title={`Results (${rows.length})`} empty="No results imported for this season/grade yet." rows={rows} />
+}
+
+function FootballRowsTable({ title, empty, rows }: { title: string; empty: string; rows: (FootballFixtureRow | FootballResultRow)[] }) {
+  return (
+    <div style={box}>
+      <b>{title}</b>
+      {rows.length === 0 ? <p style={{ color: C.mute, fontSize: 13, marginTop: 6 }}>{empty} Add rows from Round Backfill.</p> : <div className="pf-scroll" style={{ marginTop: 8 }}>
+        <table style={{ width: '100%' }}><thead><tr><th style={th}>Round</th><th style={th}>Date</th><th style={th}>Match</th><th style={th}>Score</th><th style={th}>Venue</th><th style={th}>Source</th><th style={th}>Flags</th></tr></thead>
+          <tbody>{rows.map(r => {
+            const result = 'homePoints' in r
+            return <tr key={r.id}><td style={td}>{r.round ?? '—'}</td><td style={td}>{r.matchDate ? new Date(r.matchDate).toLocaleDateString() : '—'}</td><td style={td} className="pf-break">{r.homeName} v {r.awayName}</td><td style={td}>{result ? `${(r as FootballResultRow).homePoints}–${(r as FootballResultRow).awayPoints}` : '—'}</td><td style={td} className="pf-break">{r.venue || '—'}</td><td style={td}>{r.sourceUrl ? <a href={r.sourceUrl} target="_blank" rel="noreferrer" style={{ color: C.pink }}>{r.sourceType} ↗</a> : r.sourceType}</td><td style={td}>{r.verified ? 'verified' : 'unverified'}{result && (r as FootballResultRow).published ? ' · published' : ''}</td></tr>
+          })}</tbody>
+        </table>
+      </div>}
     </div>
   )
 }

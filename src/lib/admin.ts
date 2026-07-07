@@ -42,6 +42,18 @@ export interface FootballLeague extends AdminLeague {
 export interface FootballImportResult {
   importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string
 }
+
+export interface FootballImportRow {
+  id: string; sourceType: string; dataType: string; sourceUrl: string | null; dryRun: boolean; status: string
+  recordsFound: number; recordsImported: number; conflictsFound: number; confidence: number; error: string | null
+  scrapedAt: string | null; createdAt: string; publishedAt: string | null
+}
+export interface FootballFixtureRow {
+  id: string; round: string | null; homeName: string; awayName: string; matchDate: string | null; venue: string | null; sourceType: string; sourceUrl: string | null; verified: boolean
+}
+export interface FootballResultRow extends FootballFixtureRow {
+  homeGoals: number; homeBehinds: number; homePoints: number; awayGoals: number; awayBehinds: number; awayPoints: number; published: boolean
+}
 export interface RoundImportReport {
   round: string; resultsFound: number; resultsImported: number; fixturesFound: number; fixturesImported: number
   clubsCreated: number; conflicts: number; reviews: number; ladderRows: number; strategies: string[]; warnings: string[]
@@ -204,6 +216,9 @@ export const admin = {
   generateFootballLadder: (id: string, b: { season?: string; grade?: string; dryRun?: boolean }) => req<{ data: { season: string; grade: string; rows?: number; ladder?: unknown[] } }>('POST', `/admin/platform/football/leagues/${id}/generate-ladder`, b).then(r => r.data),
   compareFootballLadder: (id: string, season = '2026', grade = 'Senior Football') => req<{ data: { generatedRows: number; storedRows: number; conflictCount: number; diffs: unknown[] } }>('GET', `/admin/platform/football/leagues/${id}/compare-ladder?season=${encodeURIComponent(season)}&grade=${encodeURIComponent(grade)}`).then(r => r.data),
   publishFootballLeague: (id: string, b: { season?: string; grade?: string; recalculate?: boolean }) => req<{ data: { publishedResults: number; publishedLadderRows: number; recalc: unknown } }>('POST', `/admin/platform/football/leagues/${id}/publish`, b).then(r => r.data),
+  listFootballImports: (id: string) => req<{ data: FootballImportRow[] }>('GET', `/admin/platform/football/leagues/${id}/imports`).then(r => r.data),
+  listFootballFixtures: (id: string, season = '2026', grade = 'Senior Football') => req<{ data: FootballFixtureRow[] }>('GET', `/admin/platform/football/leagues/${id}/fixtures?season=${encodeURIComponent(season)}&grade=${encodeURIComponent(grade)}`).then(r => r.data),
+  listFootballResults: (id: string, season = '2026', grade = 'Senior Football') => req<{ data: FootballResultRow[] }>('GET', `/admin/platform/football/leagues/${id}/results?season=${encodeURIComponent(season)}&grade=${encodeURIComponent(grade)}`).then(r => r.data),
   // Admin V3 — TRUE URL ingestion (paste URLs, backend fetches + parses + imports)
   importFootballUrl: (id: string, b: { round: string; season?: string; grade?: string; resultsUrl?: string; fixtureUrl?: string; source?: string; generateLadder?: boolean; dryRun?: boolean }) => req<{ data: RoundImportReport }>('POST', `/admin/platform/football/leagues/${id}/import-url`, b).then(r => r.data),
   importFootballSeason: (id: string, b: { season?: string; grade?: string; source?: string; generateLadder?: boolean; dryRun?: boolean; rounds: { round: string; resultsUrl?: string; fixtureUrl?: string }[] }) => req<{ data: { season: string; grade: string; totals: SeasonImportTotals; rounds: RoundImportReport[] } }>('POST', `/admin/platform/football/leagues/${id}/import-season`, b).then(r => r.data),

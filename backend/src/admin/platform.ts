@@ -508,7 +508,7 @@ router.post('/football/leagues/:id/import', async (req, res) => {
   const imp = await prisma.footballDataImport.upsert({
     where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: source, dataType, payloadHash } },
     create: { leagueId: league.id, sourceType: source, dataType, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), payloadHash, dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: rows.length, confidence: source === 'MANUAL_ENTRY' ? 0.9 : 0.65, payload: JSON.stringify(rows), scrapedAt: source === 'PLAYHQ_SCRAPER' ? new Date() : null },
-    update: { dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: rows.length, payload: JSON.stringify(rows) },
+    update: { sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), dryRun, status: dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: rows.length, payload: JSON.stringify(rows) },
   })
   if (dryRun) return res.json({ data: { importId: imp.id, status: imp.status, recordsFound: rows.length, recordsImported: 0 } })
 
@@ -527,7 +527,7 @@ router.post('/football/leagues/:id/import', async (req, res) => {
       await prisma.footballResult.upsert({
         where: { leagueId_season_grade_round_homeName_awayName: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away) } },
         create: { leagueId: league.id, season: str(r.season, '2026'), grade: str(r.grade, 'Senior Football'), round: str(r.round, 'Round TBC'), homeName: str(r.homeName ?? r.home), awayName: str(r.awayName ?? r.away), homeGoals, homeBehinds, homePoints: footballPoints(homeGoals, homeBehinds, r.homePoints), awayGoals, awayBehinds, awayPoints: footballPoints(awayGoals, awayBehinds, r.awayPoints), matchDate: r.matchDate ? new Date(String(r.matchDate)) : null, venue: str(r.venue, ''), sourceType: source, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), verified: source === 'MANUAL_ENTRY', published: false },
-        update: { homeGoals, homeBehinds, homePoints: footballPoints(homeGoals, homeBehinds, r.homePoints), awayGoals, awayBehinds, awayPoints: footballPoints(awayGoals, awayBehinds, r.awayPoints), sourceType: source, verified: source === 'MANUAL_ENTRY' },
+        update: { homeGoals, homeBehinds, homePoints: footballPoints(homeGoals, homeBehinds, r.homePoints), awayGoals, awayBehinds, awayPoints: footballPoints(awayGoals, awayBehinds, r.awayPoints), sourceType: source, sourceUrl: str(req.body?.sourceUrl, league.sourceUrl ?? ''), verified: source === 'MANUAL_ENTRY' },
       }); imported++
     }
   } else if (dataType === 'LADDER') {
@@ -642,7 +642,7 @@ async function importRoundFromUrls(
     await prisma.footballDataImport.upsert({
       where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: opts.source, dataType: 'RESULTS', payloadHash } },
       create: { leagueId: league.id, sourceType: opts.source, dataType: 'RESULTS', sourceUrl: opts.resultsUrl, payloadHash, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, season: opts.season, grade: opts.grade, importedBy: opts.importedBy, strategy: parsed.strategy, rows: parsed.rows }), scrapedAt: new Date() },
-      update: { dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, importedBy: opts.importedBy, strategy: parsed.strategy, rows: parsed.rows }) },
+      update: { sourceUrl: opts.resultsUrl, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, season: opts.season, grade: opts.grade, importedBy: opts.importedBy, strategy: parsed.strategy, rows: parsed.rows }) },
     })
     if (parsed.rows.length === 0) { await createFootballReview(league.id, 'FOOTBALL_URL_NO_DATA', `Results URL returned no parseable rows for ${opts.round}: ${opts.resultsUrl}`, { url: opts.resultsUrl, warnings: parsed.warnings }, 0.2); rep.reviews++ }
     if (!opts.dryRun) {
@@ -662,7 +662,7 @@ async function importRoundFromUrls(
         await prisma.footballResult.upsert({
           where: { leagueId_season_grade_round_homeName_awayName: key },
           create: { ...key, homeGoals: num(r.homeGoals), homeBehinds: num(r.homeBehinds), homePoints, awayGoals: num(r.awayGoals), awayBehinds: num(r.awayBehinds), awayPoints, matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.resultsUrl, verified, published: false },
-          update: { homeGoals: num(r.homeGoals), homeBehinds: num(r.homeBehinds), homePoints, awayGoals: num(r.awayGoals), awayBehinds: num(r.awayBehinds), awayPoints, sourceType: opts.source, verified },
+          update: { homeGoals: num(r.homeGoals), homeBehinds: num(r.homeBehinds), homePoints, awayGoals: num(r.awayGoals), awayBehinds: num(r.awayBehinds), awayPoints, matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.resultsUrl, verified },
         })
         rep.resultsImported++
       }
@@ -678,7 +678,7 @@ async function importRoundFromUrls(
     await prisma.footballDataImport.upsert({
       where: { leagueId_sourceType_dataType_payloadHash: { leagueId: league.id, sourceType: opts.source, dataType: 'FIXTURES', payloadHash } },
       create: { leagueId: league.id, sourceType: opts.source, dataType: 'FIXTURES', sourceUrl: opts.fixtureUrl, payloadHash, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, importedBy: opts.importedBy, rows: parsed.rows }), scrapedAt: new Date() },
-      update: { dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, rows: parsed.rows }) },
+      update: { sourceUrl: opts.fixtureUrl, dryRun: opts.dryRun, status: opts.dryRun ? 'PREVIEWED' : 'COMMITTED', recordsFound: parsed.rows.length, confidence: parsed.confidence, payload: JSON.stringify({ round: opts.round, season: opts.season, grade: opts.grade, importedBy: opts.importedBy, rows: parsed.rows }) },
     })
     if (parsed.rows.length === 0) { await createFootballReview(league.id, 'FOOTBALL_URL_NO_DATA', `Fixture URL returned no parseable rows for ${opts.round}: ${opts.fixtureUrl}`, { url: opts.fixtureUrl, warnings: parsed.warnings }, 0.2); rep.reviews++ }
     if (!opts.dryRun) {
@@ -691,7 +691,7 @@ async function importRoundFromUrls(
         await prisma.footballFixture.upsert({
           where: { leagueId_season_grade_round_homeName_awayName: key },
           create: { ...key, matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.fixtureUrl, verified },
-          update: { matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, verified },
+          update: { matchDate: r.matchDate ? new Date(r.matchDate) : null, venue: str(r.venue), sourceType: opts.source, sourceUrl: opts.fixtureUrl, verified },
         })
         rep.fixturesImported++
       }
@@ -714,6 +714,32 @@ async function regenerateLadder(leagueId: string, season: string, grade: string)
   }
   return ladder.length
 }
+
+
+router.get('/football/leagues/:id/imports', async (req, res) => {
+  const take = Math.min(num(req.query.take, 25), 100)
+  const data = await prisma.footballDataImport.findMany({
+    where: { leagueId: req.params.id },
+    orderBy: { createdAt: 'desc' },
+    take,
+    select: { id: true, sourceType: true, dataType: true, sourceUrl: true, dryRun: true, status: true, recordsFound: true, recordsImported: true, conflictsFound: true, confidence: true, error: true, scrapedAt: true, createdAt: true, publishedAt: true },
+  })
+  res.json({ data })
+})
+
+router.get('/football/leagues/:id/fixtures', async (req, res) => {
+  const season = str(req.query.season, '2026')
+  const grade = str(req.query.grade, 'Senior Football')
+  const data = await prisma.footballFixture.findMany({ where: { leagueId: req.params.id, season, grade }, orderBy: [{ matchDate: 'asc' }, { round: 'asc' }, { homeName: 'asc' }], take: Math.min(num(req.query.take, 200), 500) })
+  res.json({ data })
+})
+
+router.get('/football/leagues/:id/results', async (req, res) => {
+  const season = str(req.query.season, '2026')
+  const grade = str(req.query.grade, 'Senior Football')
+  const data = await prisma.footballResult.findMany({ where: { leagueId: req.params.id, season, grade }, orderBy: [{ matchDate: 'asc' }, { round: 'asc' }, { homeName: 'asc' }], take: Math.min(num(req.query.take, 200), 500) })
+  res.json({ data })
+})
 
 // POST /football/leagues/:id/import-url — one round from pasted URLs
 router.post('/football/leagues/:id/import-url', async (req, res) => {
