@@ -17,20 +17,49 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state, league, season } = req.query as Record<string, string>
 
-    const run = await prisma.rankingRun.findFirst({
+    const runs = await prisma.rankingRun.findMany({
       where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
       orderBy: { completedAt: 'desc' },
+      take:    25,
     })
+    let run = null as (typeof runs)[number] | null
+    for (const candidate of runs) {
+      const visibleRows = await prisma.rankingEntry.count({
+        where: {
+          runId: candidate.id,
+          league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+          club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+        },
+      })
+      if (visibleRows > 0) { run = candidate; break }
+    }
 
-    if (!run) return res.json({ data: [], meta: {} })
+    if (!run) {
+      const clubs = await prisma.club.findMany({
+        where: {
+          sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED',
+          ...(state ? { state: { code: state } } : {}),
+          leagueSeasons: { some: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(league ? { name: { contains: league, mode: 'insensitive' as const } } : {}) } } },
+        },
+        include: { state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, include: { league: { select: { name: true } } }, take: 1 } },
+        orderBy: { name: 'asc' },
+        take: 200,
+      })
+      return res.json({
+        data: clubs.map(c => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: null, powerRating: null, logoUrl: c.logoUrl ?? null })),
+        meta: { weekLabel: null, season: season ?? null, total: clubs.length, source: 'clubs' },
+      })
+    }
 
     const entries = await prisma.rankingEntry.findMany({
       where: {
         runId: run.id,
         league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
         ...(state  ? { state }       : {}),
         ...(league ? { leagueName: { contains: league, mode: 'insensitive' as const } } : {}),
       },
+      include: { club: { select: { logoUrl: true } } },
       orderBy: { rank: 'asc' },
       take:    200,
     })
@@ -43,8 +72,9 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
         state:       e.state,
         rank:        e.rank,
         powerRating: e.powerRating,
+        logoUrl:     e.club?.logoUrl ?? null,
       })),
-      meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length },
+      meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, source: 'rankings' },
     })
   } catch {
     res.status(500).json({ error: 'Internal server error' })
