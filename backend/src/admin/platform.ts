@@ -397,51 +397,70 @@ router.post('/backups/:id/restore', async (req, res) => {
 
 // ─── PlayFooty football data-source control centre ───────────────────────────
 router.get('/football/leagues', async (_req, res) => {
-  const leagues = await prisma.league.findMany({
-    where: { sport: 'FOOTBALL', archivedAt: null },
-    include: {
-      state: { select: { code: true, name: true } },
-      _count: { select: { clubSeasons: true, footballFixtures: true, footballResults: true, footballLadderEntries: true, footballImports: true } },
-    },
-    orderBy: [{ updatedAt: 'desc' }],
-    take: 300,
-  })
-  res.json({ data: leagues })
+  try {
+    const leagues = await prisma.league.findMany({
+      where: { sport: 'FOOTBALL', archivedAt: null },
+      include: {
+        state: { select: { code: true, name: true } },
+        _count: { select: { clubSeasons: true, footballFixtures: true, footballResults: true, footballLadderEntries: true, footballImports: true } },
+      },
+      orderBy: [{ updatedAt: 'desc' }],
+      take: 300,
+    })
+    res.json({ data: leagues })
+  } catch (e) {
+    logger.error('football league list failed', { detail: String(e) })
+    // Keep the admin usable even if an additive football import/count relation is
+    // unavailable in a partially migrated environment. Counts can be repaired by
+    // the migration; league operations should still load.
+    const leagues = await prisma.league.findMany({
+      where: { sport: 'FOOTBALL', archivedAt: null },
+      include: { state: { select: { code: true, name: true } } },
+      orderBy: [{ updatedAt: 'desc' }],
+      take: 300,
+    })
+    res.json({ data: leagues.map(l => ({ ...l, _count: { clubSeasons: 0, footballFixtures: 0, footballResults: 0, footballLadderEntries: 0, footballImports: 0 } })) })
+  }
 })
 
 router.post('/football/leagues', async (req, res) => {
   const b = req.body as { name?: string; state?: string; regionName?: string; sourceUrl?: string; primaryDataSource?: string; fallbackDataSources?: string[]; playhqOrganisationId?: string; playhqCompetitionId?: string; playhqSeasonId?: string; playhqGradeId?: string }
-  if (!b.name) return res.status(400).json({ error: 'name required' })
+  if (!str(b.name)) return res.status(400).json({ error: 'name required' })
   const source = isFootballSource(b.primaryDataSource) ? b.primaryDataSource : 'MANUAL_ENTRY'
   const fallbacks = Array.isArray(b.fallbackDataSources) ? b.fallbackDataSources.filter(isFootballSource) : ['CSV_UPLOAD', 'OCR_UPLOAD']
   const flags = sourceFlags(source, fallbacks)
-  const stateCode = (b.state || 'VIC').toUpperCase()
-  const state = await prisma.state.upsert({ where: { code: stateCode }, create: { code: stateCode, name: stateCode }, update: {} })
-  const league = await prisma.league.create({
-    data: {
-      name: b.name,
-      shortName: b.name,
-      stateId: state.id,
-      sport: 'FOOTBALL',
-      primaryDataSource: source,
-      fallbackDataSources: JSON.stringify(fallbacks),
-      sourceUrl: b.sourceUrl ?? null,
-      playhqOrganisationId: b.playhqOrganisationId ?? null,
-      playhqCompetitionId: b.playhqCompetitionId ?? null,
-      playhqSeasonId: b.playhqSeasonId ?? null,
-      playhqGradeId: b.playhqGradeId ?? null,
-      regionName: b.regionName ?? null,
-      syncStatus: 'READY',
-      dataConfidence: source === 'MANUAL_ENTRY' ? 0.75 : 0.55,
-      primarySource: source,
-      importType: 'MANUAL',
-      manualOverride: true,
-      currentSeason: '2026',
-      ...flags,
-    },
-  })
-  await audit('CREATE_FOOTBALL_LEAGUE', 'League', league.id, league)
-  res.status(201).json({ data: league })
+  const stateCode = str(b.state, 'VIC').toUpperCase()
+  try {
+    const state = await prisma.state.upsert({ where: { code: stateCode }, create: { code: stateCode, name: stateCode }, update: {} })
+    const league = await prisma.league.create({
+      data: {
+        name: str(b.name),
+        shortName: str(b.name),
+        stateId: state.id,
+        sport: 'FOOTBALL',
+        primaryDataSource: source,
+        fallbackDataSources: JSON.stringify(fallbacks),
+        sourceUrl: str(b.sourceUrl) || null,
+        ...(str(b.playhqOrganisationId) ? { playhqOrganisationId: str(b.playhqOrganisationId) } : {}),
+        ...(str(b.playhqCompetitionId) ? { playhqCompetitionId: str(b.playhqCompetitionId) } : {}),
+        ...(str(b.playhqSeasonId) ? { playhqSeasonId: str(b.playhqSeasonId) } : {}),
+        ...(str(b.playhqGradeId) ? { playhqGradeId: str(b.playhqGradeId) } : {}),
+        ...(str(b.regionName) ? { regionName: str(b.regionName) } : {}),
+        syncStatus: 'READY',
+        dataConfidence: source === 'MANUAL_ENTRY' ? 0.75 : 0.55,
+        primarySource: source,
+        importType: 'MANUAL',
+        manualOverride: true,
+        currentSeason: '2026',
+        ...flags,
+      },
+    })
+    await audit('CREATE_FOOTBALL_LEAGUE', 'League', league.id, league, source)
+    res.status(201).json({ data: { ...league, state: { code: state.code, name: state.name }, _count: { clubSeasons: 0, footballFixtures: 0, footballResults: 0, footballLadderEntries: 0, footballImports: 0 } } })
+  } catch (e) {
+    logger.error('football league create failed', { detail: String(e), source, sourceUrl: b.sourceUrl ?? null })
+    res.status(500).json({ error: 'Could not create football league. The league was not synced or scraped; check database schema/migrations and server logs.' })
+  }
 })
 
 router.patch('/football/leagues/:id/source', async (req, res) => {
