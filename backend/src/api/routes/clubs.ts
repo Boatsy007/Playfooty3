@@ -17,6 +17,26 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state, league, season } = req.query as Record<string, string>
 
+    const clubWhere = {
+      sport: 'FOOTBALL',
+      archivedAt: null,
+      isActive: true,
+      approvalStatus: 'APPROVED',
+      ...(state ? { state: { code: state } } : {}),
+      leagueSeasons: {
+        some: {
+          isActive: true,
+          ...(season ? { season } : {}),
+          league: {
+            sport: 'FOOTBALL',
+            archivedAt: null,
+            isActive: true,
+            ...(league ? { name: { contains: league, mode: 'insensitive' as const } } : {}),
+          },
+        },
+      },
+    }
+
     const runs = await prisma.rankingRun.findMany({
       where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
       orderBy: { completedAt: 'desc' },
@@ -36,11 +56,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 
     if (!run) {
       const clubs = await prisma.club.findMany({
-        where: {
-          sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED',
-          ...(state ? { state: { code: state } } : {}),
-          leagueSeasons: { some: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(league ? { name: { contains: league, mode: 'insensitive' as const } } : {}) } } },
-        },
+        where: clubWhere,
         select: { id: true, name: true, logoUrl: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
         orderBy: { name: 'asc' },
         take: 200,
@@ -63,6 +79,19 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
       orderBy: { rank: 'asc' },
       take:    200,
     })
+
+    if (entries.length === 0) {
+      const clubs = await prisma.club.findMany({
+        where: clubWhere,
+        select: { id: true, name: true, logoUrl: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
+        orderBy: { name: 'asc' },
+        take: 200,
+      })
+      return res.json({
+        data: clubs.map((c, index) => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: index + 1, powerRating: null, logoUrl: c.logoUrl ?? null })),
+        meta: { weekLabel: run.weekLabel, season: run.season, total: clubs.length, source: 'clubs-fallback' },
+      })
+    }
 
     res.json({
       data: entries.map(e => ({

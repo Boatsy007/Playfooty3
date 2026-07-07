@@ -170,6 +170,7 @@ async function persistLeagueLadder(
 ): Promise<ImportReport> {
   const report = emptyReport('SUCCESS')
   report.url = sourceUrl
+  const shouldMirrorFootballLadder = /\/afl\//i.test(sourceUrl) || /\/afl\//i.test(dl.ladderUrl)
 
   // Scrape first — if the ladder is empty we bail without mutating anything.
   const scraped = await adapter.scrapeLadder(dl.ladderUrl)
@@ -202,6 +203,7 @@ async function persistLeagueLadder(
     league = await prisma.league.create({
       data: {
         name: dl.associationName, shortName: dl.associationName, stateId: state.id, associationId: association?.id ?? null,
+        ...(shouldMirrorFootballLadder ? { sport: 'FOOTBALL', approvalStatus: 'APPROVED', archivedAt: null, status: 'ACTIVE', primaryDataSource: 'PLAYHQ_SCRAPER' } : {}),
         isActive: true, enabled: true, autoDiscovered: true, needsStrengthReview: false,
         strengthScore: 60, strengthTier: 3, automaticStrengthRating: 3.0, finalStrengthRating: 3.0, strengthConfidence: 0.3,
         strengthNotes: 'Imported by PlayHQ URL — strength calculated from ladder data.',
@@ -221,6 +223,7 @@ async function persistLeagueLadder(
       where: { id: league.id },
       data: {
         associationId: association?.id ?? league.associationId, autoDiscovered: true, isActive: true,
+        ...(shouldMirrorFootballLadder ? { sport: 'FOOTBALL', approvalStatus: 'APPROVED', archivedAt: null, status: 'ACTIVE', primaryDataSource: 'PLAYHQ_SCRAPER' } : {}),
         playhqOrgSlug: dl.associationSlug || league.playhqOrgSlug, playhqGradeId: dl.gradeId || league.playhqGradeId,
         playhqGradeName: dl.gradeName || league.playhqGradeName, ladderUrl: dl.ladderUrl, sourceUrl,
         currentSeason: dl.season, lastSyncedAt: new Date(), syncError: null,
@@ -287,9 +290,16 @@ async function persistLeagueLadder(
 
     await prisma.clubLeagueSeason.upsert({
       where:  { clubId_leagueId_season_grade: { clubId: club.id, leagueId: league.id, season: SEASON, grade: GRADE } },
-      create: { clubId: club.id, leagueId: league.id, season: SEASON, grade: GRADE, isActive: true, position: e.rank, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, goalsFor: e.goalsFor, goalsAgainst: e.goalsAgainst, percentage: e.percentage, points: e.points },
-      update: { position: e.rank, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, goalsFor: e.goalsFor, goalsAgainst: e.goalsAgainst, percentage: e.percentage, points: e.points },
+      create: { clubId: club.id, leagueId: league.id, season: SEASON, grade: GRADE, sport: shouldMirrorFootballLadder ? 'FOOTBALL' : undefined, isActive: true, position: e.rank, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, goalsFor: e.goalsFor, goalsAgainst: e.goalsAgainst, percentage: e.percentage, points: e.points },
+      update: { sport: shouldMirrorFootballLadder ? 'FOOTBALL' : undefined, isActive: true, position: e.rank, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, goalsFor: e.goalsFor, goalsAgainst: e.goalsAgainst, percentage: e.percentage, points: e.points },
     })
+    if (shouldMirrorFootballLadder) {
+      await prisma.footballLadderEntry.upsert({
+        where: { leagueId_season_grade_clubName: { leagueId: league.id, season: SEASON, grade: FOOTBALL_GRADE, clubName: displayName } },
+        create: { leagueId: league.id, season: SEASON, grade: FOOTBALL_GRADE, clubId: club.id, clubName: displayName, position: e.rank ?? 999, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, pointsFor: e.goalsFor, pointsAgainst: e.goalsAgainst, percentage: e.percentage, premiershipPoints: e.points, sourceType: 'PLAYHQ_SCRAPER' },
+        update: { clubId: club.id, position: e.rank ?? 999, played: e.played, wins: e.wins, losses: e.losses, draws: e.draws, pointsFor: e.goalsFor, pointsAgainst: e.goalsAgainst, percentage: e.percentage, premiershipPoints: e.points, sourceType: 'PLAYHQ_SCRAPER' },
+      })
+    }
   }
   // Prune teams no longer on the ladder (keeps the season accurate).
   await prisma.clubLeagueSeason.deleteMany({ where: { leagueId: league.id, season: SEASON, grade: GRADE, clubId: { notIn: clubIds } } })

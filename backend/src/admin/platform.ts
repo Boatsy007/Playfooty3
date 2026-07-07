@@ -605,7 +605,12 @@ router.delete('/clubs/:id/logo', async (req, res) => {
 router.get('/football/leagues', async (_req, res) => {
   const leagues = await prisma.league.findMany({
     where: { sport: 'FOOTBALL', archivedAt: null },
-    include: {
+    select: {
+      id: true, name: true, shortName: true, strengthScore: true, strengthConfidence: true, manualStrengthOverride: true, finalStrengthRating: true, needsStrengthReview: true,
+      status: true, hidden: true, enabled: true, isActive: true, primarySource: true, importType: true, regionName: true, websiteUrl: true, facebookUrl: true, logoUrl: true,
+      archivedAt: true, approvalStatus: true, leagueType: true, reviewReason: true, strengthReasoning: true, strengthCalculatedAt: true, sport: true, primaryDataSource: true,
+      fallbackDataSources: true, sourceUrl: true, currentSeason: true, playhqOrganisationId: true, playhqCompetitionId: true, playhqSeasonId: true, playhqGradeId: true,
+      scrapeEnabled: true, apiEnabled: true, manualEntryEnabled: true, lastSyncAt: true, lastSuccessfulSyncAt: true, syncStatus: true, dataSourceSyncError: true,
       state: { select: { code: true, name: true } },
       _count: { select: { clubSeasons: true, footballFixtures: true, footballResults: true, footballLadderEntries: true, footballImports: true } },
     },
