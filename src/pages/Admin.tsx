@@ -383,7 +383,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 const sourceLabel = (s?: string | null) => s === 'PLAYHQ_SCRAPER' ? 'PlayHQ' : s === 'PLAYHQ_API' ? 'PlayHQ' : 'Manual'
 const ladderStatus = (n: number) => n > 0 ? 'Ready' : 'Waiting'
-const basePlayHqUrl = (url: string) => url.trim().replace(/\/ladder\/?$/i, '')
 const titleFromPlayHqUrl = (url: string) => {
   try {
     const parts = new URL(url).pathname.split('/').filter(Boolean)
@@ -400,6 +399,7 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   const [ladderUrl, setLadderUrl] = useState('')
   const [importedName, setImportedName] = useState<string | null>(null)
   const [importedRows, setImportedRows] = useState<number | null>(null)
+  const [workflowUrl, setWorkflowUrl] = useState<string | null>(null)
 
   const load = () => admin.listFootballLeagues().then(r => { setRows(r); setSelectedId(id => id ?? r[0]?.id ?? null) }).catch(e => toast(e.message, false))
   useEffect(() => { void load() }, [])
@@ -408,16 +408,14 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
   const importLeague = async () => {
     const url = ladderUrl.trim()
     if (!url) return toast('Paste the PlayHQ ladder URL first', false)
-    setBusy(true); setImportedName(null); setImportedRows(null)
+    setBusy(true); setImportedName(null); setImportedRows(null); setWorkflowUrl(null)
     try {
       const name = titleFromPlayHqUrl(url)
-      const row = await admin.createFootballLeague({ name, state: 'VIC', primaryDataSource: 'PLAYHQ_SCRAPER', sourceUrl: basePlayHqUrl(url) })
-      const imported = await admin.importFootballLadderUrl(row.id, { season: '2026', grade: 'Senior Football', ladderUrl: url })
-      try { await admin.syncFootballLeague(row.id, { sourceType: 'PLAYHQ_SCRAPER', dryRun: false }) } catch (e) { toast((e as Error).message, false) }
-      setImportedName(row.name); setImportedRows(imported.importedRows)
-      toast(`Import started for ${row.name}`)
+      const dispatch = await admin.importUrl(url)
+      setImportedName(name); setWorkflowUrl(dispatch.workflowRunUrl ?? dispatch.htmlUrl ?? null)
+      toast(dispatch.workflowRunUrl ? `Import workflow started for ${name}` : `Import workflow dispatched for ${name}`)
       setLadderUrl('')
-      await load(); setSelectedId(row.id)
+      await load()
     } catch (e) { toast((e as Error).message, false) } finally { setBusy(false) }
   }
 
@@ -437,11 +435,12 @@ function FootballSources({ toast }: { toast: (t: string, ok?: boolean) => void }
         <div style={{ ...box, padding: 28 }}>
           <h3 style={{ margin: '0 0 14px', fontSize: 28, letterSpacing: '-.045em' }}>Importing {importedName}…</h3>
           <div className="pf-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-            {['League Found', 'League Created', `${importedRows ?? 0} Ladder Rows`, 'Import Started', 'Fixtures Queued', 'Results Queued', 'Rankings Ready', 'Articles Ready'].map((x, i) => (
-              <div key={x} style={{ border: `1px solid ${C.line}`, borderRadius: 16, padding: 14, background: i < 4 ? '#f7fff9' : '#fff', color: i < 4 ? C.green : C.mute, fontWeight: 850 }}>{i < 4 ? '✓' : '•'} {x}</div>
+            {['Workflow Started', 'PlayHQ Import Running', importedRows == null ? 'Ladder Rows Pending' : `${importedRows} Ladder Rows`, 'Clubs Pending', 'Fixtures Pending', 'Results Pending', 'Rankings Pending', 'Ready After Workflow'].map((x, i) => (
+              <div key={x} style={{ border: `1px solid ${C.line}`, borderRadius: 16, padding: 14, background: i < 2 ? '#f7fff9' : '#fff', color: i < 2 ? C.green : C.mute, fontWeight: 850 }}>{i < 2 ? '✓' : '•'} {x}</div>
             ))}
           </div>
-          {selected && <button style={{ ...btn(C.pink), marginTop: 18 }} onClick={() => setSelectedId(selected.id)}>OPEN LEAGUE</button>}
+          {workflowUrl && <a href={workflowUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 14, color: C.pink, fontWeight: 900 }}>View workflow run →</a>}
+          {selected && <button style={{ ...btn(C.pink), marginTop: 18, marginLeft: workflowUrl ? 10 : 0 }} onClick={() => setSelectedId(selected.id)}>OPEN LEAGUE</button>}
         </div>
       )}
 

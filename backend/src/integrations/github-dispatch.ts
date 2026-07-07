@@ -27,14 +27,14 @@ export interface DispatchConfig { repo: string; ref: string; hasToken: boolean }
 export function githubConfig(): DispatchConfig {
   return {
     repo: process.env.GITHUB_REPO ?? 'Boatsy007/CNCA',
-    ref:  process.env.GITHUB_REF  ?? 'work',
+    ref:  process.env.GITHUB_REF  ?? 'claude/acnc-event-website-jt0kjq',
     hasToken: !!process.env.GITHUB_DISPATCH_TOKEN,
   }
 }
 
 function token(): string {
   const t = process.env.GITHUB_DISPATCH_TOKEN
-  if (!t) throw new Error('GitHub Actions dispatch is not configured: missing GITHUB_DISPATCH_TOKEN. Set it in the Vercel/API environment with GitHub Actions read/write permission, and set GITHUB_REPO plus GITHUB_REF=work.')
+  if (!t) throw new Error('GitHub Actions dispatch is not configured: missing GITHUB_DISPATCH_TOKEN. Set it in the Vercel/API environment with GitHub Actions read/write permission, and set GITHUB_REPO plus GITHUB_REF=claude/acnc-event-website-jt0kjq (or your intended source-of-truth branch).')
   return t
 }
 

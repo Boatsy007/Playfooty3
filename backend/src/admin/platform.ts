@@ -164,9 +164,13 @@ router.post('/playhq/import', async (req, res) => {
   const parsed = parsePlayHQUrl(url)
   if (!parsed.ok || !parsed.orgSlug) return res.status(400).json({ error: parsed.warnings.join('; ') || 'Could not parse PlayHQ URL' })
   try {
+    const ref = githubConfig().ref
     const out = await dispatchWorkflow(WF_URL_IMPORT, { url })
-    await audit('PLAYHQ_URL_IMPORT_DISPATCH', 'League', null, { url, runId: out.run?.id ?? null }, 'PLAYHQ_URL')
-    res.status(202).json({ data: { ...out, kind: parsed.kind } })
+    const workflowRunUrl = out.run?.htmlUrl ?? out.htmlUrl
+    const payload = { submittedUrl: url, dispatchedWorkflow: WF_URL_IMPORT, dispatchedRef: ref, workflowRunUrl, importStatus: 'DISPATCHED', runId: out.run?.id ?? null }
+    logger.info('PlayHQ URL import workflow dispatched', payload)
+    await audit('PLAYHQ_URL_IMPORT_DISPATCH', 'League', null, payload, 'PLAYHQ_URL')
+    res.status(202).json({ data: { ...out, kind: parsed.kind, ...payload } })
   } catch (err) { res.status(502).json({ error: err instanceof Error ? err.message : 'dispatch failed' }) }
 })
 

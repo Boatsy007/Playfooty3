@@ -96,7 +96,7 @@ export interface EngineInfo { repo: string; ref: string; configured: boolean }
 export interface WorkflowRun {
   id: number; status: string; conclusion: string | null; htmlUrl: string; createdAt: string; name: string; event: string
 }
-export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string }
+export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string; submittedUrl?: string; dispatchedWorkflow?: string; dispatchedRef?: string; workflowRunUrl?: string; importStatus?: string }
 export type CsvEntity = 'leagues' | 'clubs' | 'teams' | 'ladders' | 'mappings' | 'rankings'
 export interface CsvPreviewRow { index: number; data: Record<string, string>; status: 'ok' | 'warn' | 'error'; messages: string[] }
 export interface CsvPreview {
