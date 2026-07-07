@@ -39,7 +39,16 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
     // All club-season rows for this season, with club (+state) and league
     const rows = await prisma.clubLeagueSeason.findMany({
       where:   { season, isActive: true, leagueId: { in: leagueIds } },
-      include: { club: { include: { state: true } }, league: true },
+      select: {
+        clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true,
+        club: {
+          select: {
+            name: true, slug: true, region: true, websiteUrl: true, facebookUrl: true, instagramUrl: true,
+            state: { select: { code: true, name: true } },
+          },
+        },
+        league: { select: { name: true, shortName: true, strengthTier: true, strengthScore: true } },
+      },
     })
 
     // Latest ranking entries → clubId → { rank, powerRating }
