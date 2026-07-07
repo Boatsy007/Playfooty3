@@ -71,8 +71,9 @@ export async function importFromUrl(rawUrl: string, opts: { rerank?: boolean } =
   logger.info('URLImport: parsed', { kind: parsed.kind, orgSlug: parsed.orgSlug, gradeId: parsed.gradeId })
 
   const directFootballLadderUrl = parsed.ladderUrl
-  if (/^afl$/i.test(parsed.tenant ?? '') && parsed.kind === 'LADDER' && directFootballLadderUrl) {
-    return importFootballLeagueFromPlayHq(directFootballLadderUrl, rawUrl, opts)
+  if (/^afl$/i.test(parsed.tenant ?? '')) {
+    if (directFootballLadderUrl) return importFootballLeagueFromPlayHq(directFootballLadderUrl, rawUrl, opts)
+    return { ...emptyReport('FAILED'), url: rawUrl, kind: parsed.kind, error: 'PlayHQ AFL football imports require a grade or ladder URL so the football importer can classify the data as FOOTBALL.' }
   }
 
   const adapter = new PlayHQPlaywrightAdapter()
@@ -301,12 +302,13 @@ async function persistLeagueLadder(
 
 // ─── Football direct import: PlayHQ AFL ladder URL → league, clubs, ladder, rounds ──
 
+const FOOTBALL_SPORT = 'FOOTBALL'
 const FOOTBALL_GRADE = 'Senior Football'
 const FOOTBALL_SEASON = '2026'
 const stableHash = (v: unknown) => createHash('sha256').update(JSON.stringify(v ?? null)).digest('hex')
 const num = (v: unknown, fallback = 0) => Number.isFinite(Number(v)) ? Number(v) : fallback
 const points = (goals?: number, behinds?: number, total?: number) => Number.isFinite(Number(total)) ? Number(total) : num(goals) * 6 + num(behinds)
-const visibleFootballLeagueFields = { sport: 'FOOTBALL', isActive: true, enabled: true, hidden: false, archivedAt: null, status: 'ACTIVE', approvalStatus: 'APPROVED', primaryDataSource: 'PLAYHQ_SCRAPER', scrapeEnabled: true } as const
+const visibleFootballLeagueFields = { sport: FOOTBALL_SPORT, isActive: true, enabled: true, hidden: false, archivedAt: null, status: 'ACTIVE', approvalStatus: 'APPROVED', primaryDataSource: 'PLAYHQ_SCRAPER', scrapeEnabled: true } as const
 
 async function importFootballLeagueFromPlayHq(ladderUrl: string, rawUrl: string, opts: { rerank?: boolean } = {}): Promise<ImportReport> {
   const report = emptyReport('SUCCESS')
@@ -418,12 +420,12 @@ async function resolveFootballClub(name: string, stateId: string, region: string
   const clean = name.trim()
   const slug = `${clean.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${leagueId.slice(0, 8)}`
   const existing = await prisma.club.findUnique({ where: { slug }, select: { id: true } })
-  const club = await prisma.club.upsert({ where: { slug }, create: { name: clean, slug, shortName: clean, stateId, region, sport: 'FOOTBALL', isActive: true, source: 'PLAYHQ_SCRAPER', approvalStatus: 'APPROVED', townName: clean }, update: { sport: 'FOOTBALL', isActive: true }, select: { id: true } })
+  const club = await prisma.club.upsert({ where: { slug }, create: { name: clean, slug, shortName: clean, stateId, region, sport: FOOTBALL_SPORT, isActive: true, source: 'PLAYHQ_SCRAPER', approvalStatus: 'APPROVED', archivedAt: null, townName: clean }, update: { sport: FOOTBALL_SPORT, isActive: true, archivedAt: null, approvalStatus: 'APPROVED' }, select: { id: true } })
   await prisma.clubNameVariant.upsert({ where: { rawName_sourceType: { rawName: clean, sourceType: 'PLAYHQ_SCRAPER' } }, create: { clubId: club.id, rawName: clean, sourceType: 'PLAYHQ_SCRAPER', confidence: 1 }, update: {} }).catch(() => {})
   await prisma.clubLeagueSeason.upsert({
     where: { clubId_leagueId_season_grade: { clubId: club.id, leagueId, season, grade } },
-    create: { clubId: club.id, leagueId, season, grade, sport: 'FOOTBALL', isActive: true, position: row?.position, played: num(row?.played), wins: num(row?.wins), losses: num(row?.losses), draws: num(row?.draws), byes: num(row?.byes), forfeits: num(row?.forfeits), disqualifications: num(row?.disqualified), adjustments: num(row?.adjustedPoints), goalsFor: num(row?.pointsFor), goalsAgainst: num(row?.pointsAgainst), percentage: num(row?.percentage), points: num(row?.points) },
-    update: { sport: 'FOOTBALL', isActive: true, position: row?.position, played: num(row?.played), wins: num(row?.wins), losses: num(row?.losses), draws: num(row?.draws), byes: num(row?.byes), forfeits: num(row?.forfeits), disqualifications: num(row?.disqualified), adjustments: num(row?.adjustedPoints), goalsFor: num(row?.pointsFor), goalsAgainst: num(row?.pointsAgainst), percentage: num(row?.percentage), points: num(row?.points) },
+    create: { clubId: club.id, leagueId, season, grade, sport: FOOTBALL_SPORT, isActive: true, position: row?.position, played: num(row?.played), wins: num(row?.wins), losses: num(row?.losses), draws: num(row?.draws), byes: num(row?.byes), forfeits: num(row?.forfeits), disqualifications: num(row?.disqualified), adjustments: num(row?.adjustedPoints), goalsFor: num(row?.pointsFor), goalsAgainst: num(row?.pointsAgainst), percentage: num(row?.percentage), points: num(row?.points) },
+    update: { sport: FOOTBALL_SPORT, isActive: true, position: row?.position, played: num(row?.played), wins: num(row?.wins), losses: num(row?.losses), draws: num(row?.draws), byes: num(row?.byes), forfeits: num(row?.forfeits), disqualifications: num(row?.disqualified), adjustments: num(row?.adjustedPoints), goalsFor: num(row?.pointsFor), goalsAgainst: num(row?.pointsAgainst), percentage: num(row?.percentage), points: num(row?.points) },
   })
   if (!existing) console.log(`[playhq-football] club created: ${clean}`)
   return club.id

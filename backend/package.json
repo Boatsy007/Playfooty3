@@ -23,7 +23,8 @@
     "playfooty:cleanup-netball": "tsx src/jobs/playfooty-netball-cleanup.ts",
     "playfooty:seed-football-template": "tsx src/jobs/playfooty-football-seed-template.ts",
     "typecheck": "tsc --noEmit",
-    "db:verify:football-schema": "node scripts/verify-football-schema.mjs"
+    "db:verify:football-schema": "node scripts/verify-football-schema.mjs",
+    "db:repair:playhq-afl-sport": "node scripts/repair-playhq-afl-import-sport.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

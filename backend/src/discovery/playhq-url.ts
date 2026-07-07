@@ -5,8 +5,8 @@
  * every routing token we can (tenant sport, org slug, competition/season slug,
  * grade slug, grade id, whether it is already a ladder URL).
  *
- * PlayHQ public URL shapes (netball is tenant "netball-australia"; football
- * netball leagues sometimes live under "afl"):
+ * PlayHQ public URL shapes (football uses tenant "afl"; legacy netball
+ * imports may use tenant "netball-australia"):
  *
  *   Association   /{tenant}/org/{orgSlug}
  *   Association   /{tenant}/org/{orgSlug}/{hexOrgId}
@@ -120,8 +120,12 @@ export function parsePlayHQUrl(input: string): ParsedPlayHQUrl {
   else kind = 'ASSOCIATION'
 
   const warnings: string[] = []
-  if (!/netball/i.test(tenantSafe)) {
-    warnings.push(`Tenant is "${tenantSafe}" — confirm this is a netball competition (FNL netball lives under a football org sometimes).`)
+  if (/^afl$/i.test(tenantSafe)) {
+    // PlayFooty treats PlayHQ AFL tenant URLs as football imports. Do not warn
+    // operators that an AFL URL might be netball; that legacy FNL warning caused
+    // successful football imports to be misdiagnosed.
+  } else if (!/netball/i.test(tenantSafe)) {
+    warnings.push(`Tenant is "${tenantSafe}" — confirm this PlayHQ tenant is supported by PlayFooty.`)
   }
 
   return {
