@@ -53,6 +53,9 @@ app.use(cors({
 app.use('/admin/ocr', express.json({ limit: '20mb' }))
 // CSV imports (ladders) can be large too.
 app.use('/admin/platform/csv', express.json({ limit: '20mb' }))
+// Logo uploads are sent as base64 JSON from the admin profile editors.
+app.use('/admin/platform/leagues', express.json({ limit: '8mb' }))
+app.use('/admin/platform/clubs', express.json({ limit: '8mb' }))
 // Full-season imports (many rounds / multiple OCR/CSV payloads) can be large.
 app.use('/admin/season', express.json({ limit: '25mb' }))
 app.use(express.json({ limit: '1mb' }))

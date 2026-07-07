@@ -136,7 +136,7 @@ function Top10Spotlight({ entries }: { entries: RankingEntry[] }) {
     <div className="top10-grid">
       {entries.map(e => <Link key={e.clubId} to={teamPath(e.clubId)} className={`top10-card rank-${e.rank}`}>
         <span className="top10-rank">{e.rank <= 3 && <Trophy size={15} />}#{e.rank}</span>
-        <TeamLogo name={e.clubName} size={e.rank <= 3 ? 56 : 44} />
+        <TeamLogo name={e.clubName} src={e.logoUrl ?? undefined} size={e.rank <= 3 ? 56 : 44} />
         <span className="top10-copy"><b>{e.clubName}</b><small>{e.leagueName} · {e.state}</small></span>
         <span className="top10-meta"><strong>{e.powerRating.toFixed(1)}</strong><Movement value={e.rankMovement} compact /></span>
       </Link>)}
@@ -157,14 +157,14 @@ function WeeklyPulse({ entries, week }: { entries: RankingEntry[]; week: string 
     <div className="pulse-grid">
       <MoverList title="Top climbers" entries={climbers} empty="No major climbs this week." />
       <MoverList title="Top fallers" entries={fallers} empty="No major drops this week." />
-      {newClubs.length > 0 && <div className="pulse-card new-week"><h3>New this week</h3>{newClubs.map(e => <Link key={e.clubId} to={teamPath(e.clubId)}><TeamLogo name={e.clubName} size={26} /><span>{e.clubName}</span><b>#{e.rank}</b></Link>)}</div>}
+      {newClubs.length > 0 && <div className="pulse-card new-week"><h3>New this week</h3>{newClubs.map(e => <Link key={e.clubId} to={teamPath(e.clubId)}><TeamLogo name={e.clubName} src={e.logoUrl ?? undefined} size={26} /><span>{e.clubName}</span><b>#{e.rank}</b></Link>)}</div>}
     </div>
     {stories.length > 0 && <div className="story-row">{stories.map(s => <Link key={s.to + s.label} to={s.to} className="story-card"><span>{s.kicker}</span><b>{s.label}</b><small>{s.detail}</small></Link>)}</div>}
   </section>
 }
 
 function MoverList({ title, entries, empty }: { title: string; entries: RankingEntry[]; empty: string }) {
-  return <div className="pulse-card"><h3>{title}</h3>{entries.length ? entries.map(e => <Link key={e.clubId} to={teamPath(e.clubId)}><TeamLogo name={e.clubName} size={28} /><span><b>{e.clubName}</b><small>#{e.rank} · was #{e.previousRank}</small></span><Movement value={e.rankMovement} compact /></Link>) : <p>{empty}</p>}</div>
+  return <div className="pulse-card"><h3>{title}</h3>{entries.length ? entries.map(e => <Link key={e.clubId} to={teamPath(e.clubId)}><TeamLogo name={e.clubName} src={e.logoUrl ?? undefined} size={28} /><span><b>{e.clubName}</b><small>#{e.rank} · was #{e.previousRank}</small></span><Movement value={e.rankMovement} compact /></Link>) : <p>{empty}</p>}</div>
 }
 
 function buildRankStories(entries: RankingEntry[], climbers: RankingEntry[], fallers: RankingEntry[]) {
@@ -193,7 +193,7 @@ function RankingTableRow({ entry }: { entry: RankingEntry }) {
   return <tr className={podium ? 'podium' : ''} onClick={() => { window.location.href = teamPath(entry.clubId) }}>
     <td><span className="rank-num">{entry.rank === 1 && <Trophy size={13} />}{entry.rank}</span></td>
     <td><Movement value={entry.rankMovement} /></td>
-    <td><span className="club-cell"><TeamLogo name={entry.clubName} size={38} /><span><b>{entry.clubName}</b><small>{entry.leagueName} · {entry.state}</small></span></span></td>
+    <td><span className="club-cell"><TeamLogo name={entry.clubName} src={entry.logoUrl ?? undefined} size={38} /><span><b>{entry.clubName}</b><small>{entry.leagueName} · {entry.state}</small></span></span></td>
     <td>{entry.leagueName}</td>
     <td>{entry.state}</td>
     <td><b>{recordLabel(entry)}</b><small>{entry.record.played} GP</small></td>
@@ -207,14 +207,14 @@ function RankingTableRow({ entry }: { entry: RankingEntry }) {
 function RankingsCards({ entries }: { entries: RankingEntry[] }) {
   if (!entries.length) return null
   return <div className="ranking-cards">{entries.map(e => <Link to={teamPath(e.clubId)} className={`rank-card ${e.rank <= 3 ? 'podium' : ''}`} key={e.clubId}>
-    <span className="rank-num">{e.rank}</span><TeamLogo name={e.clubName} size={42} />
+    <span className="rank-num">{e.rank}</span><TeamLogo name={e.clubName} src={e.logoUrl ?? undefined} size={42} />
     <span className="card-club"><b>{e.clubName}</b><small>{e.leagueName} · {e.state}</small><small>{recordLabel(e)} · {e.percentage ? `${e.percentage.toFixed(1)}%` : 'percentage pending'}</small></span>
     <span className="card-side"><strong>{e.powerRating.toFixed(1)}</strong><Movement value={e.rankMovement} /><FormPips form={e.recentForm} /></span>
   </Link>)}</div>
 }
 
 function UpdateCard({ week, updated, total }: { week: string | null | undefined; updated: string | null; total: number }) { return <Link to="/rankings" className="side-card update"><span className="live-pill"><span /> Latest rankings update</span><strong>{week ?? 'Season live'}</strong><small>{total} ranked clubs{updated ? ` · updated ${shortDate(updated)}` : ''}</small></Link> }
-function MoversCard({ entries }: { entries: RankingEntry[] }) { const movers = entries.filter(e => e.previousRank != null && e.rankMovement !== 0).sort((a, b) => Math.abs(b.rankMovement) - Math.abs(a.rankMovement)).slice(0, 5); if (!movers.length) return null; return <article className="side-card"><CardHead title="Biggest movers" to="/rankings" />{movers.map(e => <Link to={teamPath(e.clubId)} key={e.clubId} className="side-row"><TeamLogo name={e.clubName} size={28} /><span><b>{e.clubName}</b><small>#{e.rank} nationally · was #{e.previousRank}</small></span><Movement value={e.rankMovement} compact /></Link>)}</article> }
+function MoversCard({ entries }: { entries: RankingEntry[] }) { const movers = entries.filter(e => e.previousRank != null && e.rankMovement !== 0).sort((a, b) => Math.abs(b.rankMovement) - Math.abs(a.rankMovement)).slice(0, 5); if (!movers.length) return null; return <article className="side-card"><CardHead title="Biggest movers" to="/rankings" />{movers.map(e => <Link to={teamPath(e.clubId)} key={e.clubId} className="side-row"><TeamLogo name={e.clubName} src={e.logoUrl ?? undefined} size={28} /><span><b>{e.clubName}</b><small>#{e.rank} nationally · was #{e.previousRank}</small></span><Movement value={e.rankMovement} compact /></Link>)}</article> }
 function StrongestLeagues({ leagues, loading }: { leagues: LeagueRow[]; loading: boolean }) { const top = [...leagues].sort((a, b) => b.strengthScore - a.strengthScore).slice(0, 5); if (!loading && !top.length) return null; return <article className="side-card"><CardHead title="Strongest leagues" to="/leagues" />{loading ? <p className="empty-copy">Loading leagues…</p> : top.map(l => <Link key={l.id} to={leaguePath(l.id)} className="side-row"><LeagueMark league={l} /><span><b>{l.name}</b><small>{l.state} · {l.clubCount} clubs</small></span><StarStrength stars={strengthStars(l.strengthScore)} size={10} /></Link>)}</article> }
 function LatestNews({ articles }: { articles: Article[] }) { if (!articles.length) return null; return <article className="side-card"><CardHead title="Latest news" to="/news" />{articles.slice(0, 4).map(a => <Link key={a.slug} to={newsPath(a.slug)} className="news-row"><b>{a.title}</b><small>{formatDate(a.date)} · {a.readingTime} min read</small></Link>)}</article> }
 function ChampionshipTeaser() { return <Link to="/championship" className="side-card championship"><CalendarDays /><span>Future showcase pathway</span><strong>Future showcase pathway</strong><small>Coming soon</small></Link> }

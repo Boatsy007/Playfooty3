@@ -108,6 +108,8 @@ model League {
   websiteUrl         String?
   facebookUrl        String?
   logoUrl            String?
+  description        String?
+  featuredLeague     Boolean  @default(false)
 
   // ── PlayFooty football data-source control centre ────────────────────────
   // Additive fields only: existing netball/ranking systems continue to use the
@@ -337,6 +339,9 @@ model Club {
   websiteUrl      String?
   facebookUrl     String?
   instagramUrl    String?
+  description     String?
+  contactEmail    String?
+  featuredClub    Boolean  @default(false)
 
   // CNCA status
   cncaQualified    Boolean @default(false)

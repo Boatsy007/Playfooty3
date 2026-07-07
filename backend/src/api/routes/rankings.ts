@@ -17,10 +17,24 @@ import { logger }        from '../../utils/logger.js'
 const router = Router()
 
 async function getLatestRun(season?: string) {
-  return prisma.rankingRun.findFirst({
+  const runs = await prisma.rankingRun.findMany({
     where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
     orderBy: { completedAt: 'desc' },
+    take:    25,
   })
+
+  for (const run of runs) {
+    const publicFootballEntries = await prisma.rankingEntry.count({
+      where: {
+        runId: run.id,
+        league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+      },
+    })
+    if (publicFootballEntries > 0) return run
+  }
+
+  return null
 }
 
 async function getEntries(runId: string, limit?: number, state?: string) {
@@ -28,10 +42,12 @@ async function getEntries(runId: string, limit?: number, state?: string) {
     where: {
       runId,
       league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
       ...(state ? { state } : {}),
     },
     orderBy: { rank: 'asc' },
     ...(limit ? { take: limit } : {}),
+    include: { club: { select: { logoUrl: true } } },
   })
 }
 
@@ -51,6 +67,7 @@ function formatEntry(
     rankMovement: entry.rankMovement,
     clubId:       entry.clubId,
     clubName:     entry.clubName,
+    logoUrl:      entry.club?.logoUrl ?? null,
     leagueName:   entry.leagueName,
     state:        entry.state,
     powerRating:  entry.powerRating,
@@ -108,7 +125,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, res) => {
   try {
     const run = await prisma.rankingRun.findFirst({
-      where:   { weekLabel: req.params.weekLabel, status: 'COMPLETED' },
+      where:   { weekLabel: String(req.params.weekLabel), status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     })
     if (!run) { res.status(404).json({ error: 'No rankings found for this week' }); return }
