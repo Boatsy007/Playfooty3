@@ -2511,7 +2511,7 @@ model FootballGoalKicker {
   goals       Int      @default(0)
   matches     Int?
   sourceUrl   String?
-  sourceType  String   @default("PLAYHQ_SCRAPER")
+  sourceType  String   @default("PLAYHQ")
   importedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2520,6 +2520,7 @@ model FootballGoalKicker {
   club   Club?   @relation(fields: [clubId], references: [id])
 
   @@unique([leagueId, season, grade, playerName, clubName])
+  @@unique([season, grade, playerName, clubName, leagueName])
   @@index([season, goals])
   @@index([leagueId])
   @@index([clubId])

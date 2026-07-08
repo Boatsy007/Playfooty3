@@ -11,6 +11,7 @@ import { rankingsRouter }      from './api/routes/rankings.js'
 import { clubsRouter }         from './api/routes/clubs.js'
 import { leaguesRouter }       from './api/routes/leagues.js'
 import { directoryRouter }     from './api/routes/directory.js'
+import { goalKickersRouter }   from './api/routes/goal-kickers.js'
 import { newsRouter }          from './api/routes/news.js'
 import { adminDashboardRouter } from './admin/dashboard.js'
 import { adminSettingsRouter }  from './admin/settings.js'
@@ -65,6 +66,7 @@ app.use('/api/rankings',  rankingsRouter)   // /api/rankings, /api/rankings/top1
 app.use('/api/clubs',     clubsRouter)      // /api/clubs, /api/clubs/:id, /api/clubs/history/:clubId
 app.use('/api/leagues',   leaguesRouter)    // /api/leagues, /api/leagues/:id
 app.use('/api/directory', directoryRouter)  // /api/directory — clubs by state → league
+app.use('/api/goal-kickers', goalKickersRouter) // /api/goal-kickers — country goal kicking ladder
 app.use('/api/news',      newsRouter)       // /api/news, /api/news/:slug — published articles
 
 // Phase B2 — claiming platform (additive; nothing exposed in the UI yet)

@@ -637,13 +637,13 @@ router.post('/goal-kickers/import', async (req, res) => {
     const league = await prisma.league.findFirst({ where: { name: { equals: leagueName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
     const club = await prisma.club.findFirst({ where: { name: { equals: clubName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
     await prisma.footballGoalKicker.upsert({
-      where: { leagueId_season_grade_playerName_clubName: { leagueId: league?.id ?? null, season, grade, playerName, clubName } },
-      create: { playerName, clubId: club?.id ?? null, clubName, leagueId: league?.id ?? null, leagueName: league?.name ?? leagueName, season, grade, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ_SCRAPER', importedAt: new Date() },
-      update: { clubId: club?.id ?? null, leagueName: league?.name ?? leagueName, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ_SCRAPER', importedAt: new Date() },
+      where: { season_grade_playerName_clubName_leagueName: { season, grade, playerName, clubName, leagueName: league?.name ?? leagueName } },
+      create: { playerName, clubId: club?.id ?? null, clubName, leagueId: league?.id ?? null, leagueName: league?.name ?? leagueName, season, grade, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ', importedAt: new Date() },
+      update: { clubId: club?.id ?? null, leagueName: league?.name ?? leagueName, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ', importedAt: new Date() },
     })
     imported++
   }
-  res.json({ data: { imported, sourceUrl: b.sourceUrl ?? null, note: rows.length ? 'Goal kickers imported.' : 'Paste a PlayHQ statistics URL after the goal kicker parser is connected, or send parsed rows to this endpoint.' } })
+  res.json({ data: { imported, sourceUrl: b.sourceUrl ?? null, note: rows.length ? 'Goal kickers imported.' : 'Goal kicker PlayHQ parser not implemented yet.' } })
 })
 
 // ─── PlayFooty football data-source control centre ───────────────────────────
