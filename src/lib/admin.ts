@@ -16,7 +16,11 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   })
   if (r.status === 401) throw new Error('Unauthorized — check the admin key')
   const json = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error((json as { error?: string }).error ?? `HTTP ${r.status}`)
+  if (!r.ok) {
+    const err = new Error((json as { error?: string }).error ?? `HTTP ${r.status}`) as Error & { response?: unknown }
+    err.response = json
+    throw err
+  }
   return json as T
 }
 
@@ -197,7 +201,7 @@ export const admin = {
   uploadClubLogo: (id: string, b: LogoUploadPayload) => req<{ data: ClubProfileDetail }>('POST', `/admin/platform/clubs/${id}/logo`, b).then(r => r.data),
   removeClubLogo: (id: string) => req<{ data: ClubProfileDetail }>('DELETE', `/admin/platform/clubs/${id}/logo`).then(r => r.data),
   listGoalKickers: () => req<{ data: GoalKickerRow[] }>('GET', '/admin/platform/goal-kickers').then(r => r.data),
-  importGoalKickers: (b: { sourceUrl?: string; rows?: Record<string, unknown>[] }) => req<{ data: { imported: number; sourceUrl: string | null; note: string } }>('POST', '/admin/platform/goal-kickers/import', b).then(r => r.data),
+  importGoalKickers: (b: { url?: string; sourceUrl?: string; rows?: Record<string, unknown>[] }) => req<{ data: { imported: number; skipped?: number; errors?: number; sourceUrl: string | null; note: string; diagnostics?: unknown; warnings?: string[] }; errors?: unknown[] }>('POST', '/admin/platform/goal-kickers/import', b).then(r => r.data),
   // PlayHQ URL import (Phase 1) + League sync (Phase 10) — dispatched to GitHub Actions
   classifyUrl: (url: string) => req<{ data: ParsedUrl }>('POST', '/admin/platform/playhq/classify', { url }).then(r => r.data),
   importUrl:   (url: string) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),

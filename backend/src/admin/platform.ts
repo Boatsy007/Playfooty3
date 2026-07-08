@@ -624,8 +624,8 @@ router.get('/goal-kickers', async (_req, res) => {
 })
 
 router.post('/goal-kickers/import', async (req, res) => {
-  const b = req.body as { sourceUrl?: string; rows?: Array<Record<string, unknown>> }
-  const sourceUrl = str(b.sourceUrl, '').trim()
+  const b = req.body as { sourceUrl?: string; url?: string; rows?: Array<Record<string, unknown>> }
+  const sourceUrl = str(b.sourceUrl ?? b.url, '').trim()
   let rows: GoalKickerRow[] = []
   let strategy = 'provided-rows'
   let warnings: string[] = []

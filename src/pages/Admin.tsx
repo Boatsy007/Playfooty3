@@ -127,10 +127,28 @@ function GoalKickers() {
   const [rows, setRows] = useState<GoalKickerRow[]>([])
   const [url, setUrl] = useState('')
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
   const load = () => admin.listGoalKickers().then(setRows).catch(() => setRows([]))
   useEffect(() => { load() }, [])
-  const run = async () => { const result = await admin.importGoalKickers({ sourceUrl: url.trim() }); setMessage(result.note); setUrl(''); await load() }
-  return <Page icon="⚽" title="Goal Kickers"><section style={box}><h3>Import Goal Kickers</h3><p style={{ color: C.mute }}>Paste a PlayHQ goal kickers/statistics URL. Parsed goal rows are stored in the country-wide goal kicking ladder.</p><div className="pf-form"><input style={input} value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste PlayHQ goal kickers/statistics URL" /><button style={button()} onClick={run}>IMPORT</button></div>{message && <p style={{ color: C.green, fontWeight: 900 }}>{message}</p>}</section><section style={box}><h3>Country goal kicking ladder</h3>{rows.length === 0 ? <p style={{ color: C.mute }}>No goal kickers imported yet.</p> : rows.map(r => <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.line}`, padding: '10px 0', gap: 12 }}><span><strong>{r.playerName}</strong><br/><small style={{ color: C.mute }}>{r.clubName} · {r.leagueName}</small></span><strong>{r.goals}</strong></div>)}</section></Page>
+  const run = async () => {
+    const pastedUrl = url.trim()
+    setMessage('')
+    setError('')
+    if (!pastedUrl) { setError('Paste a PlayHQ goal kickers/statistics URL.'); return }
+    setBusy(true)
+    try {
+      const result = await admin.importGoalKickers({ url: pastedUrl, sourceUrl: pastedUrl })
+      setMessage(result.note)
+      await load()
+    } catch (e) {
+      const response = (e as Error & { response?: unknown }).response
+      setError(response ? JSON.stringify(response, null, 2) : plainError(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return <Page icon="⚽" title="Goal Kickers"><section style={box}><h3>Import Goal Kickers</h3><p style={{ color: C.mute }}>Paste a PlayHQ goal kickers/statistics URL. Parsed goal rows are stored in the country-wide goal kicking ladder.</p><div className="pf-form"><input style={input} value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste PlayHQ goal kickers/statistics URL" /><button style={button()} disabled={busy} onClick={run}>{busy ? 'IMPORTING…' : 'IMPORT'}</button></div>{message && <p style={{ color: C.green, fontWeight: 900 }}>{message}</p>}{error && <pre style={{ whiteSpace: 'pre-wrap', color: C.red, background: '#fff5f5', border: `1px solid ${C.line}`, borderRadius: 12, padding: 12 }}>{error}</pre>}</section><section style={box}><h3>Country goal kicking ladder</h3>{rows.length === 0 ? <p style={{ color: C.mute }}>No goal kickers imported yet.</p> : rows.map(r => <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${C.line}`, padding: '10px 0', gap: 12 }}><span><strong>{r.playerName}</strong><br/><small style={{ color: C.mute }}>{r.clubName} · {r.leagueName}</small></span><strong>{r.goals}</strong></div>)}</section></Page>
 }
 function Settings() { return <Page icon="⚙️" title="Settings"><section style={box}><h3>Logo storage</h3><p style={{ color: C.mute }}>Logo upload uses Supabase Storage bucket <strong>playfooty-logos</strong>. Accepted: png, jpg/jpeg and webp. Max size: 5MB.</p></section></Page> }
 
