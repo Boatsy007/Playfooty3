@@ -26,7 +26,6 @@ router.get('/', publicRateLimit, cachePublic(3600), async (req, res) => {
       select: {
         id: true, name: true, strengthScore: true, lastSyncedAt: true,
         state:   { select: { code: true, name: true } },
-        sources: { where: { isActive: true }, select: { sourceType: true } },
         _count:  { select: { clubSeasons: true } },
       },
       orderBy: [{ state: { name: 'asc' } }, { name: 'asc' }],
@@ -39,7 +38,7 @@ router.get('/', publicRateLimit, cachePublic(3600), async (req, res) => {
         state:          l.state.code,
         stateName:      l.state.name,
         strengthScore:  l.strengthScore,
-        sourceTypes:    l.sources.map(s => s.sourceType),
+        sourceTypes:    [],
         clubCount:      l._count.clubSeasons,
         lastSyncedAt:   l.lastSyncedAt,
       })),
@@ -67,7 +66,6 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
         strengthTier: true,
         lastSyncedAt: true,
         state: { select: { code: true, name: true } },
-        sources: { where: { isActive: true }, select: { sourceType: true } },
         _count: { select: { clubSeasons: true } },
       },
     })
@@ -132,13 +130,11 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
           percentage: r.percentage,
           points: r.points,
         })),
-        sources: league.sources.map(s => ({
-          sourceType: s.sourceType,
-          ladderUrl: null,
-          fixturesUrl: null,
-          isActive: true,
-          lastScraped: null,
-        })),
+        sources: [],
+        fixtures: [],
+        results: [],
+        ranking: null,
+        bio: null,
       },
     })
   } catch (err) {

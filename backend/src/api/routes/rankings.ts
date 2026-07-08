@@ -28,7 +28,7 @@ async function getLatestRun(season?: string) {
       where: {
         runId: run.id,
         league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       },
     })
     if (publicFootballEntries > 0) return run
@@ -42,12 +42,11 @@ async function getEntries(runId: string, limit?: number, state?: string) {
     where: {
       runId,
       league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       ...(state ? { state } : {}),
     },
     orderBy: { rank: 'asc' },
     ...(limit ? { take: limit } : {}),
-    include: { club: { select: { logoUrl: true } } },
   })
 }
 
@@ -67,7 +66,7 @@ function formatEntry(
     rankMovement: entry.rankMovement,
     clubId:       entry.clubId,
     clubName:     entry.clubName,
-    logoUrl:      entry.club?.logoUrl ?? null,
+    logoUrl:      null,
     leagueName:   entry.leagueName,
     state:        entry.state,
     powerRating:  entry.powerRating,
@@ -106,7 +105,7 @@ async function formatEntries(
 
 async function getFallbackEntries(limit?: number, state?: string, season?: string) {
   const latestSeason = season ?? (await prisma.clubLeagueSeason.findFirst({
-    where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' } },
+    where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, club: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
     orderBy: { season: 'desc' },
     select: { season: true },
   }))?.season
@@ -116,13 +115,13 @@ async function getFallbackEntries(limit?: number, state?: string, season?: strin
       isActive: true,
       ...(latestSeason ? { season: latestSeason } : {}),
       league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED', ...(state ? { state: { code: state } } : {}) },
+      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(state ? { state: { code: state } } : {}) },
     },
     orderBy: [{ points: 'desc' }, { percentage: 'desc' }, { wins: 'desc' }, { club: { name: 'asc' } }],
     ...(limit ? { take: limit } : {}),
     select: {
       clubId: true, leagueId: true, season: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true,
-      club: { select: { name: true, logoUrl: true, state: { select: { code: true } } } },
+      club: { select: { name: true, state: { select: { code: true } } } },
       league: { select: { name: true } },
     },
   })
@@ -135,7 +134,7 @@ async function getFallbackEntries(limit?: number, state?: string, season?: strin
       rankMovement: 0,
       clubId: row.clubId,
       clubName: row.club.name,
-      logoUrl: row.club.logoUrl ?? null,
+      logoUrl: null,
       leagueName: row.league.name,
       state: row.club.state?.code ?? '—',
       powerRating: row.points || row.percentage ? Math.round(((row.points * 4) + row.percentage) * 10) / 10 : 0,
@@ -294,10 +293,6 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
     let weights
     try { weights = config?.weights ? JSON.parse(config.weights as string) : undefined } catch { weights = undefined }
 
-    const league = entry.leagueId
-      ? await prisma.league.findUnique({ where: { id: entry.leagueId }, select: { strengthReasoning: true, strengthConfidence: true, finalStrengthRating: true, strengthCalculatedAt: true } })
-      : null
-
     res.json({ data: {
       clubId:      entry.clubId,
       clubName:    entry.clubName,
@@ -310,12 +305,12 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
         componentScores, recentForm, weights,
       }),
       componentScores,
-      league: league ? {
+      league: entry.leagueId ? {
         name:          entry.leagueName,
-        strength:      league.finalStrengthRating,
-        confidence:    league.strengthConfidence,
-        reasoning:     league.strengthReasoning,
-        calculatedAt:  league.strengthCalculatedAt,
+        strength:      null,
+        confidence:    null,
+        reasoning:     null,
+        calculatedAt:  null,
       } : null,
     } })
   } catch (err) {

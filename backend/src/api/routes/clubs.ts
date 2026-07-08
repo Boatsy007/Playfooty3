@@ -21,7 +21,6 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
       sport: 'FOOTBALL',
       archivedAt: null,
       isActive: true,
-      approvalStatus: 'APPROVED',
       ...(state ? { state: { code: state } } : {}),
       leagueSeasons: {
         some: {
@@ -48,7 +47,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
         where: {
           runId: candidate.id,
           league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-          club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+          club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
         },
       })
       if (visibleRows > 0) { run = candidate; break }
@@ -57,12 +56,12 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
     if (!run) {
       const clubs = await prisma.club.findMany({
         where: clubWhere,
-        select: { id: true, name: true, logoUrl: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
+        select: { id: true, name: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
         orderBy: { name: 'asc' },
         take: 200,
       })
       return res.json({
-        data: clubs.map(c => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: null, powerRating: null, logoUrl: c.logoUrl ?? null })),
+        data: clubs.map(c => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: null, powerRating: null, logoUrl: null })),
         meta: { weekLabel: null, season: season ?? null, total: clubs.length, source: 'clubs' },
       })
     }
@@ -71,11 +70,10 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
       where: {
         runId: run.id,
         league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
+        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
         ...(state  ? { state }       : {}),
         ...(league ? { leagueName: { contains: league, mode: 'insensitive' as const } } : {}),
       },
-      include: { club: { select: { logoUrl: true } } },
       orderBy: { rank: 'asc' },
       take:    200,
     })
@@ -83,12 +81,12 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
     if (entries.length === 0) {
       const clubs = await prisma.club.findMany({
         where: clubWhere,
-        select: { id: true, name: true, logoUrl: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
+        select: { id: true, name: true, state: { select: { code: true } }, leagueSeasons: { where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } }, select: { league: { select: { name: true } } }, take: 1 } },
         orderBy: { name: 'asc' },
         take: 200,
       })
       return res.json({
-        data: clubs.map((c, index) => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: index + 1, powerRating: null, logoUrl: c.logoUrl ?? null })),
+        data: clubs.map((c, index) => ({ clubId: c.id, clubName: c.name, leagueName: c.leagueSeasons[0]?.league?.name ?? '—', state: c.state?.code ?? '—', rank: index + 1, powerRating: null, logoUrl: null })),
         meta: { weekLabel: run.weekLabel, season: run.season, total: clubs.length, source: 'clubs-fallback' },
       })
     }
@@ -101,7 +99,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
         state:       e.state,
         rank:        e.rank,
         powerRating: e.powerRating,
-        logoUrl:     e.club?.logoUrl ?? null,
+        logoUrl:     null,
       })),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, source: 'rankings' },
     })
@@ -233,6 +231,11 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         websiteUrl: null,
         facebookUrl: null,
         instagramUrl: null,
+        bio: null,
+        ranking: rank == null ? null : { rank, powerRating: currentEntry?.powerRating ?? null, movement: currentEntry?.rankMovement ?? null },
+        fixtures: [],
+        results: [],
+        teams: [],
         ladder: ladderRows.map(r => ({
           clubId: r.clubId,
           clubName: r.club.name,
