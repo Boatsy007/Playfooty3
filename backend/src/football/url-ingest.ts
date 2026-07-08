@@ -45,10 +45,34 @@ export async function fetchPage(url: string, timeoutMs = 15000): Promise<Fetched
   }
 }
 
-function shouldRenderPlayHq(url: string): boolean {
-  return /\/\/(?:www\.)?playhq\.com\//i.test(url) && process.env.PLAYFOOTY_RENDER_PLAYHQ === '1'
+function isPlayHqUrl(url: string): boolean {
+  return /\/\/(?:www\.)?playhq\.com\//i.test(url)
 }
 
+function shouldRenderPlayHq(url: string): boolean {
+  return isPlayHqUrl(url) && process.env.PLAYFOOTY_RENDER_PLAYHQ === '1'
+}
+
+export async function fetchPlayHqStatisticsPage(url: string, timeoutMs = 30000): Promise<FetchedPage> {
+  const page = await fetchPage(url, timeoutMs)
+  if (page.ok || !isPlayHqUrl(url) || page.status !== 403) return page
+
+  logger.warn('PlayHQ statistics fetch returned 403; retrying with rendered browser fetch', { url })
+  const rendered = await fetchRenderedPlayHqPage(url, timeoutMs, { waitForNetworkIdle: true }).catch(e => {
+    logger.warn('PlayHQ statistics rendered fetch failed after 403', { url, detail: String(e) })
+    return null
+  })
+  if (rendered?.body) return rendered
+  return {
+    ...page,
+    diagnostics: {
+      ...(page.diagnostics ?? {}),
+      plainFetchStatus: page.status,
+      renderedRetryAttempted: true,
+      renderedRetryError: rendered ? undefined : 'Rendered browser fetch did not return a page.',
+    },
+  }
+}
 
 type RenderDiagnostics = {
   finalUrl?: string
@@ -113,7 +137,7 @@ async function writePlayHqArtifacts(page: import('playwright').Page, url: string
   return { htmlPath, screenshotPath }
 }
 
-async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<FetchedPage> {
+async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { waitForNetworkIdle?: boolean } = {}): Promise<FetchedPage> {
   const { chromium } = await import('playwright')
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
   const capturedJson: unknown[] = []
@@ -122,6 +146,10 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<
     const ctx = await browser.newContext({
       userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       locale: 'en-AU',
+      extraHTTPHeaders: {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'accept-language': 'en-AU,en;q=0.9',
+      },
     })
     const page = await ctx.newPage()
     page.on('response', async response => {
@@ -138,6 +166,7 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number): Promise<
       }
     })
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs })
+    if (opts.waitForNetworkIdle) await page.waitForLoadState('networkidle', { timeout: Math.min(timeoutMs, 15000) }).catch(() => undefined)
     let advancedToggleClicked = false
     if (/\/ladder(?:$|[?#])/i.test(url)) advancedToggleClicked = await enableAdvancedLadder(page)
     await page.waitForTimeout(3500)

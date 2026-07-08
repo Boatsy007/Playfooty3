@@ -15,7 +15,7 @@ import { createBackup } from '../jobs/backup.js'
 import { sweepDataQuality } from '../jobs/data-quality.js'
 import { generateWeeklyDrafts } from '../jobs/generate-articles.js'
 import { runWeeklyUpdate } from '../jobs/weekly-update-engine.js'
-import { fetchPage, parseResults, parseFixtures, parseLadder, parseGoalKickers, type ResultRow, type FixtureRow, type GoalKickerRow } from '../football/url-ingest.js'
+import { fetchPage, fetchPlayHqStatisticsPage, parseResults, parseFixtures, parseLadder, parseGoalKickers, type ResultRow, type FixtureRow, type GoalKickerRow } from '../football/url-ingest.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -643,7 +643,7 @@ router.post('/goal-kickers/import', async (req, res) => {
       sourceUrl,
     })).filter(row => row.playerName && row.clubName && row.leagueName)
   } else if (sourceUrl) {
-    const page = await fetchPage(sourceUrl, 30000)
+    const page = await fetchPlayHqStatisticsPage(sourceUrl, 30000)
     const parsed = parseGoalKickers(page)
     rows = parsed.rows
     strategy = parsed.strategy
