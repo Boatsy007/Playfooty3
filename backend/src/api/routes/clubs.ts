@@ -147,7 +147,6 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         goalsAgainst: true,
         percentage: true,
         points: true,
-        position: true,
         league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } },
       },
     })
@@ -181,8 +180,8 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
     const ladderRows = leagueId && cls?.season
       ? await prisma.clubLeagueSeason.findMany({
           where: { leagueId, season: cls.season, isActive: true },
-          orderBy: [{ position: 'asc' }, { points: 'desc' }, { club: { name: 'asc' } }],
-          select: { clubId: true, position: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true, club: { select: { name: true } } },
+          orderBy: [{ points: 'desc' }, { percentage: 'desc' }, { club: { name: 'asc' } }],
+          select: { clubId: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true, club: { select: { name: true } } },
         })
       : []
 
@@ -195,6 +194,7 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
 
     const rank = currentEntry?.rank ?? null
     const league = cls?.league ?? null
+    const ladderIndex = ladderRows.findIndex(r => r.clubId === clubId)
 
     res.json({
       data: {
@@ -214,7 +214,7 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         goalsFor: cls?.goalsFor ?? 0,
         goalsAgainst: cls?.goalsAgainst ?? 0,
         percentage: cls?.percentage ?? 0,
-        ladderPosition: cls?.position ?? null,
+        ladderPosition: ladderIndex >= 0 ? ladderIndex + 1 : null,
         leagueStrengthScore: league?.strengthScore ?? null,
         leagueStrengthTier: league?.strengthTier ?? null,
         recentForm,
@@ -236,10 +236,10 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         fixtures: [],
         results: [],
         teams: [],
-        ladder: ladderRows.map(r => ({
+        ladder: ladderRows.map((r, index) => ({
           clubId: r.clubId,
           clubName: r.club.name,
-          position: r.position,
+          position: index + 1,
           played: r.played,
           wins: r.wins,
           losses: r.losses,
