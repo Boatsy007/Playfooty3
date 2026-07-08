@@ -16,6 +16,16 @@ import { logger }        from '../../utils/logger.js'
 
 const router = Router()
 
+function logAndRethrow(route: string, err: unknown): never {
+  console.error(err)
+  if (err instanceof Error && err.stack) console.error(err.stack)
+  console.error(`[rankings] ${route} failed`, {
+    name: err instanceof Error ? err.name : typeof err,
+    message: err instanceof Error ? err.message : String(err),
+  })
+  throw err
+}
+
 async function getLatestRun(season?: string) {
   const runs = await prisma.rankingRun.findMany({
     where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
@@ -63,13 +73,13 @@ function formatEntry(
   return {
     rank:         entry.rank,
     previousRank: entry.previousRank,
-    rankMovement: entry.rankMovement,
+    rankMovement: entry.rankMovement ?? 0,
     clubId:       entry.clubId,
-    clubName:     entry.clubName,
+    clubName:     entry.clubName ?? 'Unknown Club',
     logoUrl:      null,
-    leagueName:   entry.leagueName,
-    state:        entry.state,
-    powerRating:  entry.powerRating,
+    leagueName:   entry.leagueName ?? 'Unknown League',
+    state:        entry.state ?? '—',
+    powerRating:  Number.isFinite(entry.powerRating) ? entry.powerRating : 0,
     // Raw season stats (from ClubLeagueSeason) so the frontend can show record + goals
     record:       { wins: stats?.wins ?? 0, losses: stats?.losses ?? 0, draws: stats?.draws ?? 0, played: stats?.played ?? 0 },
     goalsFor:     stats?.goalsFor ?? 0,
@@ -133,11 +143,11 @@ async function getFallbackEntries(limit?: number, state?: string, season?: strin
       previousRank: null,
       rankMovement: 0,
       clubId: row.clubId,
-      clubName: row.club.name,
+      clubName: row.club?.name ?? 'Unknown Club',
       logoUrl: null,
-      leagueName: row.league.name,
-      state: row.club.state?.code ?? '—',
-      powerRating: row.points || row.percentage ? Math.round(((row.points * 4) + row.percentage) * 10) / 10 : 0,
+      leagueName: row.league?.name ?? 'Unknown League',
+      state: row.club?.state?.code ?? '—',
+      powerRating: row.points || row.percentage ? Math.round((((row.points ?? 0) * 4) + (row.percentage ?? 0)) * 10) / 10 : 0,
       record: { wins: row.wins, losses: row.losses, draws: row.draws, played: row.played },
       goalsFor: row.goalsFor,
       goalsAgainst: row.goalsAgainst,
@@ -173,7 +183,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
     })
   } catch (err) {
     logger.error('GET /rankings error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+    logAndRethrow('GET /api/rankings', err)
   }
 })
 
@@ -193,7 +203,7 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
     })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+    logAndRethrow('GET /api/rankings/week/:weekLabel', err)
   }
 })
 
@@ -217,7 +227,7 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+    logAndRethrow('GET /api/top10', err)
   }
 })
 
@@ -241,7 +251,7 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+    logAndRethrow('GET /api/top25', err)
   }
 })
 
@@ -265,7 +275,7 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error', detail: String(err) })
+    logAndRethrow('GET /api/top100', err)
   }
 })
 
@@ -315,7 +325,7 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
     } })
   } catch (err) {
     logger.error('GET /rankings/explain error', { detail: String(err) })
-    res.status(500).json({ error: 'Internal server error' })
+    logAndRethrow('GET /api/rankings/explain/:clubId', err)
   }
 })
 
