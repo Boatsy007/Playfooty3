@@ -150,6 +150,7 @@ model League {
   footballFixtures FootballFixture[]
   footballResults  FootballResult[]
   footballLadderEntries FootballLadderEntry[]
+  footballGoalKickers FootballGoalKicker[]
   footballImports FootballDataImport[]
 
   createdAt    DateTime         @default(now())
@@ -372,6 +373,7 @@ model Club {
   awayMatches    Match[]          @relation("AwayClub")
   rankingEntries RankingEntry[]
   snapshots      RankingSnapshot[]
+  footballGoalKickers FootballGoalKicker[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2495,4 +2497,31 @@ model ProfileChangeLog {
   @@index([actorId])
   @@index([createdAt])
   @@map("profile_change_logs")
+}
+
+model FootballGoalKicker {
+  id          String   @id @default(uuid())
+  playerName  String
+  clubId      String?
+  clubName    String
+  leagueId    String?
+  leagueName  String
+  season      String
+  grade       String?
+  goals       Int      @default(0)
+  matches     Int?
+  sourceUrl   String?
+  sourceType  String   @default("PLAYHQ_SCRAPER")
+  importedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  league League? @relation(fields: [leagueId], references: [id])
+  club   Club?   @relation(fields: [clubId], references: [id])
+
+  @@unique([leagueId, season, grade, playerName, clubName])
+  @@index([season, goals])
+  @@index([leagueId])
+  @@index([clubId])
+  @@map("football_goal_kickers")
 }

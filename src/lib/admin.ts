@@ -87,6 +87,7 @@ export interface ArticleRow {
   summary: string; status: string; weekLabel: string | null; updatedAt: string; publishedAt: string | null
 }
 export interface ArticleFull extends ArticleRow { body: string; heroSeed: string; tags: string | null; seoTitle: string | null; seoDescription: string | null; author: string }
+export interface GoalKickerRow { id: string; playerName: string; clubId: string | null; clubName: string; leagueId: string | null; leagueName: string; season: string; grade: string | null; goals: number; matches: number | null; sourceUrl: string | null; sourceType: string; importedAt: string }
 export interface ParsedUrl {
   ok: boolean; kind: string; tenant: string | null; orgSlug: string | null
   competitionSlug: string | null; gradeSlug: string | null; gradeId: string | null
@@ -195,6 +196,8 @@ export const admin = {
   updateClubProfile: (id: string, b: Record<string, unknown>) => req<{ data: ClubProfileDetail }>('PATCH', `/admin/platform/clubs/${id}`, b).then(r => r.data),
   uploadClubLogo: (id: string, b: LogoUploadPayload) => req<{ data: ClubProfileDetail }>('POST', `/admin/platform/clubs/${id}/logo`, b).then(r => r.data),
   removeClubLogo: (id: string) => req<{ data: ClubProfileDetail }>('DELETE', `/admin/platform/clubs/${id}/logo`).then(r => r.data),
+  listGoalKickers: () => req<{ data: GoalKickerRow[] }>('GET', '/admin/platform/goal-kickers').then(r => r.data),
+  importGoalKickers: (b: { sourceUrl?: string; rows?: Record<string, unknown>[] }) => req<{ data: { imported: number; sourceUrl: string | null; note: string } }>('POST', '/admin/platform/goal-kickers/import', b).then(r => r.data),
   // PlayHQ URL import (Phase 1) + League sync (Phase 10) — dispatched to GitHub Actions
   classifyUrl: (url: string) => req<{ data: ParsedUrl }>('POST', '/admin/platform/playhq/classify', { url }).then(r => r.data),
   importUrl:   (url: string) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),

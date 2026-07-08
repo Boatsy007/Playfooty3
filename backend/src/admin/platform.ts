@@ -614,6 +614,38 @@ router.delete('/clubs/:id/logo', async (req, res) => {
   res.json({ data: updated })
 })
 
+router.get('/goal-kickers', async (_req, res) => {
+  const rows = await prisma.footballGoalKicker.findMany({
+    orderBy: [{ goals: 'desc' }, { playerName: 'asc' }],
+    take: 500,
+    select: { id: true, playerName: true, clubId: true, clubName: true, leagueId: true, leagueName: true, season: true, grade: true, goals: true, matches: true, sourceUrl: true, sourceType: true, importedAt: true },
+  })
+  res.json({ data: rows })
+})
+
+router.post('/goal-kickers/import', async (req, res) => {
+  const b = req.body as { sourceUrl?: string; rows?: Array<Record<string, unknown>> }
+  const rows = Array.isArray(b.rows) ? b.rows : []
+  let imported = 0
+  for (const row of rows) {
+    const playerName = str(row.playerName ?? row.player, '').trim()
+    const clubName = str(row.clubName ?? row.club, '').trim()
+    const leagueName = str(row.leagueName ?? row.league, '').trim()
+    const season = str(row.season, '2026')
+    const grade = str(row.grade, 'Senior Football')
+    if (!playerName || !clubName || !leagueName) continue
+    const league = await prisma.league.findFirst({ where: { name: { equals: leagueName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
+    const club = await prisma.club.findFirst({ where: { name: { equals: clubName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
+    await prisma.footballGoalKicker.upsert({
+      where: { leagueId_season_grade_playerName_clubName: { leagueId: league?.id ?? null, season, grade, playerName, clubName } },
+      create: { playerName, clubId: club?.id ?? null, clubName, leagueId: league?.id ?? null, leagueName: league?.name ?? leagueName, season, grade, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ_SCRAPER', importedAt: new Date() },
+      update: { clubId: club?.id ?? null, leagueName: league?.name ?? leagueName, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ_SCRAPER', importedAt: new Date() },
+    })
+    imported++
+  }
+  res.json({ data: { imported, sourceUrl: b.sourceUrl ?? null, note: rows.length ? 'Goal kickers imported.' : 'Paste a PlayHQ statistics URL after the goal kicker parser is connected, or send parsed rows to this endpoint.' } })
+})
+
 // ─── PlayFooty football data-source control centre ───────────────────────────
 router.get('/football/leagues', async (_req, res) => {
   const leagues = await prisma.league.findMany({
