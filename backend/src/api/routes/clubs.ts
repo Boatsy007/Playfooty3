@@ -171,6 +171,12 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
     })
 
     const rank = currentEntry?.rank ?? null
+    let recentForm: unknown[] = []
+    let componentScores: Record<string, unknown> = {}
+    if (currentEntry) {
+      try { recentForm = JSON.parse((currentEntry.recentForm as string) || '[]') } catch { recentForm = [] }
+      try { componentScores = JSON.parse((currentEntry.componentScores as string) || '{}') } catch { componentScores = {} }
+    }
 
     res.json({
       data: {
@@ -193,8 +199,8 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
         ladderPosition: cls?.position ?? null,
         leagueStrengthScore: league?.strengthScore ?? null,
         leagueStrengthTier:  league?.strengthTier ?? null,
-        recentForm:  currentEntry ? JSON.parse(currentEntry.recentForm as string ?? '[]') : [],
-        componentScores: currentEntry ? JSON.parse(currentEntry.componentScores as string ?? '{}') : {},
+        recentForm,
+        componentScores,
         weekLabel:   currentEntry?.rankingRun.weekLabel ?? null,
         season:      season ?? cls?.season ?? null,
         history:     history.map(h => ({ weekLabel: h.rankingRun.weekLabel, rank: h.rank, powerRating: h.powerRating, date: h.rankingRun.completedAt })),

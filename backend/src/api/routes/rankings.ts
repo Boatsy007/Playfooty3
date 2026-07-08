@@ -103,14 +103,71 @@ async function formatEntries(
   })
 }
 
+
+async function getFallbackEntries(limit?: number, state?: string, season?: string) {
+  const latestSeason = season ?? (await prisma.clubLeagueSeason.findFirst({
+    where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' } },
+    orderBy: { season: 'desc' },
+    select: { season: true },
+  }))?.season
+
+  const rows = await prisma.clubLeagueSeason.findMany({
+    where: {
+      isActive: true,
+      ...(latestSeason ? { season: latestSeason } : {}),
+      league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
+      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED', ...(state ? { state: { code: state } } : {}) },
+    },
+    orderBy: [{ points: 'desc' }, { percentage: 'desc' }, { wins: 'desc' }, { club: { name: 'asc' } }],
+    ...(limit ? { take: limit } : {}),
+    select: {
+      clubId: true, leagueId: true, season: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true,
+      club: { select: { name: true, logoUrl: true, state: { select: { code: true } } } },
+      league: { select: { name: true } },
+    },
+  })
+
+  return {
+    season: latestSeason ?? null,
+    data: rows.map((row, index) => ({
+      rank: index + 1,
+      previousRank: null,
+      rankMovement: 0,
+      clubId: row.clubId,
+      clubName: row.club.name,
+      logoUrl: row.club.logoUrl ?? null,
+      leagueName: row.league.name,
+      state: row.club.state?.code ?? '—',
+      powerRating: row.points || row.percentage ? Math.round(((row.points * 4) + row.percentage) * 10) / 10 : 0,
+      record: { wins: row.wins, losses: row.losses, draws: row.draws, played: row.played },
+      goalsFor: row.goalsFor,
+      goalsAgainst: row.goalsAgainst,
+      percentage: row.percentage,
+      points: row.points,
+      recentForm: [],
+      componentScores: {},
+      calculatedAt: null,
+    })),
+  }
+}
+
 // GET /api/rankings
 router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { season, state } = req.query as Record<string, string>
     const run = await getLatestRun(season)
-    if (!run) { res.json({ data: [], meta: { weekLabel: null, season: null, total: 0 } }); return }
+    if (!run) {
+      const fallback = await getFallbackEntries(undefined, state, season)
+      res.json({ data: fallback.data, meta: { weekLabel: null, season: fallback.season, total: fallback.data.length, source: 'clubs-fallback' } })
+      return
+    }
 
     const entries = await getEntries(run.id, undefined, state)
+    if (entries.length === 0) {
+      const fallback = await getFallbackEntries(undefined, state, run.season)
+      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, total: fallback.data.length, generatedAt: run.completedAt, source: 'clubs-fallback' } })
+      return
+    }
     res.json({
       data: await formatEntries(entries, run.season),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, generatedAt: run.completedAt },
@@ -146,9 +203,18 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) { res.json({ data: [], meta: {} }); return }
+    if (!run) {
+      const fallback = await getFallbackEntries(10, state)
+      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
+      return
+    }
 
     const entries = await getEntries(run.id, 10, state)
+    if (entries.length === 0) {
+      const fallback = await getFallbackEntries(10, state, run.season)
+      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
+      return
+    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
@@ -161,9 +227,18 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) { res.json({ data: [], meta: {} }); return }
+    if (!run) {
+      const fallback = await getFallbackEntries(25, state)
+      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
+      return
+    }
 
     const entries = await getEntries(run.id, 25, state)
+    if (entries.length === 0) {
+      const fallback = await getFallbackEntries(25, state, run.season)
+      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
+      return
+    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
@@ -176,9 +251,18 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) { res.json({ data: [], meta: {} }); return }
+    if (!run) {
+      const fallback = await getFallbackEntries(100, state)
+      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
+      return
+    }
 
     const entries = await getEntries(run.id, 100, state)
+    if (entries.length === 0) {
+      const fallback = await getFallbackEntries(100, state, run.season)
+      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
+      return
+    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })

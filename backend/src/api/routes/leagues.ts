@@ -87,17 +87,22 @@ router.get('/:id', publicRateLimit, cachePublic(3600), async (req, res) => {
     // League ladder from season stats (ladder position order)
     const season = run?.season
     const seasonForLadder = season ?? league.currentSeason ?? undefined
-    const footballLadderRows = seasonForLadder
-      ? await prisma.footballLadderEntry.findMany({
+    let footballLadderRows: { clubId: string | null; clubName: string; position: number; played: number; wins: number; losses: number; draws: number; pointsFor: number; pointsAgainst: number; percentage: number; premiershipPoints: number }[] = []
+    if (seasonForLadder) {
+      try {
+        footballLadderRows = await prisma.footballLadderEntry.findMany({
           where:   { leagueId: league.id, season: seasonForLadder },
           orderBy: [{ position: 'asc' }, { premiershipPoints: 'desc' }],
           select:  { clubId: true, clubName: true, position: true, played: true, wins: true, losses: true, draws: true, pointsFor: true, pointsAgainst: true, percentage: true, premiershipPoints: true },
         })
-      : []
-    const ladderRows = seasonForLadder && footballLadderRows.length === 0
+      } catch {
+        footballLadderRows = []
+      }
+    }
+    const ladderRows = footballLadderRows.length === 0
       ? await prisma.clubLeagueSeason.findMany({
-          where:   { leagueId: league.id, season: seasonForLadder, isActive: true },
-          orderBy: [{ position: 'asc' }, { points: 'desc' }],
+          where:   { leagueId: league.id, isActive: true, ...(seasonForLadder ? { season: seasonForLadder } : {}) },
+          orderBy: [{ season: 'desc' }, { position: 'asc' }, { points: 'desc' }],
           select:  { clubId: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true, position: true },
         })
       : []
