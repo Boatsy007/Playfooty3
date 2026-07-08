@@ -35,11 +35,11 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
     const leagueIds = [...new Set(footballLeagues.map(s => s.id))]
     if (leagueIds.length === 0) { res.json({ season, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
-    // All club-season rows for the latest season when available. Only select
-    // stable fields needed to render the directory; profile/logo/social fields
-    // are deliberately not required for public visibility.
+    // All active football club-season rows. Do not apply one global latest-season
+    // filter here: different imported leagues can have different season labels,
+    // and the league ladder already proves these memberships are public.
     const rows = await prisma.clubLeagueSeason.findMany({
-      where:   { ...(season ? { season } : {}), isActive: true, leagueId: { in: leagueIds } },
+      where:   { isActive: true, leagueId: { in: leagueIds } },
       select: {
         clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true,
         club: {

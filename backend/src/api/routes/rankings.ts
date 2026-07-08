@@ -113,7 +113,7 @@ async function getFallbackEntries(limit?: number, state?: string, season?: strin
   const rows = await prisma.clubLeagueSeason.findMany({
     where: {
       isActive: true,
-      ...(latestSeason ? { season: latestSeason } : {}),
+      ...(season ? { season } : {}),
       league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(state ? { state: { code: state } } : {}) },
     },
