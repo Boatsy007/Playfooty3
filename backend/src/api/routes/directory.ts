@@ -22,9 +22,8 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
       orderBy: { season: 'desc' },
       select:  { season: true },
     })
-    if (!latest) { res.json({ season: null, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
-    const season = latest.season
+    const season = latest?.season ?? null
 
     // Only football leagues are public in the PlayFooty app. Leagues may be
     // manually managed while PlayHQ access is pending, so do not require an
@@ -36,14 +35,16 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
     const leagueIds = [...new Set(footballLeagues.map(s => s.id))]
     if (leagueIds.length === 0) { res.json({ season, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
-    // All club-season rows for this season, with club (+state) and league
+    // All club-season rows for the latest season when available. Only select
+    // stable fields needed to render the directory; profile/logo/social fields
+    // are deliberately not required for public visibility.
     const rows = await prisma.clubLeagueSeason.findMany({
-      where:   { season, isActive: true, leagueId: { in: leagueIds } },
+      where:   { ...(season ? { season } : {}), isActive: true, leagueId: { in: leagueIds } },
       select: {
         clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true,
         club: {
           select: {
-            name: true, slug: true, region: true, websiteUrl: true, facebookUrl: true, instagramUrl: true,
+            name: true,
             state: { select: { code: true, name: true } },
           },
         },
@@ -72,11 +73,11 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
       return {
         clubId:       r.clubId,
         name:         r.club.name,
-        slug:         r.club.slug,
-        region:       r.club.region ?? null,
-        websiteUrl:   r.club.websiteUrl ?? null,
-        facebookUrl:  r.club.facebookUrl ?? null,
-        instagramUrl: r.club.instagramUrl ?? null,
+        slug:         null,
+        region:       null,
+        websiteUrl:   null,
+        facebookUrl:  null,
+        instagramUrl: null,
         played:       r.played,
         wins:         r.wins,
         losses:       r.losses,

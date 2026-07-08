@@ -111,119 +111,144 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 })
 
 // GET /api/clubs/:id
-// Full read-only club profile for the team profile page: current national rank,
-// power rating, league + league strength, season record / goals / percentage /
-// ladder position, recent form, championship qualification, and rank history.
+// Full read-only club profile for the team profile page. A club that is visible
+// through the public/admin lists must open even when rankings, ladder rows,
+// logos, or optional profile columns are missing.
 const QUALIFY_CUTOFF = 32
 
 router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const clubId = req.params.id
 
-    // Get current ranking (latest run), if this club is ranked.
-    const currentEntry = await prisma.rankingEntry.findFirst({
-      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
-      orderBy: { rankingRun: { completedAt: 'desc' } },
-      include: { rankingRun: { select: { id: true, weekLabel: true, season: true, completedAt: true } } },
-    })
-
-    // Fallback base: the club itself + its most recent season row, so EVERY club
-    // in the directory has a working profile even when it isn't currently ranked.
-    const club = await prisma.club.findUnique({
-      where:  { id: clubId },
+    const club = await prisma.club.findFirst({
+      where: {
+        id: clubId,
+        sport: 'FOOTBALL',
+        archivedAt: null,
+        isActive: true,
+      },
       select: {
-        id: true, name: true, townName: true, region: true, logoUrl: true, primaryColour: true, secondaryColour: true,
-        websiteUrl: true, facebookUrl: true, instagramUrl: true,
+        id: true,
+        name: true,
+        region: true,
         state: { select: { code: true, name: true } },
       },
     })
-    if (!currentEntry && !club) return res.status(404).json({ error: 'Club not found' })
 
-    const season = currentEntry?.rankingRun.season
     const cls = await prisma.clubLeagueSeason.findFirst({
-      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, ...(currentEntry ? { season, leagueId: currentEntry.leagueId } : {}) },
+      where: { clubId, isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
       orderBy: { season: 'desc' },
-      include: { league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } } },
+      select: {
+        leagueId: true,
+        season: true,
+        played: true,
+        wins: true,
+        losses: true,
+        draws: true,
+        goalsFor: true,
+        goalsAgainst: true,
+        percentage: true,
+        points: true,
+        position: true,
+        league: { select: { id: true, name: true, strengthScore: true, strengthTier: true } },
+      },
     })
 
-    const league = cls?.league
-      ?? (currentEntry ? await prisma.league.findFirst({ where: { id: currentEntry.leagueId }, select: { id: true, name: true, strengthScore: true, strengthTier: true } }) : null)
-    if (!currentEntry && !cls) return res.status(404).json({ error: 'Club not found' })
+    if (!club && !cls) return res.status(404).json({ error: 'Club not found' })
 
-    // Current league ladder (for the club page's "current ladder" context), plus
-    // the season stats so we can show each rival's record. Ordered by position.
-    const leagueId = currentEntry?.leagueId ?? league?.id ?? cls?.leagueId ?? null
-    const ladderSeason = season ?? cls?.season ?? undefined
-    const ladderRows = leagueId && ladderSeason
+    let currentEntry: { rank: number; previousRank: number | null; rankMovement: number; powerRating: number; clubName: string; leagueId: string; leagueName: string; state: string; recentForm: string | null; componentScores: string | null; rankingRun: { weekLabel: string; season: string; completedAt: Date } } | null = null
+    try {
+      currentEntry = await prisma.rankingEntry.findFirst({
+        where: { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
+        orderBy: { rankingRun: { completedAt: 'desc' } },
+        select: {
+          rank: true,
+          previousRank: true,
+          rankMovement: true,
+          powerRating: true,
+          clubName: true,
+          leagueId: true,
+          leagueName: true,
+          state: true,
+          recentForm: true,
+          componentScores: true,
+          rankingRun: { select: { weekLabel: true, season: true, completedAt: true } },
+        },
+      })
+    } catch {
+      currentEntry = null
+    }
+
+    const leagueId = currentEntry?.leagueId ?? cls?.leagueId ?? null
+    const ladderRows = leagueId && cls?.season
       ? await prisma.clubLeagueSeason.findMany({
-          where:   { leagueId, season: ladderSeason },
-          orderBy: [{ position: 'asc' }, { points: 'desc' }],
-          select:  { clubId: true, position: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true },
+          where: { leagueId, season: cls.season, isActive: true },
+          orderBy: [{ position: 'asc' }, { points: 'desc' }, { club: { name: 'asc' } }],
+          select: { clubId: true, position: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true, club: { select: { name: true } } },
         })
       : []
-    const ladderNames = new Map((await prisma.club.findMany({ where: { id: { in: ladderRows.map(r => r.clubId) } }, select: { id: true, name: true } })).map(c => [c.id, c.name]))
 
-    const history = await prisma.rankingEntry.findMany({
-      where:   { clubId, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
-      orderBy: { rankingRun: { completedAt: 'desc' } },
-      take:    12,
-      include: { rankingRun: { select: { weekLabel: true, completedAt: true } } },
-    })
-
-    const rank = currentEntry?.rank ?? null
     let recentForm: unknown[] = []
     let componentScores: Record<string, unknown> = {}
     if (currentEntry) {
-      try { recentForm = JSON.parse((currentEntry.recentForm as string) || '[]') } catch { recentForm = [] }
-      try { componentScores = JSON.parse((currentEntry.componentScores as string) || '{}') } catch { componentScores = {} }
+      try { recentForm = JSON.parse(currentEntry.recentForm || '[]') } catch { recentForm = [] }
+      try { componentScores = JSON.parse(currentEntry.componentScores || '{}') } catch { componentScores = {} }
     }
+
+    const rank = currentEntry?.rank ?? null
+    const league = cls?.league ?? null
 
     res.json({
       data: {
         clubId,
-        clubName:    currentEntry?.clubName ?? club?.name ?? 'Unknown Club',
-        leagueId:    currentEntry?.leagueId ?? league?.id ?? cls?.leagueId ?? null,
-        leagueName:  currentEntry?.leagueName ?? league?.name ?? null,
-        state:       currentEntry?.state ?? club?.state?.code ?? null,
+        clubName: currentEntry?.clubName ?? club?.name ?? 'Unknown Club',
+        leagueId,
+        leagueName: currentEntry?.leagueName ?? league?.name ?? null,
+        state: currentEntry?.state ?? club?.state?.code ?? null,
         rank,
         previousRank: currentEntry?.previousRank ?? null,
         rankMovement: currentEntry?.rankMovement ?? 0,
         powerRating: currentEntry?.powerRating ?? null,
-        ranked:      !!currentEntry,
-        qualified:   rank != null && rank <= QUALIFY_CUTOFF,
+        ranked: !!currentEntry,
+        qualified: rank != null && rank <= QUALIFY_CUTOFF,
         qualifyCutoff: QUALIFY_CUTOFF,
-        record:      { wins: cls?.wins ?? 0, losses: cls?.losses ?? 0, draws: cls?.draws ?? 0, played: cls?.played ?? 0 },
-        goalsFor:    cls?.goalsFor ?? 0,
+        record: { wins: cls?.wins ?? 0, losses: cls?.losses ?? 0, draws: cls?.draws ?? 0, played: cls?.played ?? 0 },
+        goalsFor: cls?.goalsFor ?? 0,
         goalsAgainst: cls?.goalsAgainst ?? 0,
-        percentage:  cls?.percentage ?? 0,
+        percentage: cls?.percentage ?? 0,
         ladderPosition: cls?.position ?? null,
         leagueStrengthScore: league?.strengthScore ?? null,
-        leagueStrengthTier:  league?.strengthTier ?? null,
+        leagueStrengthTier: league?.strengthTier ?? null,
         recentForm,
         componentScores,
-        weekLabel:   currentEntry?.rankingRun.weekLabel ?? null,
-        season:      season ?? cls?.season ?? null,
-        history:     history.map(h => ({ weekLabel: h.rankingRun.weekLabel, rank: h.rank, powerRating: h.powerRating, date: h.rankingRun.completedAt })),
-        // Club identity + brand (from the club record; nulls where unset)
-        town:        club?.townName ?? null,
-        region:      club?.region ?? null,
-        stateName:   club?.state?.name ?? null,
-        logoUrl:     club?.logoUrl ?? null,
-        primaryColour:   club?.primaryColour ?? null,
-        secondaryColour: club?.secondaryColour ?? null,
-        websiteUrl:  club?.websiteUrl ?? null,
-        facebookUrl: club?.facebookUrl ?? null,
-        instagramUrl: club?.instagramUrl ?? null,
-        // Current league ladder for context on the club page.
-        ladder:      ladderRows.map(r => ({
-          clubId: r.clubId, clubName: ladderNames.get(r.clubId) ?? 'Unknown', position: r.position,
-          played: r.played, wins: r.wins, losses: r.losses, draws: r.draws, percentage: r.percentage, points: r.points,
+        weekLabel: currentEntry?.rankingRun.weekLabel ?? null,
+        season: currentEntry?.rankingRun.season ?? cls?.season ?? null,
+        history: [],
+        town: null,
+        region: club?.region ?? null,
+        stateName: club?.state?.name ?? null,
+        logoUrl: null,
+        primaryColour: null,
+        secondaryColour: null,
+        websiteUrl: null,
+        facebookUrl: null,
+        instagramUrl: null,
+        ladder: ladderRows.map(r => ({
+          clubId: r.clubId,
+          clubName: r.club.name,
+          position: r.position,
+          played: r.played,
+          wins: r.wins,
+          losses: r.losses,
+          draws: r.draws,
+          percentage: r.percentage,
+          points: r.points,
           isThisClub: r.clubId === clubId,
         })),
       },
     })
-  } catch {
-    res.status(500).json({ error: 'Internal server error' })
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
