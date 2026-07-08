@@ -55,22 +55,43 @@ function shouldRenderPlayHq(url: string): boolean {
 
 export async function fetchPlayHqStatisticsPage(url: string, timeoutMs = 30000): Promise<FetchedPage> {
   const page = await fetchPage(url, timeoutMs)
-  if (page.ok || !isPlayHqUrl(url) || page.status !== 403) return page
-
-  logger.warn('PlayHQ statistics fetch returned 403; retrying with rendered browser fetch', { url })
-  const rendered = await fetchRenderedPlayHqPage(url, timeoutMs, { waitForNetworkIdle: true }).catch(e => {
-    logger.warn('PlayHQ statistics rendered fetch failed after 403', { url, detail: String(e) })
-    return null
-  })
-  if (rendered?.body) return rendered
-  return {
+  if (page.ok || !isPlayHqUrl(url) || page.status !== 403) return {
     ...page,
     diagnostics: {
       ...(page.diagnostics ?? {}),
+      attemptedRenderedFetch: false,
+      renderedFetchSucceeded: false,
       plainFetchStatus: page.status,
-      renderedRetryAttempted: true,
-      renderedRetryError: rendered ? undefined : 'Rendered browser fetch did not return a page.',
     },
+  }
+
+  logger.warn('PlayHQ statistics fetch returned 403; forcing rendered browser retry', { url })
+  try {
+    const rendered = await fetchRenderedPlayHqPage(url, timeoutMs, { waitForNetworkIdle: true })
+    return {
+      ...rendered,
+      diagnostics: {
+        ...(rendered.diagnostics ?? {}),
+        attemptedRenderedFetch: true,
+        renderedFetchSucceeded: Boolean(rendered.ok && rendered.body),
+        plainFetchStatus: page.status,
+        fetchStrategy: 'playwright-render',
+      },
+    }
+  } catch (e) {
+    const renderedFetchError = e instanceof Error ? `${e.name}: ${e.message}${e.stack ? `\n${e.stack}` : ''}` : String(e)
+    logger.warn('PlayHQ statistics rendered fetch failed after 403', { url, detail: renderedFetchError })
+    return {
+      ...page,
+      diagnostics: {
+        ...(page.diagnostics ?? {}),
+        attemptedRenderedFetch: true,
+        renderedFetchSucceeded: false,
+        renderedFetchError,
+        plainFetchStatus: page.status,
+        fetchStrategy: 'plain-fetch-403-render-failed',
+      },
+    }
   }
 }
 

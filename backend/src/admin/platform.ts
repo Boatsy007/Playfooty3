@@ -630,6 +630,7 @@ router.post('/goal-kickers/import', async (req, res) => {
   let strategy = 'provided-rows'
   let warnings: string[] = []
   let diagnostics: Record<string, unknown> | null = null
+  const goalKickerImporterVersion = 'playwright-retry-v2'
 
   if (Array.isArray(b.rows) && b.rows.length) {
     rows = b.rows.map(row => ({
@@ -646,18 +647,21 @@ router.post('/goal-kickers/import', async (req, res) => {
     const page = await fetchPlayHqStatisticsPage(sourceUrl, 30000)
     const parsed = parseGoalKickers(page)
     rows = parsed.rows
-    strategy = parsed.strategy
+    const fetchStrategy = (page.diagnostics as Record<string, unknown> | undefined)?.fetchStrategy
+    strategy = fetchStrategy === 'playwright-render' ? 'playwright-render' : parsed.strategy
     warnings = parsed.warnings
     diagnostics = page.diagnostics ?? null
     if (rows.length === 0) {
       const d = (page.diagnostics ?? {}) as Record<string, unknown>
       return res.status(422).json({
         error: 'No goal kicker rows could be parsed from this PlayHQ page.',
+        goalKickerImporterVersion,
         data: {
           imported: 0,
           skipped: 0,
           errors: 0,
           sourceUrl,
+          goalKickerImporterVersion,
           strategy,
           warnings,
           diagnostics: {
@@ -667,12 +671,15 @@ router.post('/goal-kickers/import', async (req, res) => {
             rowCount: d.rowCount ?? 0,
             capturedJsonCount: d.capturedJsonCount ?? 0,
             sampleRenderedText: d.textSample ?? '',
+            attemptedRenderedFetch: d.attemptedRenderedFetch ?? false,
+            renderedFetchSucceeded: d.renderedFetchSucceeded ?? false,
+            renderedFetchError: d.renderedFetchError ?? null,
           },
         },
       })
     }
   } else {
-    return res.status(400).json({ error: 'Paste a PlayHQ goal kickers/statistics URL.' })
+    return res.status(400).json({ error: 'Paste a PlayHQ goal kickers/statistics URL.', goalKickerImporterVersion })
   }
 
   let imported = 0
@@ -713,7 +720,7 @@ router.post('/goal-kickers/import', async (req, res) => {
     }
   }
 
-  res.json({ data: { imported, skipped, errors: errors.length, sourceUrl: sourceUrl || null, strategy, warnings, diagnostics, note: `Imported ${imported} goal kicker${imported === 1 ? '' : 's'}.` }, errors: errors.slice(0, 20) })
+  res.json({ goalKickerImporterVersion, data: { imported, skipped, errors: errors.length, sourceUrl: sourceUrl || null, goalKickerImporterVersion, strategy, warnings, diagnostics, note: `Imported ${imported} goal kicker${imported === 1 ? '' : 's'}.` }, errors: errors.slice(0, 20) })
 })
 // ─── PlayFooty football data-source control centre ───────────────────────────
 router.get('/football/leagues', async (_req, res) => {
