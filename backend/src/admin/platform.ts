@@ -487,10 +487,19 @@ router.post('/backups/:id/restore', async (req, res) => {
 router.get('/leagues/:id', async (req, res) => {
   const league = await prisma.league.findUnique({
     where: { id: req.params.id },
-    include: {
-      state: true,
-      sources: true,
-      clubSeasons: { include: { club: { include: { state: true } } }, orderBy: [{ season: 'desc' }, { grade: 'asc' }] },
+    select: {
+      id: true, name: true, shortName: true, stateId: true, isActive: true, strengthScore: true, strengthTier: true,
+      strengthConfidence: true, finalStrengthRating: true, manualStrengthOverride: true, needsStrengthReview: true,
+      playhqOrgSlug: true, playhqGradeId: true, playhqGradeName: true, ladderUrl: true, currentSeason: true,
+      enabled: true, lastSyncedAt: true, primarySource: true, importType: true, sourceUrl: true, status: true,
+      manualOverride: true, hidden: true, regionName: true, websiteUrl: true, facebookUrl: true, logoUrl: true,
+      sport: true, primaryDataSource: true, fallbackDataSources: true, playhqOrganisationId: true,
+      playhqCompetitionId: true, playhqSeasonId: true, playhqGradeId: true, scrapeEnabled: true,
+      apiEnabled: true, manualEntryEnabled: true, lastSyncAt: true, lastSuccessfulSyncAt: true, syncStatus: true,
+      dataSourceSyncError: true, archivedAt: true, approvalStatus: true, leagueType: true, reviewReason: true,
+      strengthReasoning: true, strengthCalculatedAt: true, state: { select: { id: true, code: true, name: true } },
+      sources: { select: { id: true, sourceType: true, ladderUrl: true, fixturesUrl: true, resultsUrl: true, season: true, isActive: true, lastScrapedAt: true, lastStatus: true, notes: true } },
+      clubSeasons: { select: { id: true, clubId: true, leagueId: true, season: true, grade: true, isActive: true, sport: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true, position: true, club: { select: { id: true, name: true, shortName: true, logoUrl: true, state: { select: { code: true, name: true } } } } }, orderBy: [{ season: 'desc' }, { grade: 'asc' }] },
       footballFixtures: { orderBy: [{ season: 'desc' }, { round: 'asc' }], take: 100 },
       footballResults: { orderBy: [{ season: 'desc' }, { round: 'asc' }], take: 100 },
       footballLadderEntries: { orderBy: [{ season: 'desc' }, { position: 'asc' }], take: 100 },
@@ -499,17 +508,17 @@ router.get('/leagues/:id', async (req, res) => {
     },
   })
   if (!league) return res.status(404).json({ error: 'league not found' })
-  res.json({ data: league })
+  res.json({ data: { ...league, description: null, featuredLeague: false, profileFieldsAvailable: false } })
 })
 
 router.patch('/leagues/:id', async (req, res) => {
   const body = req.body as Record<string, unknown>
   const data: Record<string, unknown> = { lastManualUpdateAt: new Date(), manualOverride: true }
-  for (const key of ['name', 'shortName', 'description', 'regionName', 'websiteUrl', 'facebookUrl', 'sourceUrl', 'primaryDataSource', 'status', 'approvalStatus', 'currentSeason', 'playhqGradeName'] as const) {
+  for (const key of ['name', 'shortName', 'regionName', 'websiteUrl', 'facebookUrl', 'sourceUrl', 'primaryDataSource', 'status', 'approvalStatus', 'currentSeason', 'playhqGradeName'] as const) {
     const value = pickNullableString(body, key)
     if (value !== undefined) data[key] = value
   }
-  for (const key of ['isActive', 'enabled', 'hidden', 'featuredLeague'] as const) {
+  for (const key of ['isActive', 'enabled', 'hidden'] as const) {
     const value = pickBoolean(body, key)
     if (value !== undefined) data[key] = value
   }
@@ -519,9 +528,9 @@ router.patch('/leagues/:id', async (req, res) => {
     const state = await prisma.state.upsert({ where: { code }, create: { code, name: code }, update: {} })
     data.stateId = state.id
   }
-  const league = await prisma.league.update({ where: { id: req.params.id }, data })
+  const league = await prisma.league.update({ where: { id: req.params.id }, data, select: { id: true, name: true, shortName: true, regionName: true, websiteUrl: true, facebookUrl: true, sourceUrl: true, primaryDataSource: true, status: true, approvalStatus: true, currentSeason: true, playhqGradeName: true, isActive: true, enabled: true, hidden: true, logoUrl: true, sport: true, state: { select: { code: true, name: true } } } })
   await audit('UPDATE_LEAGUE_PROFILE', 'League', league.id, data)
-  res.json({ data: league })
+  res.json({ data: { ...league, description: null, featuredLeague: false, profileFieldsAvailable: false } })
 })
 
 router.post('/leagues/:id/logo', async (req, res) => {
@@ -529,7 +538,7 @@ router.post('/leagues/:id/logo', async (req, res) => {
   if (!league) return res.status(404).json({ error: 'league not found' })
   try {
     const uploaded = await uploadLogoToStorage('league', league.id, req.body as Record<string, unknown>)
-    const updated = await prisma.league.update({ where: { id: league.id }, data: { logoUrl: uploaded.publicUrl, lastManualUpdateAt: new Date(), manualOverride: true } })
+    const updated = await prisma.league.update({ where: { id: league.id }, data: { logoUrl: uploaded.publicUrl, lastManualUpdateAt: new Date(), manualOverride: true }, select: { id: true, name: true, logoUrl: true } })
     await audit('UPLOAD_LEAGUE_LOGO', 'League', league.id, uploaded)
     res.json({ data: updated, logo: uploaded })
   } catch (err) { res.status(400).json({ error: err instanceof Error ? err.message : 'logo upload failed' }) }
@@ -539,7 +548,7 @@ router.delete('/leagues/:id/logo', async (req, res) => {
   const league = await prisma.league.findUnique({ where: { id: req.params.id }, select: { id: true, logoUrl: true } })
   if (!league) return res.status(404).json({ error: 'league not found' })
   await deleteLogoFromStorage(league.logoUrl)
-  const updated = await prisma.league.update({ where: { id: league.id }, data: { logoUrl: null, lastManualUpdateAt: new Date(), manualOverride: true } })
+  const updated = await prisma.league.update({ where: { id: league.id }, data: { logoUrl: null, lastManualUpdateAt: new Date(), manualOverride: true }, select: { id: true, name: true, logoUrl: true } })
   await audit('REMOVE_LEAGUE_LOGO', 'League', league.id, null)
   res.json({ data: updated })
 })
@@ -547,25 +556,29 @@ router.delete('/leagues/:id/logo', async (req, res) => {
 router.get('/clubs/:id', async (req, res) => {
   const club = await prisma.club.findUnique({
     where: { id: req.params.id },
-    include: {
-      state: true,
-      leagueSeasons: { include: { league: { include: { state: true } } }, orderBy: [{ season: 'desc' }, { grade: 'asc' }] },
-      rankingEntries: { orderBy: { createdAt: 'desc' }, take: 20, include: { rankingRun: { select: { weekLabel: true, season: true, completedAt: true } } } },
-      nameVariants: true,
+    select: {
+      id: true, name: true, slug: true, shortName: true, stateId: true, region: true, latitude: true, longitude: true,
+      logoUrl: true, primaryColour: true, secondaryColour: true, websiteUrl: true, facebookUrl: true, instagramUrl: true,
+      isActive: true, notes: true, manualOverride: true, source: true, bestRank: true, sport: true, playhqClubId: true,
+      archivedAt: true, approvalStatus: true, townName: true,
+      state: { select: { id: true, code: true, name: true } },
+      leagueSeasons: { select: { id: true, clubId: true, leagueId: true, season: true, grade: true, isActive: true, sport: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true, position: true, league: { select: { id: true, name: true, shortName: true, sport: true, state: { select: { code: true, name: true } } } } }, orderBy: [{ season: 'desc' }, { grade: 'asc' }] },
+      rankingEntries: { orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, rank: true, previousRank: true, rankMovement: true, powerRating: true, weekLabel: true, season: true, leagueName: true, state: true, createdAt: true, rankingRun: { select: { weekLabel: true, season: true, completedAt: true } } } },
+      nameVariants: { select: { id: true, rawName: true, sourceType: true, confidence: true, createdAt: true } },
     },
   })
   if (!club) return res.status(404).json({ error: 'club not found' })
-  res.json({ data: club })
+  res.json({ data: { ...club, description: null, contactEmail: null, featuredClub: false, profileFieldsAvailable: false } })
 })
 
 router.patch('/clubs/:id', async (req, res) => {
   const body = req.body as Record<string, unknown>
   const data: Record<string, unknown> = { manualOverride: true }
-  for (const key of ['name', 'shortName', 'description', 'logoUrl', 'primaryColour', 'secondaryColour', 'websiteUrl', 'facebookUrl', 'instagramUrl', 'contactEmail', 'region', 'sport', 'approvalStatus', 'townName', 'notes'] as const) {
+  for (const key of ['name', 'shortName', 'logoUrl', 'primaryColour', 'secondaryColour', 'websiteUrl', 'facebookUrl', 'instagramUrl', 'region', 'sport', 'approvalStatus', 'townName', 'notes'] as const) {
     const value = pickNullableString(body, key)
     if (value !== undefined) data[key] = value
   }
-  for (const key of ['isActive', 'featuredClub'] as const) {
+  for (const key of ['isActive'] as const) {
     const value = pickBoolean(body, key)
     if (value !== undefined) data[key] = value
   }
@@ -576,9 +589,9 @@ router.patch('/clubs/:id', async (req, res) => {
     const state = await prisma.state.upsert({ where: { code }, create: { code, name: code }, update: {} })
     data.stateId = state.id
   }
-  const club = await prisma.club.update({ where: { id: req.params.id }, data })
+  const club = await prisma.club.update({ where: { id: req.params.id }, data, select: { id: true, name: true, shortName: true, logoUrl: true, primaryColour: true, secondaryColour: true, websiteUrl: true, facebookUrl: true, instagramUrl: true, region: true, sport: true, approvalStatus: true, townName: true, notes: true, isActive: true, state: { select: { code: true, name: true } } } })
   await audit('UPDATE_CLUB_PROFILE', 'Club', club.id, data)
-  res.json({ data: club })
+  res.json({ data: { ...club, description: null, contactEmail: null, featuredClub: false, profileFieldsAvailable: false } })
 })
 
 router.post('/clubs/:id/logo', async (req, res) => {
@@ -586,7 +599,7 @@ router.post('/clubs/:id/logo', async (req, res) => {
   if (!club) return res.status(404).json({ error: 'club not found' })
   try {
     const uploaded = await uploadLogoToStorage('club', club.id, req.body as Record<string, unknown>)
-    const updated = await prisma.club.update({ where: { id: club.id }, data: { logoUrl: uploaded.publicUrl, manualOverride: true } })
+    const updated = await prisma.club.update({ where: { id: club.id }, data: { logoUrl: uploaded.publicUrl, manualOverride: true }, select: { id: true, name: true, logoUrl: true } })
     await audit('UPLOAD_CLUB_LOGO', 'Club', club.id, uploaded)
     res.json({ data: updated, logo: uploaded })
   } catch (err) { res.status(400).json({ error: err instanceof Error ? err.message : 'logo upload failed' }) }
@@ -596,7 +609,7 @@ router.delete('/clubs/:id/logo', async (req, res) => {
   const club = await prisma.club.findUnique({ where: { id: req.params.id }, select: { id: true, logoUrl: true } })
   if (!club) return res.status(404).json({ error: 'club not found' })
   await deleteLogoFromStorage(club.logoUrl)
-  const updated = await prisma.club.update({ where: { id: club.id }, data: { logoUrl: null, manualOverride: true } })
+  const updated = await prisma.club.update({ where: { id: club.id }, data: { logoUrl: null, manualOverride: true }, select: { id: true, name: true, logoUrl: true } })
   await audit('REMOVE_CLUB_LOGO', 'Club', club.id, null)
   res.json({ data: updated })
 })

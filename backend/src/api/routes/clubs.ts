@@ -131,7 +131,11 @@ router.get('/:id', publicRateLimit, cachePublic(600), async (req, res) => {
     // in the directory has a working profile even when it isn't currently ranked.
     const club = await prisma.club.findUnique({
       where:  { id: clubId },
-      include: { state: { select: { code: true, name: true } } },
+      select: {
+        id: true, name: true, townName: true, region: true, logoUrl: true, primaryColour: true, secondaryColour: true,
+        websiteUrl: true, facebookUrl: true, instagramUrl: true,
+        state: { select: { code: true, name: true } },
+      },
     })
     if (!currentEntry && !club) return res.status(404).json({ error: 'Club not found' })
 
