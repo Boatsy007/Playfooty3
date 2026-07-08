@@ -15,7 +15,7 @@ import { createBackup } from '../jobs/backup.js'
 import { sweepDataQuality } from '../jobs/data-quality.js'
 import { generateWeeklyDrafts } from '../jobs/generate-articles.js'
 import { runWeeklyUpdate } from '../jobs/weekly-update-engine.js'
-import { fetchPage, parseResults, parseFixtures, parseLadder, type ResultRow, type FixtureRow } from '../football/url-ingest.js'
+import { fetchPage, parseResults, parseFixtures, parseLadder, parseGoalKickers, type ResultRow, type FixtureRow, type GoalKickerRow } from '../football/url-ingest.js'
 import { logger }          from '../utils/logger.js'
 
 // Workflow files (the browser-backed execution engine on GitHub Actions).
@@ -625,27 +625,96 @@ router.get('/goal-kickers', async (_req, res) => {
 
 router.post('/goal-kickers/import', async (req, res) => {
   const b = req.body as { sourceUrl?: string; rows?: Array<Record<string, unknown>> }
-  const rows = Array.isArray(b.rows) ? b.rows : []
-  let imported = 0
-  for (const row of rows) {
-    const playerName = str(row.playerName ?? row.player, '').trim()
-    const clubName = str(row.clubName ?? row.club, '').trim()
-    const leagueName = str(row.leagueName ?? row.league, '').trim()
-    const season = str(row.season, '2026')
-    const grade = str(row.grade, 'Senior Football')
-    if (!playerName || !clubName || !leagueName) continue
-    const league = await prisma.league.findFirst({ where: { name: { equals: leagueName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
-    const club = await prisma.club.findFirst({ where: { name: { equals: clubName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
-    await prisma.footballGoalKicker.upsert({
-      where: { season_grade_playerName_clubName_leagueName: { season, grade, playerName, clubName, leagueName: league?.name ?? leagueName } },
-      create: { playerName, clubId: club?.id ?? null, clubName, leagueId: league?.id ?? null, leagueName: league?.name ?? leagueName, season, grade, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ', importedAt: new Date() },
-      update: { clubId: club?.id ?? null, leagueName: league?.name ?? leagueName, goals: num(row.goals), matches: row.matches == null ? null : num(row.matches), sourceUrl: str(b.sourceUrl, ''), sourceType: 'PLAYHQ', importedAt: new Date() },
-    })
-    imported++
-  }
-  res.json({ data: { imported, sourceUrl: b.sourceUrl ?? null, note: rows.length ? 'Goal kickers imported.' : 'Goal kicker PlayHQ parser not implemented yet.' } })
-})
+  const sourceUrl = str(b.sourceUrl, '').trim()
+  let rows: GoalKickerRow[] = []
+  let strategy = 'provided-rows'
+  let warnings: string[] = []
+  let diagnostics: Record<string, unknown> | null = null
 
+  if (Array.isArray(b.rows) && b.rows.length) {
+    rows = b.rows.map(row => ({
+      playerName: str(row.playerName ?? row.player, '').trim(),
+      clubName: str(row.clubName ?? row.club, '').trim(),
+      leagueName: str(row.leagueName ?? row.league, '').trim(),
+      season: str(row.season, '2026'),
+      grade: str(row.grade, 'Senior Football'),
+      goals: num(row.goals),
+      matches: row.matches == null ? undefined : num(row.matches),
+      sourceUrl,
+    })).filter(row => row.playerName && row.clubName && row.leagueName)
+  } else if (sourceUrl) {
+    const page = await fetchPage(sourceUrl, 30000)
+    const parsed = parseGoalKickers(page)
+    rows = parsed.rows
+    strategy = parsed.strategy
+    warnings = parsed.warnings
+    diagnostics = page.diagnostics ?? null
+    if (rows.length === 0) {
+      const d = (page.diagnostics ?? {}) as Record<string, unknown>
+      return res.status(422).json({
+        error: 'No goal kicker rows could be parsed from this PlayHQ page.',
+        data: {
+          imported: 0,
+          skipped: 0,
+          errors: 0,
+          sourceUrl,
+          strategy,
+          warnings,
+          diagnostics: {
+            urlLoaded: page.url,
+            pageTitle: d.title ?? null,
+            tableCount: d.tableCount ?? 0,
+            rowCount: d.rowCount ?? 0,
+            capturedJsonCount: d.capturedJsonCount ?? 0,
+            sampleRenderedText: d.textSample ?? '',
+          },
+        },
+      })
+    }
+  } else {
+    return res.status(400).json({ error: 'Paste a PlayHQ goal kickers/statistics URL.' })
+  }
+
+  let imported = 0
+  let skipped = 0
+  const errors: Array<{ row: GoalKickerRow; error: string }> = []
+  const defaultSeason = new Date().getFullYear().toString()
+
+  for (const row of rows) {
+    try {
+      const playerName = str(row.playerName, '').trim()
+      const clubName = str(row.clubName, '').trim()
+      const leagueName = str(row.leagueName, '').trim()
+      const season = str(row.season, defaultSeason)
+      const grade = str(row.grade, 'Senior Football')
+      const goals = num(row.goals)
+      if (!playerName || !clubName || !leagueName || goals < 0) { skipped++; continue }
+      const league = await prisma.league.findFirst({
+        where: {
+          sport: 'FOOTBALL',
+          archivedAt: null,
+          OR: [
+            { name: { equals: leagueName, mode: 'insensitive' } },
+            ...(sourceUrl ? [{ sourceUrl }, { ladderUrl: sourceUrl }] : []),
+          ],
+        },
+        select: { id: true, name: true },
+      })
+      const club = await prisma.club.findFirst({ where: { name: { equals: clubName, mode: 'insensitive' }, sport: 'FOOTBALL', archivedAt: null }, select: { id: true, name: true } })
+      const storedLeagueName = league?.name ?? leagueName
+      await prisma.footballGoalKicker.upsert({
+        where: { season_grade_playerName_clubName_leagueName: { season, grade, playerName, clubName, leagueName: storedLeagueName } },
+        create: { playerName, clubId: club?.id ?? null, clubName, leagueId: league?.id ?? null, leagueName: storedLeagueName, season, grade, goals, matches: row.matches == null ? null : num(row.matches), sourceUrl: row.sourceUrl ?? sourceUrl, sourceType: 'PLAYHQ', importedAt: new Date() },
+        update: { clubId: club?.id ?? null, leagueId: league?.id ?? null, leagueName: storedLeagueName, goals, matches: row.matches == null ? null : num(row.matches), sourceUrl: row.sourceUrl ?? sourceUrl, sourceType: 'PLAYHQ', importedAt: new Date() },
+      })
+      imported++
+    } catch (err) {
+      errors.push({ row, error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  res.json({ data: { imported, skipped, errors: errors.length, sourceUrl: sourceUrl || null, strategy, warnings, diagnostics, note: `Imported ${imported} goal kicker${imported === 1 ? '' : 's'}.` }, errors: errors.slice(0, 20) })
+})
 // ─── PlayFooty football data-source control centre ───────────────────────────
 router.get('/football/leagues', async (_req, res) => {
   const leagues = await prisma.league.findMany({

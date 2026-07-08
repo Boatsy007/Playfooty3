@@ -16,6 +16,7 @@ import { logger } from '../utils/logger.js'
 export interface ResultRow { homeName: string; awayName: string; homeGoals?: number; homeBehinds?: number; homePoints?: number; awayGoals?: number; awayBehinds?: number; awayPoints?: number; round?: string; matchDate?: string; time?: string; venue?: string; status?: string; sourceUrl?: string }
 export interface FixtureRow { homeName: string; awayName: string; round?: string; matchDate?: string; time?: string; venue?: string; status?: string; sourceUrl?: string }
 export interface LadderRow { clubName: string; position?: number; played?: number; wins?: number; losses?: number; draws?: number; byes?: number; pointsFor?: number; pointsAgainst?: number; percentage?: number; points?: number; forfeits?: number; disqualified?: number; adjustedPoints?: number }
+export interface GoalKickerRow { playerName: string; clubName: string; leagueName?: string; season?: string; grade?: string; goals: number; matches?: number; sourceUrl?: string }
 export interface ParseOutcome<T> { rows: T[]; confidence: number; strategy: string; warnings: string[] }
 
 export interface FetchedPage { url: string; ok: boolean; status: number; contentType: string; body: string; error?: string; diagnostics?: Record<string, unknown> }
@@ -302,6 +303,88 @@ function fixturesFromJson(root: unknown): FixtureRow[] {
     return { homeName: home, awayName: away, round: str(o.round ?? o.roundName), matchDate: str(o.date ?? o.startDate ?? o.matchDate ?? o.startTime), time: str(o.time ?? o.startTime ?? o.matchTime), venue: teamName(o.venue ?? o.venueName), status: str(o.status ?? o.matchStatus) ?? 'upcoming' }
   })
 }
+
+function playerName(v: unknown): string | undefined {
+  if (typeof v === 'string' && v.trim()) return clean(v)
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    return playerName(o.name ?? o.playerName ?? o.fullName ?? o.displayName ?? o.title)
+  }
+  return undefined
+}
+
+function goalKickersFromJson(root: unknown): GoalKickerRow[] {
+  const rows = walk<GoalKickerRow>(root, o => {
+    const player = playerName(o.player ?? o.person ?? o.participant ?? o.playerName ?? o.name ?? o.fullName)
+    const club = teamName(o.club ?? o.team ?? o.organisation ?? o.clubName ?? o.teamName)
+    const goals = metric(o, ['goals', 'goal', 'totalGoals', 'G']) ?? asNum(o.goals ?? o.totalGoals ?? o.value)
+    if (!player || !club || goals == null) return null
+    const matches = metric(o, ['matches', 'games', 'played', 'appearances']) ?? asNum(o.matches ?? o.games ?? o.played)
+    return {
+      playerName: player,
+      clubName: club,
+      leagueName: teamName(o.league ?? o.competition ?? o.association ?? o.leagueName ?? o.competitionName),
+      season: str(o.season ?? o.seasonName),
+      grade: str(o.grade ?? o.gradeName ?? o.division ?? o.competitionDivisionName),
+      goals,
+      matches,
+    }
+  })
+  return dedupeGoalKickers(rows)
+}
+
+function goalKickersFromCellRows(rows: string[][]): GoalKickerRow[] {
+  if (rows.length < 2) return []
+  const headerAt = rows.findIndex(r => r.some(c => /player|name/i.test(c)) && r.some(c => /goal/i.test(c)) && r.length >= 3)
+  if (headerAt < 0) return []
+  const headers = rows[headerAt].map(h => h.toUpperCase())
+  const playerIdx = ladderHeaderIndex(headers, ['PLAYER', 'PLAYER NAME', 'NAME'])
+  const clubIdx = ladderHeaderIndex(headers, ['CLUB', 'TEAM'])
+  const goalsIdx = ladderHeaderIndex(headers, ['GOALS', 'GOAL', 'G'])
+  const matchesIdx = ladderHeaderIndex(headers, ['MATCHES', 'GAMES', 'PLAYED', 'M'])
+  const leagueIdx = ladderHeaderIndex(headers, ['LEAGUE', 'COMPETITION', 'ASSOCIATION'])
+  const gradeIdx = ladderHeaderIndex(headers, ['GRADE', 'DIVISION'])
+  if (playerIdx < 0 || clubIdx < 0 || goalsIdx < 0) return []
+  const out = rows.slice(headerAt + 1).map((r): GoalKickerRow | null => {
+    const player = clean(r[playerIdx] ?? '')
+    const club = clean(r[clubIdx] ?? '')
+    const goals = asNum(r[goalsIdx])
+    if (!player || !club || goals == null || /^(player|name)$/i.test(player)) return null
+    return {
+      playerName: player,
+      clubName: club,
+      leagueName: leagueIdx >= 0 ? clean(r[leagueIdx] ?? '') || undefined : undefined,
+      grade: gradeIdx >= 0 ? clean(r[gradeIdx] ?? '') || undefined : undefined,
+      goals,
+      matches: matchesIdx >= 0 ? asNum(r[matchesIdx]) : undefined,
+    }
+  }).filter((r): r is GoalKickerRow => !!r)
+  return out.length ? dedupeGoalKickers(out) : []
+}
+
+function goalKickersFromHtml(html: string): GoalKickerRow[] {
+  const tableMatches = [...html.matchAll(/<table[\s\S]*?<\/table>/gi)].map(m => m[0])
+  for (const table of tableMatches) {
+    const rowHtml = [...table.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map(m => m[0])
+    const rows = rowHtml.map(r => [...r.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(c => stripTags(c[1]))).filter(r => r.length >= 3)
+    const out = goalKickersFromCellRows(rows)
+    if (out.length) return out
+  }
+  const diagnostics = extractRenderDiagnostics(html)
+  const domRows = diagnostics?.domRows ?? []
+  return goalKickersFromCellRows(domRows)
+}
+
+function dedupeGoalKickers(rows: GoalKickerRow[]): GoalKickerRow[] {
+  const seen = new Set<string>()
+  return rows.filter(r => {
+    const key = `${r.playerName}|${r.clubName}|${r.leagueName ?? ''}|${r.grade ?? ''}`.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return r.goals >= 0
+  })
+}
+
 function ladderFromJson(root: unknown): LadderRow[] {
   const rows = walk<LadderRow>(root, o => {
     const club = teamName(o.team ?? o.club ?? o.competitor ?? o.organisation ?? o.participant ?? o.clubName ?? o.teamName ?? o.name)
@@ -418,6 +501,36 @@ function ladderFromHtml(html: string): LadderRow[] {
 }
 
 // ── public parse API ──────────────────────────────────────────────────────────
+
+export function parseGoalKickers(page: FetchedPage): ParseOutcome<GoalKickerRow> {
+  const warnings: string[] = []
+  if (!page.ok) return { rows: [], confidence: 0, strategy: 'none', warnings: [page.error ?? 'fetch failed'] }
+  if (page.contentType.includes('json')) {
+    try {
+      const rows = goalKickersFromJson(JSON.parse(page.body))
+      if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.85, strategy: 'json', warnings }
+    } catch { warnings.push('json parse failed') }
+  }
+  const nd = extractNextData(page.body)
+  if (nd) {
+    const rows = goalKickersFromJson(nd)
+    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.8, strategy: '__NEXT_DATA__', warnings }
+  }
+  for (const json of extractCapturedJson(page.body)) {
+    const rows = goalKickersFromJson(json)
+    if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.9, strategy: 'playwright-json', warnings }
+  }
+  const rows = goalKickersFromHtml(page.body)
+  if (rows.length) return { rows: rows.map(r => ({ ...r, sourceUrl: page.url })), confidence: 0.7, strategy: 'html-table', warnings }
+  const diagnostics = extractRenderDiagnostics(page.body) ?? page.diagnostics as RenderDiagnostics | undefined
+  if (diagnostics) {
+    warnings.push(`no goal kickers parsed: finalUrl=${diagnostics.finalUrl ?? page.url}; title=${diagnostics.title ?? 'unknown'}; tables=${diagnostics.tableCount ?? 0}; rows=${diagnostics.rowCount ?? 0}; jsonResponses=${diagnostics.capturedJsonCount ?? 0}; sample=${(diagnostics.textSample ?? '').slice(0, 300)}`)
+  } else {
+    warnings.push('no goal kickers could be extracted from rendered DOM, embedded JSON, captured network JSON, or HTML tables')
+  }
+  return { rows: [], confidence: 0, strategy: 'none', warnings }
+}
+
 export function parseResults(page: FetchedPage): ParseOutcome<ResultRow> {
   const warnings: string[] = []
   if (!page.ok) return { rows: [], confidence: 0, strategy: 'none', warnings: [page.error ?? 'fetch failed'] }
