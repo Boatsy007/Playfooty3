@@ -37,6 +37,7 @@ import { fetchPage, parseLadder, parseFixtures, parseResults, type FixtureRow, t
 
 const GRADE  = 'A Grade'
 const SEASON = '2026'
+const AFL_PLAYHQ_RE = /(?:^|\/)afl(?:\/|$)/i
 
 export interface ImportReport {
   status:       'SUCCESS' | 'NO_DATA' | 'FAILED'
@@ -59,6 +60,19 @@ export interface ImportReport {
 
 function emptyReport(status: ImportReport['status']): ImportReport {
   return { status, clubsAdded: 0, clubsUpdated: 0, ladderRows: 0, ladderUpdated: false, rankingRecalculated: false, clubsRanked: 0, confidence: 0, warnings: [], reviewsRaised: 0 }
+}
+
+function isAflPlayHqUrl(url: string | null | undefined): boolean {
+  if (typeof url !== 'string' || !/playhq\.com/i.test(url)) return false
+  try {
+    return AFL_PLAYHQ_RE.test(new URL(url.startsWith('http') ? url : `https://${url}`).pathname)
+  } catch {
+    return /playhq\.com\/afl\//i.test(url)
+  }
+}
+
+function assertAflImportIsFootball(entity: string, id: string, sport: string | null | undefined): void {
+  if (sport !== 'FOOTBALL') throw new Error(`AFL PlayHQ import guard failed: ${entity} ${id} was saved as ${sport ?? 'null'} instead of FOOTBALL.`)
 }
 
 // ─── Public: import from a pasted PlayHQ URL ──────────────────────────────────
@@ -170,7 +184,7 @@ async function persistLeagueLadder(
 ): Promise<ImportReport> {
   const report = emptyReport('SUCCESS')
   report.url = sourceUrl
-  const shouldMirrorFootballLadder = /\/afl\//i.test(sourceUrl) || /\/afl\//i.test(dl.ladderUrl)
+  const shouldMirrorFootballLadder = isAflPlayHqUrl(sourceUrl) || isAflPlayHqUrl(dl.ladderUrl)
 
   // Scrape first — if the ladder is empty we bail without mutating anything.
   const scraped = await adapter.scrapeLadder(dl.ladderUrl)
@@ -213,7 +227,13 @@ async function persistLeagueLadder(
     })
   } else if (opts.syncOnly) {
     // Sync: refresh ONLY the sync-related fields; leave name/logo/metadata/strength override untouched.
-    league = await prisma.league.update({ where: { id: league.id }, data: { lastSyncedAt: new Date(), syncError: null, lastManualUpdateAt: league.lastManualUpdateAt } })
+    league = await prisma.league.update({
+      where: { id: league.id },
+      data: {
+        lastSyncedAt: new Date(), syncError: null, lastManualUpdateAt: league.lastManualUpdateAt,
+        ...(shouldMirrorFootballLadder ? { sport: 'FOOTBALL', approvalStatus: 'APPROVED', archivedAt: null, status: 'ACTIVE', primaryDataSource: 'PLAYHQ_SCRAPER' } : {}),
+      },
+    })
   } else {
     if (league.manualOverride && !opts.existingLeagueId) {
       report.warnings.push('League is manual-override protected — ladder refreshed but metadata preserved.')
@@ -230,6 +250,7 @@ async function persistLeagueLadder(
       },
     })
   }
+  if (shouldMirrorFootballLadder) assertAflImportIsFootball('league', league.id, league.sport)
   report.league = league.name
   report.leagueId = league.id
 
@@ -264,10 +285,11 @@ async function persistLeagueLadder(
     const existing = await prisma.club.findUnique({ where: { slug }, select: { id: true } })
     const club = await prisma.club.upsert({
       where:  { slug },
-      create: { name: displayName, slug, shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, townName: verdict.isAnonymous ? null : displayName, isActive: true, source: 'PLAYHQ_URL', approvalStatus: verdict.verdict === 'VALID' ? 'APPROVED' : 'PENDING' },
-      update: {},   // never overwrite manual club edits
-      select: { id: true },
+      create: { name: displayName, slug, shortName: e.teamRaw, stateId: state.id, region: dl.leagueName, townName: verdict.isAnonymous ? null : displayName, isActive: true, source: 'PLAYHQ_URL', approvalStatus: shouldMirrorFootballLadder ? 'APPROVED' : (verdict.verdict === 'VALID' ? 'APPROVED' : 'PENDING'), ...(shouldMirrorFootballLadder ? { sport: 'FOOTBALL', archivedAt: null } : {}) },
+      update: shouldMirrorFootballLadder ? { sport: 'FOOTBALL', isActive: true, archivedAt: null, approvalStatus: 'APPROVED' } : {},   // never overwrite manual club edits
+      select: { id: true, sport: true },
     })
+    if (shouldMirrorFootballLadder) assertAflImportIsFootball('club', club.id, club.sport)
     if (existing) report.clubsUpdated++; else report.clubsAdded++
     clubIds.push(club.id)
 
