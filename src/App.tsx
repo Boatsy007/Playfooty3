@@ -54,9 +54,9 @@ export default function App() {
             </section>
 
             <aside className="broadcast-sidebar" aria-label="Live homepage desk">
+              <GoalKickersCard rows={goalKickers.rows} loading={goalKickers.loading} />
               <ChampionshipCard />
               <RankingsUpdateCard generatedAt={home.generatedAt} weekLabel={home.weekLabel} total={home.entries.length} />
-              <GoalKickersCard rows={goalKickers.rows} loading={goalKickers.loading} />
               <PrototypeCard />
               <LatestNewsCompact articles={secondary.slice(0, 3)} />
               <MoversCard risers={home.risers} fallers={home.fallers} loading={home.loading} />
