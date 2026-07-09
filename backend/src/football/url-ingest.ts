@@ -109,6 +109,8 @@ type RenderDiagnostics = {
   domRows?: string[][]
   capturedJsonCount?: number
   capturedResponses?: Array<Record<string, unknown>>
+  browserProvider?: string
+  browserExecutablePath?: string
   screenshotPath?: string
   htmlPath?: string
 }
@@ -121,7 +123,7 @@ const bodyShape = (value: unknown): Record<string, unknown> => {
   return { type: typeof value }
 }
 
-async function collectRenderedDiagnostics(page: import('playwright').Page): Promise<RenderDiagnostics> {
+async function collectRenderedDiagnostics(page: import('playwright-core').Page): Promise<RenderDiagnostics> {
   return page.evaluate(() => {
     const doc = (globalThis as any).document
     const text = String(doc?.body?.innerText ?? '').replace(/\s+/g, ' ').trim()
@@ -144,7 +146,7 @@ async function collectRenderedDiagnostics(page: import('playwright').Page): Prom
   }).catch(e => ({ textSample: `diagnostic evaluate failed: ${String(e)}` }))
 }
 
-async function writePlayHqArtifacts(page: import('playwright').Page, url: string, html: string): Promise<Pick<RenderDiagnostics, 'screenshotPath' | 'htmlPath'>> {
+async function writePlayHqArtifacts(page: import('playwright-core').Page, url: string, html: string): Promise<Pick<RenderDiagnostics, 'screenshotPath' | 'htmlPath'>> {
   if (process.env.GITHUB_ACTIONS !== 'true' && process.env.PLAYFOOTY_DEBUG_ARTIFACTS !== '1') return {}
   const { mkdir, writeFile } = await import('node:fs/promises')
   const safe = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 120)
@@ -158,9 +160,43 @@ async function writePlayHqArtifacts(page: import('playwright').Page, url: string
   return { htmlPath, screenshotPath }
 }
 
-async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { waitForNetworkIdle?: boolean } = {}): Promise<FetchedPage> {
+type PlayHqBrowserLaunch = {
+  browser: import('playwright-core').Browser
+  provider: 'sparticuz-chromium' | 'playwright-bundled'
+  executablePath?: string
+}
+
+function shouldUseServerlessChromium(): boolean {
+  return process.env.VERCEL === '1'
+    || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined
+    || process.env.PLAYFOOTY_CHROMIUM_PROVIDER === 'sparticuz'
+}
+
+async function launchPlayHqBrowser(): Promise<PlayHqBrowserLaunch> {
+  const commonArgs = ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled']
+
+  if (shouldUseServerlessChromium()) {
+    const [{ chromium: playwrightChromium }, chromiumBinary] = await Promise.all([
+      import('playwright-core'),
+      import('@sparticuz/chromium'),
+    ])
+    const executablePath = await chromiumBinary.default.executablePath()
+    const browser = await playwrightChromium.launch({
+      executablePath,
+      args: [...chromiumBinary.default.args, ...commonArgs],
+      headless: true,
+    })
+    return { browser, provider: 'sparticuz-chromium', executablePath }
+  }
+
   const { chromium } = await import('playwright')
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
+  const browser = await chromium.launch({ headless: true, args: commonArgs })
+  return { browser, provider: 'playwright-bundled' }
+}
+
+async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { waitForNetworkIdle?: boolean } = {}): Promise<FetchedPage> {
+  const browserLaunch = await launchPlayHqBrowser()
+  const { browser } = browserLaunch
   const capturedJson: unknown[] = []
   const capturedResponses: Array<Record<string, unknown>> = []
   try {
@@ -197,6 +233,8 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { w
       advancedToggleClicked,
       capturedJsonCount: capturedJson.length,
       capturedResponses: capturedResponses.slice(0, 40),
+      browserProvider: browserLaunch.provider,
+      browserExecutablePath: browserLaunch.executablePath,
       ...(await writePlayHqArtifacts(page, url, html)),
     }
     logger.info('PlayHQ rendered page loaded', { url, ...diagnostics, textSample: diagnostics.textSample?.slice(0, 240) })
@@ -222,7 +260,7 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { w
   }
 }
 
-async function enableAdvancedLadder(page: import('playwright').Page): Promise<boolean> {
+async function enableAdvancedLadder(page: import('playwright-core').Page): Promise<boolean> {
   const controls = [
     page.getByRole('button', { name: /show advanced ladder/i }),
     page.getByRole('checkbox', { name: /show advanced ladder/i }),
