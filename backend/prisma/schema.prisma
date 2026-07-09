@@ -305,6 +305,7 @@ model LeagueSource {
   ladderUrl     String?
   fixturesUrl   String?
   resultsUrl    String?
+  goalKickersUrl String?
   apiKey        String?   // encrypted in production via Supabase Vault
   season        String    // "2025"
   isActive      Boolean   @default(true)
