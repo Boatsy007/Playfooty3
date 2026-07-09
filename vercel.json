@@ -1,43 +1,50 @@
 {
   "version": 2,
-  "builds": [
+  "services": {
+    "web": {
+      "root": ".",
+      "framework": "vite",
+      "installCommand": "npm ci",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
+    },
+    "backend": {
+      "root": "backend",
+      "framework": "express",
+      "runtime": "node",
+      "entrypoint": "api/index.ts",
+      "installCommand": "npm ci",
+      "functions": {
+        "api/index.ts": {
+          "includeFiles": "node_modules/@sparticuz/chromium/bin/**"
+        }
+      }
+    }
+  },
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "backend"
       }
     },
     {
-      "src": "backend/api/index.ts",
-      "use": "@vercel/node"
+      "source": "/admin/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/health",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "web"
+      }
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/api/index.ts"
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "/backend/api/index.ts"
-    },
-    {
-      "src": "/health",
-      "dest": "/backend/api/index.ts"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "installCommand": "npm ci && npm --prefix backend ci",
-  "functions": {
-    "backend/api/index.ts": {
-      "includeFiles": "backend/node_modules/@sparticuz/chromium/bin/**"
-    }
-  }
+  ]
 }
