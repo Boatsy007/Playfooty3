@@ -40,9 +40,7 @@
   },
   "functions": {
     "backend/api/index.ts": {
-      "includeFiles": [
-        "backend/node_modules/playwright-core/.local-browsers/**"
-      ]
+      "includeFiles": "backend/node_modules/playwright-core/.local-browsers/**"
     }
   }
 }
