@@ -57,5 +57,3 @@ DO $$ BEGIN
     ALTER TABLE "football_goal_kickers" ADD CONSTRAINT "football_goal_kickers_clubId_fkey" FOREIGN KEY ("clubId") REFERENCES "clubs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
   END IF;
 END $$;
-
--- Manual Supabase SQL editor copy of the idempotent Prisma migration above.
