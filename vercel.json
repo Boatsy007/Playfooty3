@@ -4,7 +4,9 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist"
+      }
     },
     {
       "src": "backend/api/index.ts",
@@ -12,10 +14,33 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)",   "dest": "/backend/api/index.ts" },
-    { "src": "/admin/(.*)", "dest": "/backend/api/index.ts" },
-    { "src": "/health",     "dest": "/backend/api/index.ts" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)",       "dest": "/index.html" }
-  ]
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "src": "/health",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "installCommand": "npm ci && npm --prefix backend ci && PLAYWRIGHT_BROWSERS_PATH=0 npm --prefix backend run playhq:install-browser",
+  "env": {
+    "PLAYWRIGHT_BROWSERS_PATH": "0"
+  },
+  "functions": {
+    "backend/api/index.ts": {
+      "includeFiles": "backend/node_modules/playwright-core/.local-browsers/**"
+    }
+  }
 }

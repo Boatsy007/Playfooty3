@@ -69,7 +69,12 @@ async function stateId(code: string): Promise<string> {
 
 router.get('/leagues', async (_req, res) => {
   const leagues = await prisma.league.findMany({
-    include: { state: { select: { code: true } }, association: { select: { name: true } }, _count: { select: { clubSeasons: true } } },
+    select: {
+      id: true, name: true, shortName: true, strengthScore: true, strengthConfidence: true, manualStrengthOverride: true, finalStrengthRating: true, needsStrengthReview: true,
+      status: true, hidden: true, enabled: true, isActive: true, primarySource: true, importType: true, regionName: true, websiteUrl: true, facebookUrl: true, logoUrl: true,
+      archivedAt: true, approvalStatus: true, leagueType: true, reviewReason: true, strengthReasoning: true, strengthCalculatedAt: true,
+      state: { select: { code: true } }, association: { select: { name: true } }, _count: { select: { clubSeasons: true } },
+    },
     orderBy: [{ strengthScore: 'desc' }],
   })
   res.json({ data: leagues })
@@ -226,8 +231,8 @@ router.post('/leagues/:id/reject', async (req, res) => {
 router.get('/clubs', async (req, res) => {
   const leagueId = req.query.leagueId as string | undefined
   const clubs = leagueId
-    ? await prisma.club.findMany({ where: { leagueSeasons: { some: { leagueId } } }, include: { state: { select: { code: true } } } })
-    : await prisma.club.findMany({ include: { state: { select: { code: true } } }, take: 500, orderBy: { name: 'asc' } })
+    ? await prisma.club.findMany({ where: { leagueSeasons: { some: { leagueId } } }, select: { id: true, name: true, shortName: true, region: true, logoUrl: true, websiteUrl: true, primaryColour: true, secondaryColour: true, notes: true, source: true, bestRank: true, isActive: true, archivedAt: true, approvalStatus: true, townName: true, sport: true, state: { select: { code: true } } } })
+    : await prisma.club.findMany({ select: { id: true, name: true, shortName: true, region: true, logoUrl: true, websiteUrl: true, primaryColour: true, secondaryColour: true, notes: true, source: true, bestRank: true, isActive: true, archivedAt: true, approvalStatus: true, townName: true, sport: true, state: { select: { code: true } } }, take: 500, orderBy: { name: 'asc' } })
   res.json({ data: clubs })
 })
 

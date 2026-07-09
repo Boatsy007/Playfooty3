@@ -16,16 +16,20 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   })
   if (r.status === 401) throw new Error('Unauthorized — check the admin key')
   const json = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error((json as { error?: string }).error ?? `HTTP ${r.status}`)
+  if (!r.ok) {
+    const err = new Error((json as { error?: string }).error ?? `HTTP ${r.status}`) as Error & { response?: unknown }
+    err.response = json
+    throw err
+  }
   return json as T
 }
 
 export interface AdminLeague {
-  id: string; name: string; strengthScore: number; strengthConfidence: number
+  id: string; name: string; shortName?: string | null; strengthScore: number; strengthConfidence: number
   manualStrengthOverride: number | null; finalStrengthRating: number; needsStrengthReview: boolean
   status: string; hidden: boolean; enabled: boolean; isActive: boolean
   primarySource: string | null; importType: string | null; regionName: string | null
-  websiteUrl: string | null; facebookUrl: string | null; logoUrl: string | null
+  websiteUrl: string | null; facebookUrl: string | null; logoUrl: string | null; description?: string | null; featuredLeague?: boolean
   state?: { code: string } | null; association?: { name: string } | null
   _count?: { clubSeasons: number }
   archivedAt?: string | null; approvalStatus?: string; leagueType?: string | null; reviewReason?: string | null
@@ -34,13 +38,13 @@ export interface AdminLeague {
 export interface FootballLeague extends AdminLeague {
   sport: string; primaryDataSource: string | null; fallbackDataSources: string | null; sourceUrl: string | null
   currentSeason: string | null
-  playhqOrganisationId: string | null; playhqCompetitionId: string | null; playhqSeasonId: string | null; playhqGradeId: string | null
+  playhqOrganisationId: string | null; playhqCompetitionId: string | null; playhqSeasonId: string | null; playhqGradeId: string | null; playhqGradeName?: string | null
   scrapeEnabled: boolean; apiEnabled: boolean; manualEntryEnabled: boolean
   lastSyncAt: string | null; lastSuccessfulSyncAt: string | null; syncStatus: string; dataSourceSyncError: string | null
   _count?: AdminLeague['_count'] & { footballFixtures?: number; footballResults?: number; footballLadderEntries?: number; footballImports?: number }
 }
 export interface FootballImportResult {
-  importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string
+  importId: string; status: string; recordsFound?: number; recordsImported?: number; dryRun?: boolean; note?: string; workflowFile?: string; htmlUrl?: string; workflowRun?: WorkflowRun | null
 }
 export interface RoundImportReport {
   round: string; resultsFound: number; resultsImported: number; fixturesFound: number; fixturesImported: number
@@ -52,10 +56,15 @@ export interface SeasonImportTotals {
 export interface AdminClub {
   id: string; name: string; shortName: string | null; region: string | null
   logoUrl: string | null; websiteUrl: string | null; primaryColour: string | null
-  secondaryColour: string | null; notes: string | null; source: string | null
+  secondaryColour: string | null; facebookUrl?: string | null; instagramUrl?: string | null; description?: string | null; contactEmail?: string | null; featuredClub?: boolean; notes: string | null; source: string | null
   bestRank: number | null; isActive: boolean; state?: { code: string } | null
-  archivedAt?: string | null; approvalStatus?: string; townName?: string | null
+  archivedAt?: string | null; approvalStatus?: string; townName?: string | null; sport?: string | null
 }
+
+
+export interface LogoUploadPayload { fileName: string; contentType: string; dataUrl: string }
+export interface ClubProfileDetail extends AdminClub { leagueSeasons?: unknown[]; rankingEntries?: unknown[]; nameVariants?: unknown[] }
+export interface LeagueProfileDetail extends FootballLeague { clubSeasons?: unknown[]; sources?: unknown[]; footballFixtures?: unknown[]; footballResults?: unknown[]; footballLadderEntries?: unknown[]; footballImports?: unknown[] }
 
 export interface DashboardData {
   counts: { leaguesActive: number; leaguesArchived: number; clubs: number; clubsArchived: number; teams: number; pendingReviews: number; ocrImports: number }
@@ -82,6 +91,7 @@ export interface ArticleRow {
   summary: string; status: string; weekLabel: string | null; updatedAt: string; publishedAt: string | null
 }
 export interface ArticleFull extends ArticleRow { body: string; heroSeed: string; tags: string | null; seoTitle: string | null; seoDescription: string | null; author: string }
+export interface GoalKickerRow { id: string; playerName: string; clubId: string | null; clubName: string; leagueId: string | null; leagueName: string; season: string; grade: string | null; goals: number; matches: number | null; sourceUrl: string | null; sourceType: string; importedAt: string }
 export interface ParsedUrl {
   ok: boolean; kind: string; tenant: string | null; orgSlug: string | null
   competitionSlug: string | null; gradeSlug: string | null; gradeId: string | null
@@ -96,7 +106,7 @@ export interface EngineInfo { repo: string; ref: string; configured: boolean }
 export interface WorkflowRun {
   id: number; status: string; conclusion: string | null; htmlUrl: string; createdAt: string; name: string; event: string
 }
-export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string }
+export interface DispatchResult { dispatched: true; run: WorkflowRun | null; htmlUrl: string; kind?: string; submittedUrl?: string; dispatchedWorkflow?: string; dispatchedRef?: string; workflowRunUrl?: string; importStatus?: string }
 export type CsvEntity = 'leagues' | 'clubs' | 'teams' | 'ladders' | 'mappings' | 'rankings'
 export interface CsvPreviewRow { index: number; data: Record<string, string>; status: 'ok' | 'warn' | 'error'; messages: string[] }
 export interface CsvPreview {
@@ -182,12 +192,23 @@ export const admin = {
   listAudit: (entityType?: string) => req<{ data: AuditRow[] }>('GET', `/admin/platform/audit${entityType ? `?entityType=${entityType}` : ''}`).then(r => r.data),
   listSettings: () => req<{ data: SettingRow[] }>('GET', '/admin/platform/settings').then(r => r.data),
   setSetting: (key: string, value: string) => req<{ data: SettingRow }>('POST', '/admin/platform/settings', { key, value }),
+  getLeagueProfile: (id: string) => req<{ data: LeagueProfileDetail }>('GET', `/admin/platform/leagues/${id}`).then(r => r.data),
+  updateLeagueProfile: (id: string, b: Record<string, unknown>) => req<{ data: LeagueProfileDetail }>('PATCH', `/admin/platform/leagues/${id}`, b).then(r => r.data),
+  uploadLeagueLogo: (id: string, b: LogoUploadPayload) => req<{ data: LeagueProfileDetail }>('POST', `/admin/platform/leagues/${id}/logo`, b).then(r => r.data),
+  removeLeagueLogo: (id: string) => req<{ data: LeagueProfileDetail }>('DELETE', `/admin/platform/leagues/${id}/logo`).then(r => r.data),
+  getClubProfile: (id: string) => req<{ data: ClubProfileDetail }>('GET', `/admin/platform/clubs/${id}`).then(r => r.data),
+  updateClubProfile: (id: string, b: Record<string, unknown>) => req<{ data: ClubProfileDetail }>('PATCH', `/admin/platform/clubs/${id}`, b).then(r => r.data),
+  uploadClubLogo: (id: string, b: LogoUploadPayload) => req<{ data: ClubProfileDetail }>('POST', `/admin/platform/clubs/${id}/logo`, b).then(r => r.data),
+  removeClubLogo: (id: string) => req<{ data: ClubProfileDetail }>('DELETE', `/admin/platform/clubs/${id}/logo`).then(r => r.data),
+  listGoalKickers: () => req<{ data: GoalKickerRow[] }>('GET', '/admin/platform/goal-kickers').then(r => r.data),
+  importGoalKickers: (b: { url?: string; sourceUrl?: string; rows?: Record<string, unknown>[] }) => req<{ data: { imported: number; skipped?: number; errors?: number; sourceUrl: string | null; note: string; diagnostics?: unknown; warnings?: string[] }; errors?: unknown[] }>('POST', '/admin/platform/goal-kickers/import', b).then(r => r.data),
   // PlayHQ URL import (Phase 1) + League sync (Phase 10) — dispatched to GitHub Actions
   classifyUrl: (url: string) => req<{ data: ParsedUrl }>('POST', '/admin/platform/playhq/classify', { url }).then(r => r.data),
   importUrl:   (url: string) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/import', { url }).then(r => r.data),
   syncLeague:  (id: string) => req<{ data: DispatchResult }>('POST', `/admin/platform/leagues/${id}/sync`).then(r => r.data),
   syncAll:     () => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/sync-all').then(r => r.data),
   discover:    (b: { assocFilter?: string; maxAssociations?: string }) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/discover', b).then(r => r.data),
+  footballBulkDiscover: (b: { state?: string; limit?: string; dryRun?: boolean; season?: string; grade?: string; seedUrls?: string; roundLimit?: string }) => req<{ data: DispatchResult }>('POST', '/admin/platform/playhq/football-bulk-discover', b).then(r => r.data),
   // Execution engine (GitHub Actions) status
   engineInfo:  () => req<{ data: EngineInfo }>('GET', '/admin/platform/engine').then(r => r.data),
   engineRuns:  (workflow?: string) => req<{ data: WorkflowRun[] }>('GET', `/admin/platform/engine/runs${workflow ? `?workflow=${workflow}` : ''}`).then(r => r.data),
