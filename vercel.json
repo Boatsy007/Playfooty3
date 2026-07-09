@@ -4,7 +4,9 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist"
+      }
     },
     {
       "src": "backend/api/index.ts",
@@ -12,10 +14,30 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)",   "dest": "/backend/api/index.ts" },
-    { "src": "/admin/(.*)", "dest": "/backend/api/index.ts" },
-    { "src": "/health",     "dest": "/backend/api/index.ts" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)",       "dest": "/index.html" }
-  ]
+    {
+      "src": "/api/(.*)",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "src": "/health",
+      "dest": "/backend/api/index.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "installCommand": "npm ci && npm --prefix backend ci",
+  "functions": {
+    "backend/api/index.ts": {
+      "includeFiles": "backend/node_modules/@sparticuz/chromium/bin/**"
+    }
+  }
 }
