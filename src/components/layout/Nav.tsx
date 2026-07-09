@@ -10,7 +10,6 @@ const ACTION_RED = '#ee0018'
 const links = [
   { label: 'Home',     href: '/',           route: '/'          },
   { label: 'Rankings', href: '/rankings',   route: '/rankings'  },
-  { label: 'Goal Kickers', href: '/goal-kickers', route: '/goal-kickers' },
   { label: 'Leagues',  href: '/leagues',    route: '/leagues'   },
   { label: 'Clubs',    href: '/directory',  route: '/directory' },
   { label: 'News',     href: '/news',       route: '/news'      },

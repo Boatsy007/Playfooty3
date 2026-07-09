@@ -22,8 +22,9 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
       orderBy: { season: 'desc' },
       select:  { season: true },
     })
+    if (!latest) { res.json({ season: null, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
-    const season = latest?.season ?? null
+    const season = latest.season
 
     // Only football leagues are public in the PlayFooty app. Leagues may be
     // manually managed while PlayHQ access is pending, so do not require an
@@ -35,21 +36,10 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
     const leagueIds = [...new Set(footballLeagues.map(s => s.id))]
     if (leagueIds.length === 0) { res.json({ season, states: [], meta: { totalClubs: 0, totalLeagues: 0 } }); return }
 
-    // All active football club-season rows. Do not apply one global latest-season
-    // filter here: different imported leagues can have different season labels,
-    // and the league ladder already proves these memberships are public.
+    // All club-season rows for this season, with club (+state) and league
     const rows = await prisma.clubLeagueSeason.findMany({
-      where:   { isActive: true, leagueId: { in: leagueIds } },
-      select: {
-        clubId: true, leagueId: true, played: true, wins: true, losses: true, draws: true, percentage: true, points: true,
-        club: {
-          select: {
-            name: true,
-            state: { select: { code: true, name: true } },
-          },
-        },
-        league: { select: { name: true, shortName: true, strengthTier: true, strengthScore: true } },
-      },
+      where:   { season, isActive: true, leagueId: { in: leagueIds } },
+      include: { club: { include: { state: true } }, league: true },
     })
 
     // Latest ranking entries → clubId → { rank, powerRating }
@@ -73,11 +63,11 @@ router.get('/', publicRateLimit, cachePublic(600), async (_req, res) => {
       return {
         clubId:       r.clubId,
         name:         r.club.name,
-        slug:         null,
-        region:       null,
-        websiteUrl:   null,
-        facebookUrl:  null,
-        instagramUrl: null,
+        slug:         r.club.slug,
+        region:       r.club.region ?? null,
+        websiteUrl:   r.club.websiteUrl ?? null,
+        facebookUrl:  r.club.facebookUrl ?? null,
+        instagramUrl: r.club.instagramUrl ?? null,
         played:       r.played,
         wins:         r.wins,
         losses:       r.losses,

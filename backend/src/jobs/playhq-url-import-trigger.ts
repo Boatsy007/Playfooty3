@@ -3,7 +3,7 @@
  *
  * Usage:
  *   tsx src/jobs/playhq-url-import-trigger.ts --url="https://www.playhq.com/netball-australia/org/..."
- *   tsx src/jobs/playhq-url-import-trigger.ts --sync=<leagueId> [--dry-run]
+ *   tsx src/jobs/playhq-url-import-trigger.ts --sync=<leagueId>
  *   tsx src/jobs/playhq-url-import-trigger.ts --sync-all       # sync every league with a stored URL
  */
 
@@ -20,24 +20,15 @@ async function main() {
   const url     = arg('url')
   const syncId  = arg('sync')
   const syncAll = arg('sync-all') !== undefined
-  const dryRun  = arg('dry-run') !== undefined
 
   if (url) {
     const report = await importFromUrl(url, { rerank: true })
     console.log('\n═══ PLAYHQ URL IMPORT ═══')
     console.log(JSON.stringify(report, null, 2))
-    if (report.status !== 'SUCCESS') process.exitCode = 1
   } else if (syncId) {
-    if (dryRun) {
-      const league = await prisma.league.findUnique({ where: { id: syncId }, select: { id: true, name: true, sourceUrl: true, ladderUrl: true } })
-      console.log('\n═══ LEAGUE SYNC DRY RUN ═══')
-      console.log(JSON.stringify({ status: league ? 'DISPATCH_OK' : 'FAILED', dryRun: true, league, note: 'GitHub Actions dispatch is connected. Dry run did not scrape or write PlayHQ data.' }, null, 2))
-    } else {
-      const report = await syncLeague(syncId, { rerank: true })
-      console.log('\n═══ LEAGUE SYNC ═══')
-      console.log(JSON.stringify(report, null, 2))
-      if (report.status !== 'SUCCESS') process.exitCode = 1
-    }
+    const report = await syncLeague(syncId, { rerank: true })
+    console.log('\n═══ LEAGUE SYNC ═══')
+    console.log(JSON.stringify(report, null, 2))
   } else if (syncAll) {
     const leagues = await prisma.league.findMany({
       where: { isActive: true, enabled: true, archivedAt: null, OR: [{ ladderUrl: { not: null } }, { sourceUrl: { not: null } }, { ladderUrlOverride: { not: null } }] },

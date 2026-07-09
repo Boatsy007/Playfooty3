@@ -7,7 +7,6 @@ import App from './App.tsx'
 import PowerRankings from './pages/PowerRankings.tsx'
 import Directory from './pages/Directory.tsx'
 import FullRankings from './pages/FullRankings.tsx'
-import GoalKickers from './pages/GoalKickers.tsx'
 import TeamProfile from './pages/TeamProfile.tsx'
 import LeagueProfile from './pages/LeagueProfile.tsx'
 import Leagues from './pages/Leagues.tsx'
@@ -31,7 +30,6 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<App />} />
         <Route path="/power-rankings" element={<PowerRankings />} />
         <Route path="/rankings" element={<FullRankings />} />
-        <Route path="/goal-kickers" element={<GoalKickers />} />
         <Route path="/team/:clubId" element={<TeamProfile />} />
         <Route path="/league/:leagueId" element={<LeagueProfile />} />
         <Route path="/leagues" element={<Leagues />} />

@@ -276,14 +276,7 @@ async function buildPlayHQRankingInputs(season: string): Promise<ClubRankingInpu
   if (leagueIds.length === 0) return []
 
   const seasons = await prisma.clubLeagueSeason.findMany({
-    where: {
-      leagueId: { in: leagueIds },
-      season,
-      sport: 'FOOTBALL',
-      isActive: true,
-      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, approvalStatus: 'APPROVED' },
-      league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-    },
+    where:   { leagueId: { in: leagueIds }, season },
     include: { club: { include: { state: true } }, league: true },
   })
 

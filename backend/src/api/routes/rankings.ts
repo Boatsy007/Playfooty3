@@ -16,35 +16,11 @@ import { logger }        from '../../utils/logger.js'
 
 const router = Router()
 
-function logAndRethrow(route: string, err: unknown): never {
-  console.error(err)
-  if (err instanceof Error && err.stack) console.error(err.stack)
-  console.error(`[rankings] ${route} failed`, {
-    name: err instanceof Error ? err.name : typeof err,
-    message: err instanceof Error ? err.message : String(err),
-  })
-  throw err
-}
-
 async function getLatestRun(season?: string) {
-  const runs = await prisma.rankingRun.findMany({
+  return prisma.rankingRun.findFirst({
     where:   { status: 'COMPLETED', ...(season ? { season } : {}) },
     orderBy: { completedAt: 'desc' },
-    take:    25,
   })
-
-  for (const run of runs) {
-    const publicFootballEntries = await prisma.rankingEntry.count({
-      where: {
-        runId: run.id,
-        league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-        club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-      },
-    })
-    if (publicFootballEntries > 0) return run
-  }
-
-  return null
 }
 
 async function getEntries(runId: string, limit?: number, state?: string) {
@@ -52,7 +28,6 @@ async function getEntries(runId: string, limit?: number, state?: string) {
     where: {
       runId,
       league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
       ...(state ? { state } : {}),
     },
     orderBy: { rank: 'asc' },
@@ -73,13 +48,12 @@ function formatEntry(
   return {
     rank:         entry.rank,
     previousRank: entry.previousRank,
-    rankMovement: entry.rankMovement ?? 0,
+    rankMovement: entry.rankMovement,
     clubId:       entry.clubId,
-    clubName:     entry.clubName ?? 'Unknown Club',
-    logoUrl:      null,
-    leagueName:   entry.leagueName ?? 'Unknown League',
-    state:        entry.state ?? '—',
-    powerRating:  Number.isFinite(entry.powerRating) ? entry.powerRating : 0,
+    clubName:     entry.clubName,
+    leagueName:   entry.leagueName,
+    state:        entry.state,
+    powerRating:  entry.powerRating,
     // Raw season stats (from ClubLeagueSeason) so the frontend can show record + goals
     record:       { wins: stats?.wins ?? 0, losses: stats?.losses ?? 0, draws: stats?.draws ?? 0, played: stats?.played ?? 0 },
     goalsFor:     stats?.goalsFor ?? 0,
@@ -112,78 +86,21 @@ async function formatEntries(
   })
 }
 
-
-async function getFallbackEntries(limit?: number, state?: string, season?: string) {
-  const latestSeason = season ?? (await prisma.clubLeagueSeason.findFirst({
-    where: { isActive: true, league: { sport: 'FOOTBALL', archivedAt: null, isActive: true }, club: { sport: 'FOOTBALL', archivedAt: null, isActive: true } },
-    orderBy: { season: 'desc' },
-    select: { season: true },
-  }))?.season
-
-  const rows = await prisma.clubLeagueSeason.findMany({
-    where: {
-      isActive: true,
-      ...(season ? { season } : {}),
-      league: { sport: 'FOOTBALL', archivedAt: null, isActive: true },
-      club: { sport: 'FOOTBALL', archivedAt: null, isActive: true, ...(state ? { state: { code: state } } : {}) },
-    },
-    orderBy: [{ points: 'desc' }, { percentage: 'desc' }, { wins: 'desc' }, { club: { name: 'asc' } }],
-    ...(limit ? { take: limit } : {}),
-    select: {
-      clubId: true, leagueId: true, season: true, played: true, wins: true, losses: true, draws: true, goalsFor: true, goalsAgainst: true, percentage: true, points: true,
-      club: { select: { name: true, state: { select: { code: true } } } },
-      league: { select: { name: true } },
-    },
-  })
-
-  return {
-    season: latestSeason ?? null,
-    data: rows.map((row, index) => ({
-      rank: index + 1,
-      previousRank: null,
-      rankMovement: 0,
-      clubId: row.clubId,
-      clubName: row.club?.name ?? 'Unknown Club',
-      logoUrl: null,
-      leagueName: row.league?.name ?? 'Unknown League',
-      state: row.club?.state?.code ?? '—',
-      powerRating: row.points || row.percentage ? Math.round((((row.points ?? 0) * 4) + (row.percentage ?? 0)) * 10) / 10 : 0,
-      record: { wins: row.wins, losses: row.losses, draws: row.draws, played: row.played },
-      goalsFor: row.goalsFor,
-      goalsAgainst: row.goalsAgainst,
-      percentage: row.percentage,
-      points: row.points,
-      recentForm: [],
-      componentScores: {},
-      calculatedAt: null,
-    })),
-  }
-}
-
 // GET /api/rankings
 router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { season, state } = req.query as Record<string, string>
     const run = await getLatestRun(season)
-    if (!run) {
-      const fallback = await getFallbackEntries(undefined, state, season)
-      res.json({ data: fallback.data, meta: { weekLabel: null, season: fallback.season, total: fallback.data.length, source: 'clubs-fallback' } })
-      return
-    }
+    if (!run) { res.json({ data: [], meta: { weekLabel: null, season: null, total: 0 } }); return }
 
     const entries = await getEntries(run.id, undefined, state)
-    if (entries.length === 0) {
-      const fallback = await getFallbackEntries(undefined, state, run.season)
-      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, total: fallback.data.length, generatedAt: run.completedAt, source: 'clubs-fallback' } })
-      return
-    }
     res.json({
       data: await formatEntries(entries, run.season),
       meta: { weekLabel: run.weekLabel, season: run.season, total: entries.length, generatedAt: run.completedAt },
     })
   } catch (err) {
     logger.error('GET /rankings error', { detail: String(err) })
-    logAndRethrow('GET /api/rankings', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -191,7 +108,7 @@ router.get('/', publicRateLimit, cachePublic(600), async (req, res) => {
 router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, res) => {
   try {
     const run = await prisma.rankingRun.findFirst({
-      where:   { weekLabel: String(req.params.weekLabel), status: 'COMPLETED' },
+      where:   { weekLabel: req.params.weekLabel, status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     })
     if (!run) { res.status(404).json({ error: 'No rankings found for this week' }); return }
@@ -203,7 +120,7 @@ router.get('/week/:weekLabel', publicRateLimit, cachePublic(3600), async (req, r
     })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    logAndRethrow('GET /api/rankings/week/:weekLabel', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -212,22 +129,13 @@ router.get('/top10', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) {
-      const fallback = await getFallbackEntries(10, state)
-      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
-      return
-    }
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 10, state)
-    if (entries.length === 0) {
-      const fallback = await getFallbackEntries(10, state, run.season)
-      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
-      return
-    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    logAndRethrow('GET /api/top10', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -236,22 +144,13 @@ router.get('/top25', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) {
-      const fallback = await getFallbackEntries(25, state)
-      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
-      return
-    }
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 25, state)
-    if (entries.length === 0) {
-      const fallback = await getFallbackEntries(25, state, run.season)
-      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
-      return
-    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    logAndRethrow('GET /api/top25', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -260,22 +159,13 @@ router.get('/top100', publicRateLimit, cachePublic(600), async (req, res) => {
   try {
     const { state } = req.query as Record<string, string>
     const run = await getLatestRun()
-    if (!run) {
-      const fallback = await getFallbackEntries(100, state)
-      res.json({ data: fallback.data, meta: { season: fallback.season, source: 'clubs-fallback' } })
-      return
-    }
+    if (!run) { res.json({ data: [], meta: {} }); return }
 
     const entries = await getEntries(run.id, 100, state)
-    if (entries.length === 0) {
-      const fallback = await getFallbackEntries(100, state, run.season)
-      res.json({ data: fallback.data, meta: { weekLabel: run.weekLabel, season: run.season, source: 'clubs-fallback' } })
-      return
-    }
     res.json({ data: await formatEntries(entries, run.season), meta: { weekLabel: run.weekLabel, season: run.season } })
   } catch (err) {
     logger.error('Rankings route error', { detail: String(err) })
-    logAndRethrow('GET /api/top100', err)
+    res.status(500).json({ error: 'Internal server error', detail: String(err) })
   }
 })
 
@@ -303,6 +193,10 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
     let weights
     try { weights = config?.weights ? JSON.parse(config.weights as string) : undefined } catch { weights = undefined }
 
+    const league = entry.leagueId
+      ? await prisma.league.findUnique({ where: { id: entry.leagueId }, select: { strengthReasoning: true, strengthConfidence: true, finalStrengthRating: true, strengthCalculatedAt: true } })
+      : null
+
     res.json({ data: {
       clubId:      entry.clubId,
       clubName:    entry.clubName,
@@ -315,17 +209,17 @@ router.get('/explain/:clubId', publicRateLimit, cachePublic(600), async (req, re
         componentScores, recentForm, weights,
       }),
       componentScores,
-      league: entry.leagueId ? {
+      league: league ? {
         name:          entry.leagueName,
-        strength:      null,
-        confidence:    null,
-        reasoning:     null,
-        calculatedAt:  null,
+        strength:      league.finalStrengthRating,
+        confidence:    league.strengthConfidence,
+        reasoning:     league.strengthReasoning,
+        calculatedAt:  league.strengthCalculatedAt,
       } : null,
     } })
   } catch (err) {
     logger.error('GET /rankings/explain error', { detail: String(err) })
-    logAndRethrow('GET /api/rankings/explain/:clubId', err)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 

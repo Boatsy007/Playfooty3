@@ -14,7 +14,6 @@ export interface RankingEntry {
   rankMovement: number
   clubId: string
   clubName: string
-  logoUrl?: string | null
   leagueName: string
   state: string
   powerRating: number
