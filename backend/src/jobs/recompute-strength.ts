@@ -11,6 +11,8 @@
  * Usage: tsx src/jobs/recompute-strength.ts
  */
 
+import { resolve }      from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { prisma }       from '../db/client.js'
 import { rankAndStore } from './playhq-scrape.js'
 import { computeLeagueStrengthV2 } from '../config/league-strength-v2.js'
@@ -41,7 +43,10 @@ export async function recalculateNational(): Promise<RecalcReport> {
   const byLeague = new Map<string, number[]>()
   for (const e of entries) { if (e.leagueId) byLeague.set(e.leagueId, [...(byLeague.get(e.leagueId) ?? []), e.powerRating]) }
 
-  const leagues = await prisma.league.findMany({ where: { isActive: true, enabled: true }, include: { association: { select: { name: true } } } })
+  const leagues = await prisma.league.findMany({
+    where: { isActive: true, enabled: true },
+    select: { id: true, name: true, manualStrengthOverride: true, strengthScore: true, association: { select: { name: true } } },
+  })
   const report: RecalcReport['leagues'] = []
   for (const l of leagues) {
     const ratings = byLeague.get(l.id) ?? []
@@ -78,7 +83,10 @@ async function main() {
     byLeague.set(e.leagueId, [...(byLeague.get(e.leagueId) ?? []), e.powerRating])
   }
 
-  const leagues = await prisma.league.findMany({ where: { isActive: true, enabled: true }, include: { association: { select: { name: true } } } })
+  const leagues = await prisma.league.findMany({
+    where: { isActive: true, enabled: true },
+    select: { id: true, name: true, manualStrengthOverride: true, strengthScore: true, association: { select: { name: true } } },
+  })
   const report: { name: string; before: number; after: number; conf: number; review: boolean }[] = []
 
   for (const l of leagues) {
@@ -125,4 +133,8 @@ async function main() {
   await prisma.$disconnect()
 }
 
-main().catch(async e => { console.error('Strength v2 failed:', e); await prisma.$disconnect().catch(() => {}); process.exit(1) })
+const isCli = process.argv[1] ? resolve(process.argv[1]) === fileURLToPath(import.meta.url) : false
+
+if (isCli) {
+  main().catch(async e => { console.error('Strength v2 failed:', e); await prisma.$disconnect().catch(() => {}); process.exit(1) })
+}
