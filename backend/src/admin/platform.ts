@@ -670,6 +670,9 @@ router.post('/goal-kickers/import', async (req, res) => {
             tableCount: d.tableCount ?? 0,
             rowCount: d.rowCount ?? 0,
             capturedJsonCount: d.capturedJsonCount ?? 0,
+            capturedJsonSampleKeys: Array.isArray(d.capturedResponses)
+              ? d.capturedResponses.slice(0, 5).map(response => (response as Record<string, unknown>).shape)
+              : [],
             sampleRenderedText: d.textSample ?? '',
             attemptedRenderedFetch: d.attemptedRenderedFetch ?? false,
             renderedFetchSucceeded: d.renderedFetchSucceeded ?? false,

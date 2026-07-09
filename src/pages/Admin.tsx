@@ -139,7 +139,7 @@ function GoalKickers() {
     setBusy(true)
     try {
       const result = await admin.importGoalKickers({ url: pastedUrl, sourceUrl: pastedUrl })
-      setMessage(result.note)
+      setMessage(`${result.note} Imported: ${result.imported}. Skipped: ${result.skipped ?? 0}. Errors: ${result.errors ?? 0}.`)
       await load()
     } catch (e) {
       const response = (e as Error & { response?: unknown }).response
