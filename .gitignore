@@ -29,3 +29,6 @@ dist-ssr
 *.sln
 *.sw?
 .claude/worktrees/
+
+# Generated Vercel Playwright browser bundle
+backend/api/.playwright/

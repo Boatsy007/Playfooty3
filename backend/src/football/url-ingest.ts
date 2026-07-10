@@ -11,6 +11,8 @@
  * AFL score notation is goals.behinds (total) — e.g. "12.8 (80)" = 12*6+8.
  */
 
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { logger } from '../utils/logger.js'
 
 export interface ResultRow { homeName: string; awayName: string; homeGoals?: number; homeBehinds?: number; homePoints?: number; awayGoals?: number; awayBehinds?: number; awayPoints?: number; round?: string; matchDate?: string; time?: string; venue?: string; status?: string; sourceUrl?: string }
@@ -111,6 +113,9 @@ type RenderDiagnostics = {
   capturedResponses?: Array<Record<string, unknown>>
   screenshotPath?: string
   htmlPath?: string
+  chromiumExecutablePath?: string
+  chromiumExecutableExists?: boolean
+  chromiumExecutableSource?: string
 }
 
 const usefulResponse = (url: string) => !/rubicon|posthog|split\.io|doubleclick|googlesyndication|adnxs|analytics/i.test(url)
@@ -158,9 +163,24 @@ async function writePlayHqArtifacts(page: import('playwright').Page, url: string
   return { htmlPath, screenshotPath }
 }
 
+function chromiumExecutableDiagnostics(): Pick<RenderDiagnostics, 'chromiumExecutablePath' | 'chromiumExecutableExists' | 'chromiumExecutableSource'> {
+  const envPath = process.env.PLAYFOOTY_CHROMIUM_EXECUTABLE_PATH
+  if (envPath) return { chromiumExecutablePath: envPath, chromiumExecutableExists: existsSync(envPath), chromiumExecutableSource: 'PLAYFOOTY_CHROMIUM_EXECUTABLE_PATH' }
+
+  const bundledPath = fileURLToPath(new URL('../../api/.playwright/chrome-headless-shell-linux64/chrome-headless-shell', import.meta.url))
+  if (existsSync(bundledPath)) return { chromiumExecutablePath: bundledPath, chromiumExecutableExists: true, chromiumExecutableSource: 'bundled-vercel-function' }
+
+  return { chromiumExecutableSource: 'playwright-default-browser-cache' }
+}
+
 async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { waitForNetworkIdle?: boolean } = {}): Promise<FetchedPage> {
   const { chromium } = await import('playwright')
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'] })
+  const chromiumDiagnostics = chromiumExecutableDiagnostics()
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: chromiumDiagnostics.chromiumExecutableExists ? chromiumDiagnostics.chromiumExecutablePath : undefined,
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled'],
+  })
   const capturedJson: unknown[] = []
   const capturedResponses: Array<Record<string, unknown>> = []
   try {
@@ -194,6 +214,7 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { w
     const html = await page.content()
     const diagnostics: RenderDiagnostics = {
       ...(await collectRenderedDiagnostics(page)),
+      ...chromiumDiagnostics,
       advancedToggleClicked,
       capturedJsonCount: capturedJson.length,
       capturedResponses: capturedResponses.slice(0, 40),
@@ -208,6 +229,9 @@ async function fetchRenderedPlayHqPage(url: string, timeoutMs: number, opts: { w
     console.log(`[playhq-render] ladder tab selected=${diagnostics.ladderTabSelected ? 'yes' : 'no'}`)
     console.log(`[playhq-render] advanced ladder toggle exists=${diagnostics.advancedToggleExists ? 'yes' : 'no'}`)
     console.log(`[playhq-render] advanced ladder toggle clicked=${diagnostics.advancedToggleClicked ? 'yes' : 'no'}`)
+    console.log(`[playhq-render] chromium executable source=${diagnostics.chromiumExecutableSource || '(unknown)'}`)
+    console.log(`[playhq-render] chromium executable path=${diagnostics.chromiumExecutablePath || '(playwright default)'}`)
+    console.log(`[playhq-render] chromium executable exists=${diagnostics.chromiumExecutableExists === undefined ? '(not checked)' : diagnostics.chromiumExecutableExists ? 'yes' : 'no'}`)
     console.log(`[playhq-render] tables found=${diagnostics.tableCount ?? 0}`)
     console.log(`[playhq-render] rows found=${diagnostics.rowCount ?? 0}`)
     console.log(`[playhq-render] text sample=${diagnostics.textSample || '(empty)'}`)
