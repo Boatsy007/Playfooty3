@@ -10,7 +10,12 @@
     },
     {
       "src": "backend/api/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "backend/api/.playwright/**"
+        ]
+      }
     }
   ],
   "routes": [
@@ -38,10 +43,5 @@
   "env": {
     "PLAYWRIGHT_BROWSERS_PATH": "0",
     "PLAYWRIGHT_SKIP_BROWSER_GC": "1"
-  },
-  "functions": {
-    "backend/api/index.ts": {
-      "includeFiles": "backend/api/.playwright/**"
-    }
   }
 }
