@@ -358,26 +358,23 @@ function playerName(v: unknown): string | undefined {
   if (typeof v === 'string' && v.trim()) return clean(v)
   if (v && typeof v === 'object') {
     const o = v as Record<string, unknown>
-    return playerName(o.name ?? o.playerName ?? o.fullName ?? o.displayName ?? o.title)
+    const firstLast = typeof o.firstName === 'string' && typeof o.lastName === 'string' ? `${o.firstName} ${o.lastName}` : undefined
+    return playerName(o.name ?? o.playerName ?? o.fullName ?? o.displayName ?? o.title ?? firstLast)
   }
   return undefined
 }
 
 function goalKickersFromJson(root: unknown): GoalKickerRow[] {
   const rows = walk<GoalKickerRow>(root, o => {
-    const player = playerName(o.player ?? o.person ?? o.participant ?? o.playerName ?? o.name ?? o.fullName)
-    const club = teamName(o.club ?? o.team ?? o.organisation ?? o.clubName ?? o.teamName)
-    const goals = metric(o, ['goals', 'goal', 'totalGoals', 'G']) ?? asNum(o.goals ?? o.totalGoals ?? o.value)
+    const player = playerName(o.player ?? o.person ?? o.participant ?? o.playerProfile ?? o.profile ?? o.playerName ?? o.name ?? o.fullName)
+    const club = teamName(o.club ?? o.team ?? o.organisation ?? o.organization ?? o.competitor ?? o.clubName ?? o.teamName ?? o.organisationName ?? o.organizationName)
+    const goals = metric(o, ['goals', 'goal', 'totalGoals', 'goalsTotal', 'G']) ?? asNum(o.goals ?? o.goal ?? o.totalGoals ?? o.goalsTotal ?? o.value ?? o.total)
     if (!player || !club || goals == null) return null
-    const matches = metric(o, ['matches', 'games', 'played', 'appearances']) ?? asNum(o.matches ?? o.games ?? o.played)
     return {
       playerName: player,
       clubName: club,
-      leagueName: teamName(o.league ?? o.competition ?? o.association ?? o.leagueName ?? o.competitionName),
-      season: str(o.season ?? o.seasonName),
-      grade: str(o.grade ?? o.gradeName ?? o.division ?? o.competitionDivisionName),
+      leagueName: teamName(o.league ?? o.competition ?? o.association ?? o.comp ?? o.leagueName ?? o.competitionName ?? o.associationName),
       goals,
-      matches,
     }
   })
   return dedupeGoalKickers(rows)
@@ -391,9 +388,7 @@ function goalKickersFromCellRows(rows: string[][]): GoalKickerRow[] {
   const playerIdx = ladderHeaderIndex(headers, ['PLAYER', 'PLAYER NAME', 'NAME'])
   const clubIdx = ladderHeaderIndex(headers, ['CLUB', 'TEAM'])
   const goalsIdx = ladderHeaderIndex(headers, ['GOALS', 'GOAL', 'G'])
-  const matchesIdx = ladderHeaderIndex(headers, ['MATCHES', 'GAMES', 'PLAYED', 'M'])
   const leagueIdx = ladderHeaderIndex(headers, ['LEAGUE', 'COMPETITION', 'ASSOCIATION'])
-  const gradeIdx = ladderHeaderIndex(headers, ['GRADE', 'DIVISION'])
   if (playerIdx < 0 || clubIdx < 0 || goalsIdx < 0) return []
   const out = rows.slice(headerAt + 1).map((r): GoalKickerRow | null => {
     const player = clean(r[playerIdx] ?? '')
@@ -404,9 +399,7 @@ function goalKickersFromCellRows(rows: string[][]): GoalKickerRow[] {
       playerName: player,
       clubName: club,
       leagueName: leagueIdx >= 0 ? clean(r[leagueIdx] ?? '') || undefined : undefined,
-      grade: gradeIdx >= 0 ? clean(r[gradeIdx] ?? '') || undefined : undefined,
       goals,
-      matches: matchesIdx >= 0 ? asNum(r[matchesIdx]) : undefined,
     }
   }).filter((r): r is GoalKickerRow => !!r)
   return out.length ? dedupeGoalKickers(out) : []
